@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import Link from "next/link";
-import { getAllPosts, getPostBySlug, getRelatedPosts, isDirectoryPost } from "@/lib/content";
+import { getAllPosts, getPostBySlug, getRelatedPosts, isDirectoryPost, getPostLocales } from "@/lib/content";
 import { compileMDX } from "@/lib/mdx";
 import { Badge } from "@/components/ui/badge";
 import { BlogComments } from "@/components/blog-comments";
 import { GeoGuard } from "@/components/geo-guard";
 import { getLocale } from "@/lib/i18n-server";
+import { PostLocaleLink } from "@/components/post-locale-link";
 import { seo, blogPostJsonLd, getConfig } from "@/lib/config";
 
 interface BlogPostPageProps {
@@ -55,15 +56,17 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
   const joined = slug.join("/");
 
+  const locale = await getLocale();
+
   let post;
   try {
-    post = getPostBySlug(joined);
+    post = getPostBySlug(joined, locale);
   } catch {
     notFound();
   }
 
+  const postLocales = getPostLocales(joined);
   const content = await compileMDX(post.content, post.slug);
-  const locale = await getLocale();
   const jsonLd = blogPostJsonLd(post);
   const config = getConfig();
   const relatedPosts = getRelatedPosts(post.slug, post.tags);
@@ -106,6 +109,18 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               </Link>
             ))}
           </div>
+
+          {postLocales.length > 0 && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+              <span>🌐</span>
+              <span className={!postLocales.includes(locale) ? "font-medium text-foreground" : ""}>
+                {locale === "ru" ? "Оригинал" : "Original"}
+              </span>
+              {postLocales.map((loc) => (
+                <PostLocaleLink key={loc} locale={loc} currentLocale={locale} />
+              ))}
+            </div>
+          )}
         </header>
 
         <div className="prose prose-neutral dark:prose-invert max-w-none">

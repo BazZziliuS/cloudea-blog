@@ -49,6 +49,9 @@ const dictionaries = {
       blogLabel: "Блог",
       docsLabel: "Доки",
       docs: "Документация",
+      showMore: "Показать ещё",
+      ofTotal: "из",
+      recentPosts: "Последние",
     },
     auth: {
       title: "Вход в аккаунт",
@@ -106,6 +109,9 @@ const dictionaries = {
       blogLabel: "Blog",
       docsLabel: "Docs",
       docs: "Docs",
+      showMore: "Show more",
+      ofTotal: "of",
+      recentPosts: "Recent",
     },
     auth: {
       title: "Sign in",

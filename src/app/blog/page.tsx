@@ -74,6 +74,24 @@ export default async function BlogPage() {
               </div>
             )}
 
+            {posts.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">{t.recentPosts}</h3>
+                <ul className="space-y-1">
+                  {posts.slice(0, 5).map((post) => (
+                    <li key={post.slug}>
+                      <Link
+                        href={`/blog/${post.slug}`}
+                        className="block rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-accent line-clamp-1"
+                      >
+                        {post.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {years.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">

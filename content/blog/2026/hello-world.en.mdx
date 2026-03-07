@@ -1,0 +1,79 @@
+---
+title: "Welcome to Cloudea Blog"
+description: "Overview of the blog and documentation platform features"
+date: "2026-03-07"
+tags: ["announcement", "blog", "nextjs"]
+---
+
+# Welcome!
+
+Cloudea Blog is a modern platform for blogging and technical documentation, built on Next.js 16, Tailwind CSS v4, and shadcn/ui.
+
+## Platform Features
+
+### Content
+
+- **MDX** — write articles in Markdown with React component support
+- **Nested folders** — organize posts by year: `content/blog/2026/my-post/index.mdx`
+- **Co-located assets** — store images in the post folder and reference via `./image.png`
+- **Drafts** — add `draft: true` in frontmatter to hide a post
+- **Custom pages** — create `content/pages/about.mdx` for the `/about` page
+
+### Navigation & Search
+
+- **Global search** — press `Ctrl+K` to search across blog and docs
+- **Tags** — filter posts by tags
+- **Archive** — browse posts by year
+- **Breadcrumbs** — breadcrumbs in documentation
+- **Related posts** — tag-based recommendations at the bottom of articles
+
+### SEO & Feeds
+
+- Auto-generated sitemap.xml, robots.txt, and OG images
+- RSS, Atom, and JSON Feed
+- JSON-LD markup (WebSite, BlogPosting, TechArticle)
+
+<Callout type="tip">
+This post is available in multiple languages! Use the language switcher above to switch between versions.
+</Callout>
+
+## Code Example
+
+All code blocks have a Copy button:
+
+```typescript
+import { getAllPosts } from "@/lib/content";
+
+export default function BlogPage() {
+  const posts = getAllPosts();
+
+  return (
+    <div>
+      {posts.map((post) => (
+        <article key={post.slug}>
+          <h2>{post.title}</h2>
+          <p>{post.description}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+```
+
+## Configuration
+
+All platform settings are in one file `cloudea.config.ts`:
+
+```typescript
+const config: CloudeaConfig = {
+  title: "My Blog",
+  homepage: "landing", // or "blog", "docs", "about"
+  comments: {
+    provider: "giscus",
+  },
+};
+```
+
+## What's Next
+
+Check the [documentation](/docs/getting-started/introduction) for a detailed setup and usage guide.

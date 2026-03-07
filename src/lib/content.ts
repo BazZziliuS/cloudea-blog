@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import readingTime from "reading-time";
+import { defaultLocale, type Locale } from "@/lib/i18n";
 
 // ---- Types ----
 
@@ -77,6 +78,8 @@ function walkBlogDir(dir: string, prefix: string[] = []): string[][] {
         );
       }
     } else if (entry.name.endsWith(".mdx")) {
+      // Skip locale variants (e.g., hello-world.en.mdx) — handled by getPostBySlug
+      if (/\.[a-z]{2}\.mdx$/.test(entry.name)) continue;
       slugs.push([...prefix, entry.name.replace(/\.mdx$/, "")]);
     }
   }
@@ -84,15 +87,71 @@ function walkBlogDir(dir: string, prefix: string[] = []): string[][] {
   return slugs;
 }
 
-export function getPostBySlug(slug: string): Post {
+/**
+ * Resolve the MDX file path for a post, with optional locale.
+ * Lookup order (directory-style):
+ *   1. content/blog/.../slug/index.{locale}.mdx
+ *   2. content/blog/.../slug/index.mdx
+ * Lookup order (file-style):
+ *   1. content/blog/.../slug.{locale}.mdx
+ *   2. content/blog/.../slug.mdx
+ */
+function resolvePostPath(slug: string, locale?: Locale): string {
   const parts = slug.split("/");
 
-  // Try directory-style first: content/blog/2025/my-post/index.mdx
-  const indexPath = path.join(BLOG_DIR, ...parts, "index.mdx");
-  // Then file-style: content/blog/2025/my-post.mdx
-  const filePath = path.join(BLOG_DIR, ...parts) + ".mdx";
+  // Directory-style
+  const dirBase = path.join(BLOG_DIR, ...parts);
+  if (locale) {
+    const localeIndex = path.join(dirBase, `index.${locale}.mdx`);
+    if (fs.existsSync(localeIndex)) return localeIndex;
+  }
+  const defaultIndex = path.join(dirBase, "index.mdx");
+  if (fs.existsSync(defaultIndex)) return defaultIndex;
 
-  const actualPath = fs.existsSync(indexPath) ? indexPath : filePath;
+  // File-style
+  if (locale) {
+    const localeFile = path.join(BLOG_DIR, ...parts.slice(0, -1), `${parts[parts.length - 1]}.${locale}.mdx`);
+    if (fs.existsSync(localeFile)) return localeFile;
+  }
+  return path.join(BLOG_DIR, ...parts) + ".mdx";
+}
+
+/** Get available locales for a post */
+export function getPostLocales(slug: string): Locale[] {
+  const parts = slug.split("/");
+  const locales: Locale[] = [];
+
+  // Check directory-style
+  const dirBase = path.join(BLOG_DIR, ...parts);
+  if (fs.existsSync(path.join(dirBase, "index.mdx"))) {
+    const files = fs.readdirSync(dirBase);
+    for (const f of files) {
+      const match = f.match(/^index\.([a-z]{2})\.mdx$/);
+      if (match) locales.push(match[1] as Locale);
+    }
+    return locales;
+  }
+
+  // Check file-style
+  const dir = path.join(BLOG_DIR, ...parts.slice(0, -1));
+  const baseName = parts[parts.length - 1];
+  if (fs.existsSync(dir)) {
+    const files = fs.readdirSync(dir);
+    for (const f of files) {
+      const match = f.match(new RegExp(`^${escapeRegex(baseName)}\\.([a-z]{2})\\.mdx$`));
+      if (match) locales.push(match[1] as Locale);
+    }
+  }
+
+  return locales;
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function getPostBySlug(slug: string, locale?: Locale): Post {
+  const actualPath = resolvePostPath(slug, locale);
   const fileContents = fs.readFileSync(actualPath, "utf-8");
   const { data, content } = matter(fileContents);
   const stats = readingTime(content);

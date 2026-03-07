@@ -4,7 +4,10 @@ import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypePrettyCode from "rehype-pretty-code";
 import { mdxComponents } from "@/components/mdx-components";
+import React from "react";
 import type { ReactElement } from "react";
+import { Callout } from "@/components/callout";
+import { CodeBlockWrapper } from "@/components/copy-button";
 
 /**
  * Rewrite relative image/link paths in MDX content to point to the content API.
@@ -61,7 +64,17 @@ export async function compileMDX(
       },
       parseFrontmatter: false,
     },
-    components: mdxComponents,
+    components: {
+      ...mdxComponents,
+      Callout,
+      figure: (props: React.ComponentPropsWithoutRef<"figure">) => {
+        // rehype-pretty-code wraps code blocks in <figure data-rehype-pretty-code-figure>
+        if ((props as Record<string, unknown>)["data-rehype-pretty-code-figure"] !== undefined) {
+          return <CodeBlockWrapper {...props} />;
+        }
+        return <figure {...props} />;
+      },
+    },
   });
 
   return content;

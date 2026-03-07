@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { PostCard, useUserCountry } from "@/components/post-card";
 import type { GeoBlock } from "@/lib/content";
 
@@ -15,30 +16,54 @@ interface PostData {
 
 interface PostGridProps {
   posts: PostData[];
+  perPage?: number;
 }
 
-export function PostGrid({ posts }: PostGridProps) {
+export function PostGrid({ posts, perPage = 12 }: PostGridProps) {
   const hasGeoBlocked = posts.some((p) => p.geoBlock);
   const { country, loaded } = useUserCountry();
+  const [page, setPage] = useState(1);
 
-  // If no posts have geo_block, skip country detection entirely
   const resolvedCountry = hasGeoBlocked ? (loaded ? country : null) : null;
 
+  const totalPages = Math.ceil(posts.length / perPage);
+  const paginated = posts.slice(0, page * perPage);
+  const hasMore = page < totalPages;
+
   return (
-    <div className="grid gap-6 sm:grid-cols-2">
-      {posts.map((post) => (
-        <PostCard
-          key={post.slug}
-          slug={post.slug}
-          title={post.title}
-          description={post.description}
-          date={post.date}
-          readingTime={post.readingTime}
-          tags={post.tags}
-          geoBlock={post.geoBlock}
-          userCountry={resolvedCountry}
-        />
-      ))}
+    <div>
+      <div className="grid gap-6 sm:grid-cols-2">
+        {paginated.map((post) => (
+          <PostCard
+            key={post.slug}
+            slug={post.slug}
+            title={post.title}
+            description={post.description}
+            date={post.date}
+            readingTime={post.readingTime}
+            tags={post.tags}
+            geoBlock={post.geoBlock}
+            userCountry={resolvedCountry}
+          />
+        ))}
+      </div>
+
+      {hasMore && (
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            className="rounded-lg border border-border px-6 py-2.5 text-sm font-medium transition-colors hover:bg-accent hover:border-primary/50"
+          >
+            Показать ещё
+          </button>
+        </div>
+      )}
+
+      {posts.length > perPage && (
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          {paginated.length} из {posts.length}
+        </p>
+      )}
     </div>
   );
 }
