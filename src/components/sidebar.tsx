@@ -39,13 +39,28 @@ function SidebarSection({
     category.name.charAt(0).toUpperCase() +
     category.name.slice(1).replace(/-/g, " ");
 
+  const indexHref = category.indexSlug
+    ? `/docs/${category.indexSlug.join("/")}`
+    : null;
+  const isCategoryActive = indexHref ? pathname === indexHref : false;
+
   return (
     <div>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold text-foreground hover:text-primary transition-colors"
-      >
-        <span>{formattedName}</span>
+      <div className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold">
+        {indexHref ? (
+          <Link
+            href={indexHref}
+            className={cn(
+              "transition-colors",
+              isCategoryActive ? "text-primary" : "text-foreground hover:text-primary"
+            )}
+          >
+            {formattedName}
+          </Link>
+        ) : (
+          <span className="text-foreground">{formattedName}</span>
+        )}
+        <button onClick={() => setIsOpen(!isOpen)} className="hover:text-primary transition-colors">
         <svg
           className={cn(
             "h-4 w-4 transition-transform",
@@ -62,7 +77,8 @@ function SidebarSection({
             d="M9 5l7 7-7 7"
           />
         </svg>
-      </button>
+        </button>
+      </div>
       {isOpen && (
         <ul className="mt-1 space-y-1 pl-3">
           {category.docs.map((doc) => {

@@ -34,6 +34,7 @@ export interface Doc {
 
 export interface SidebarCategory {
   name: string;
+  indexSlug?: string[];
   docs: { slug: string[]; title: string; order: number }[];
 }
 
@@ -263,11 +264,19 @@ export function getPostsByYear(year: number): Post[] {
 // ---- Docs ----
 
 export function getDocBySlug(slug: string[]): Doc {
+  // Try file-style first: docs/getting-started/introduction.mdx
   const filePath = path.join(DOCS_DIR, ...slug) + ".mdx";
-  const fileContents = fs.readFileSync(filePath, "utf-8");
+  // Then directory-style: docs/getting-started/index.mdx
+  const indexPath = path.join(DOCS_DIR, ...slug, "index.mdx");
+
+  const actualPath = fs.existsSync(filePath) ? filePath : indexPath;
+  const fileContents = fs.readFileSync(actualPath, "utf-8");
   const { data, content } = matter(fileContents);
 
-  const category = slug.length > 1 ? slug[0] : "general";
+  // If this is a category index page (e.g. ["getting-started"] from index.mdx),
+  // the category is the slug itself
+  const isIndexPage = fs.existsSync(path.join(DOCS_DIR, ...slug, "index.mdx"));
+  const category = isIndexPage ? slug[0] : slug.length > 1 ? slug[0] : "general";
 
   return {
     slug,
@@ -287,7 +296,15 @@ function walkDocsDir(dir: string, prefix: string[] = []): string[][] {
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
+      // Check for index.mdx (category page)
+      const indexPath = path.join(dir, entry.name, "index.mdx");
+      if (fs.existsSync(indexPath)) {
+        slugs.push([...prefix, entry.name]);
+      }
       slugs.push(...walkDocsDir(path.join(dir, entry.name), [...prefix, entry.name]));
+    } else if (entry.name === "index.mdx") {
+      // Already handled above as directory page
+      continue;
     } else if (entry.name.endsWith(".mdx")) {
       slugs.push([...prefix, entry.name.replace(/\.mdx$/, "")]);
     }
@@ -310,6 +327,12 @@ export function getDocsSidebar(): SidebarCategory[] {
     const categoryName = doc.category;
     if (!categories.has(categoryName)) {
       categories.set(categoryName, { name: categoryName, docs: [] });
+    }
+    // If this is the category index page (slug matches category name), set as indexSlug
+    const isIndex = doc.slug.length === 1 && doc.slug[0] === categoryName;
+    if (isIndex) {
+      categories.get(categoryName)!.indexSlug = doc.slug;
+      continue;
     }
     categories.get(categoryName)!.docs.push({
       slug: doc.slug,

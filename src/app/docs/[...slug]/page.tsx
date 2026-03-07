@@ -52,12 +52,18 @@ export default async function DocPage({ params }: DocPageProps) {
     ? `${githubRepo}/edit/main/content/docs/${slug.join("/")}.mdx`
     : null;
 
+  const allDocs = getAllDocs();
+  const docSlugsSet = new Set(allDocs.map((d) => d.slug.join("/")));
+
   const breadcrumbItems = [
     { label: dict.blog.docs ?? "Docs", href: "/docs" },
-    ...slug.slice(0, -1).map((segment, i) => ({
-      label: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " "),
-      href: `/docs/${slug.slice(0, i + 1).join("/")}`,
-    })),
+    ...slug.slice(0, -1).map((segment, i) => {
+      const path = slug.slice(0, i + 1).join("/");
+      return {
+        label: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " "),
+        href: docSlugsSet.has(path) ? `/docs/${path}` : undefined,
+      };
+    }),
     { label: doc.title },
   ];
 
