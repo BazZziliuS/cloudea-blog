@@ -1,8 +1,8 @@
 ---
 title: "Автоматизация с n8n"
-description: "Гайд по автоматизации рабочих процессов с помощью n8n"
+description: "Гайд по автоматизации рабочих процессов с помощью n8n — self-hosted альтернативе Zapier"
 date: "2025-05-17"
-tags: ["n8n", "automation", "self-hosted"]
+tags: ["n8n", "automation", "self-hosted", "docker"]
 geo_block:
   countries: ["RU", "DE"]
   message: "Этот контент недоступен в вашем регионе."
@@ -10,7 +10,7 @@ geo_block:
 
 # Автоматизация с n8n
 
-n8n — это мощный инструмент для автоматизации рабочих процессов с открытым исходным кодом.
+n8n — это мощный инструмент для автоматизации рабочих процессов с открытым исходным кодом. В отличие от Zapier или Make, n8n можно развернуть на собственном сервере.
 
 ## Установка
 
@@ -20,7 +20,28 @@ n8n — это мощный инструмент для автоматизаци
 docker run -it --rm \
   --name n8n \
   -p 5678:5678 \
+  -v n8n_data:/home/node/.n8n \
   n8nio/n8n
+```
+
+Или через Docker Compose:
+
+```yaml
+version: "3"
+services:
+  n8n:
+    image: n8nio/n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=changeme
+
+volumes:
+  n8n_data:
 ```
 
 ## Пример workflow
@@ -29,6 +50,18 @@ docker run -it --rm \
 
 ![Интерфейс n8n](./screenshot.png)
 
+## Интеграции
+
+n8n поддерживает сотни интеграций из коробки:
+
+| Категория | Примеры |
+|---|---|
+| Мессенджеры | Telegram, Slack, Discord |
+| CRM | HubSpot, Salesforce |
+| Базы данных | PostgreSQL, MongoDB, Redis |
+| Облако | AWS, Google Cloud, Azure |
+| DevOps | GitHub, GitLab, Jenkins |
+
 ## Заключение
 
-n8n отлично подходит для автоматизации повседневных задач.
+n8n отлично подходит для автоматизации повседневных задач без зависимости от облачных сервисов.
