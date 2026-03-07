@@ -1,0 +1,19 @@
+/*
+ * Пользовательские стили.
+ * Этот файл подключается через cloudea.config.ts → customCss.
+ *
+ * Здесь можно переопределять CSS-переменные темы,
+ * добавлять свои стили для компонентов и т.д.
+ *
+ * Примеры:
+ *
+ * :root {
+ *   --primary: #6366f1;
+ *   --primary-foreground: #ffffff;
+ * }
+ *
+ * .prose h2 {
+ *   border-bottom: 1px solid var(--border);
+ *   padding-bottom: 0.5rem;
+ * }
+ */
