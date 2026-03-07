@@ -3,6 +3,7 @@ import Script from "next/script";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { ScrollToTop } from "@/components/scroll-to-top";
 import { getConfig, seo } from "@/lib/config";
 import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
@@ -92,6 +93,7 @@ export default async function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer dict={dict} locale={locale} />
           </div>
+          <ScrollToTop />
         </ThemeProvider>
         {bodyScripts.map(renderScript)}
       </body>

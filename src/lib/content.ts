@@ -18,6 +18,7 @@ export interface Post {
   tags: string[];
   content: string;
   readingTime: string;
+  draft?: boolean;
   geoBlock?: GeoBlock;
 }
 
@@ -104,6 +105,7 @@ export function getPostBySlug(slug: string): Post {
     tags: data.tags ?? [],
     content,
     readingTime: stats.text,
+    draft: data.draft ?? false,
     geoBlock: data.geo_block ?? data.geoBlock ?? undefined,
   };
 }
@@ -124,17 +126,34 @@ export function getPostAssetDir(slug: string): string | null {
   return null;
 }
 
-export function getAllPosts(): Post[] {
+export function getAllPosts(includeDrafts = false): Post[] {
   const slugParts = walkBlogDir(BLOG_DIR);
 
-  const posts = slugParts.map((parts) => {
-    const slug = parts.join("/");
-    return getPostBySlug(slug);
-  });
+  const posts = slugParts
+    .map((parts) => {
+      const slug = parts.join("/");
+      return getPostBySlug(slug);
+    })
+    .filter((post) => includeDrafts || !post.draft);
 
   return posts.sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+}
+
+/** Get related posts by shared tags (excluding the current post) */
+export function getRelatedPosts(slug: string, tags: string[], limit = 3): Post[] {
+  const allPosts = getAllPosts();
+  return allPosts
+    .filter((p) => p.slug !== slug)
+    .map((p) => ({
+      post: p,
+      score: p.tags.filter((t) => tags.includes(t)).length,
+    }))
+    .filter((p) => p.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((p) => p.post);
 }
 
 // ---- Tags ----

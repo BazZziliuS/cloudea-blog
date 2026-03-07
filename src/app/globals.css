@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+html {
+  scroll-padding-top: 5rem;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

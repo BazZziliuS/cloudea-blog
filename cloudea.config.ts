@@ -118,13 +118,13 @@ const config: CloudeaConfig = {
     // "supabase" — комментарии через авторизацию Supabase (GitHub OAuth)
     // "giscus"   — комментарии через GitHub Discussions
     // "none"     — без комментариев
-    provider: "supabase",
+    provider: "giscus",
 
     giscus: {
-      repo: "",
-      repoId: "",
-      category: "Announcements",
-      categoryId: "",
+      repo: "BazZziliuS/cloudea-blog",
+      repoId: "R_kgDORg3eHw",
+      category: "comments",
+      categoryId: "DIC_kwDORg3eH84C3413",
       mapping: "pathname",
     },
   },

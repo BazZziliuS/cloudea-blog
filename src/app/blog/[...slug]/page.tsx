@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import Link from "next/link";
-import { getAllPosts, getPostBySlug } from "@/lib/content";
+import { getAllPosts, getPostBySlug, getRelatedPosts, isDirectoryPost } from "@/lib/content";
 import { compileMDX } from "@/lib/mdx";
 import { Badge } from "@/components/ui/badge";
 import { BlogComments } from "@/components/blog-comments";
@@ -65,6 +65,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const content = await compileMDX(post.content, post.slug);
   const locale = await getLocale();
   const jsonLd = blogPostJsonLd(post);
+  const config = getConfig();
+  const relatedPosts = getRelatedPosts(post.slug, post.tags);
+
+  // Edit on GitHub link
+  const githubRepo = config.themeConfig.socials?.github;
+  const editFileName = isDirectoryPost(post.slug) ? `${post.slug}/index.mdx` : `${post.slug}.mdx`;
+  const editUrl = githubRepo ? `${githubRepo}/edit/main/content/blog/${editFileName}` : null;
 
   const article = (
     <>
@@ -104,6 +111,46 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <div className="prose prose-neutral dark:prose-invert max-w-none">
           {content}
         </div>
+
+        {editUrl && (
+          <div className="mt-10 border-t border-border pt-4">
+            <Link
+              href={editUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ✏️ Редактировать эту страницу на GitHub
+            </Link>
+          </div>
+        )}
+
+        {relatedPosts.length > 0 && (
+          <div className="mt-10 border-t border-border pt-8">
+            <h3 className="text-lg font-semibold mb-4">Похожие статьи</h3>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedPosts.map((rp) => (
+                <Link
+                  key={rp.slug}
+                  href={`/blog/${rp.slug}`}
+                  className="rounded-lg border border-border p-4 transition-colors hover:border-primary/50 hover:bg-accent/50"
+                >
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(rp.date), "d MMM yyyy")}
+                  </p>
+                  <h4 className="mt-1 font-medium leading-snug">{rp.title}</h4>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {rp.tags.slice(0, 3).map((t) => (
+                      <Badge key={t} variant="secondary" className="text-xs">
+                        {t}
+                      </Badge>
+                    ))}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <BlogComments slug={post.slug} locale={locale} />
       </article>

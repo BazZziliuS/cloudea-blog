@@ -48,6 +48,7 @@ const dictionaries = {
       onThisPage: "На этой странице",
       blogLabel: "Блог",
       docsLabel: "Доки",
+      docs: "Документация",
     },
     auth: {
       title: "Вход в аккаунт",
@@ -104,6 +105,7 @@ const dictionaries = {
       onThisPage: "On this page",
       blogLabel: "Blog",
       docsLabel: "Docs",
+      docs: "Docs",
     },
     auth: {
       title: "Sign in",
