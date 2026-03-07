@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.0.0...v1.1.0) (2026-03-07)
+
+
+### Features
+
+* support index.mdx for docs categories ([ae7e165](https://github.com/BazZziliuS/cloudea-blog/commit/ae7e16553c07f25c4f1379a2349d3185db4ba2ca))
+
 # 1.0.0 (2026-03-07)
 
 
