@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getAllCustomPages, getCustomPage, customPageExists } from "@/lib/content";
 import { compileMDX } from "@/lib/mdx";
-import { seo } from "@/lib/config";
+import { seo, getConfig } from "@/lib/config";
 
 interface CustomPageProps {
   params: Promise<{ page: string[] }>;
@@ -16,12 +16,27 @@ export async function generateMetadata({ params }: CustomPageProps) {
   const { page } = await params;
   if (!customPageExists(page)) return seo({ title: "Not Found", noIndex: true });
 
+  const config = getConfig();
   const data = getCustomPage(page);
-  return seo({
-    title: data.title,
-    description: data.description,
-    path: `/${page.join("/")}`,
-  });
+  const ogUrl = `${config.url}/api/og?type=page&slug=${encodeURIComponent(page.join("/"))}`;
+  return {
+    ...seo({
+      title: data.title,
+      description: data.description,
+      path: `/${page.join("/")}`,
+    }),
+    openGraph: {
+      title: data.title,
+      description: data.description,
+      images: [{ url: ogUrl, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title: data.title,
+      description: data.description,
+      images: [ogUrl],
+    },
+  };
 }
 
 export default async function CustomPage({ params }: CustomPageProps) {

@@ -20,13 +20,28 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: DocPageProps) {
   const { slug } = await params;
+  const config = getConfig();
   try {
     const doc = getDocBySlug(slug);
-    return seo({
-      title: doc.title,
-      description: doc.description,
-      path: `/docs/${doc.slug.join("/")}`,
-    });
+    const ogUrl = `${config.url}/api/og?type=doc&slug=${encodeURIComponent(doc.slug.join("/"))}`;
+    return {
+      ...seo({
+        title: doc.title,
+        description: doc.description,
+        path: `/docs/${doc.slug.join("/")}`,
+      }),
+      openGraph: {
+        title: doc.title,
+        description: doc.description,
+        images: [{ url: ogUrl, width: 1200, height: 630 }],
+      },
+      twitter: {
+        card: "summary_large_image" as const,
+        title: doc.title,
+        description: doc.description,
+        images: [ogUrl],
+      },
+    };
   } catch {
     return seo({ title: "Doc Not Found", noIndex: true });
   }

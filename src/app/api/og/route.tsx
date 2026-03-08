@@ -1,23 +1,36 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
-import { getPostBySlug } from "@/lib/content";
+import { getPostBySlug, getDocBySlug, getCustomPage } from "@/lib/content";
 import { getConfig } from "@/lib/config";
 
 const config = getConfig();
 
 export async function GET(request: NextRequest) {
   const slug = request.nextUrl.searchParams.get("slug") ?? "";
+  const type = request.nextUrl.searchParams.get("type") ?? "blog";
 
   let title: string = config.title;
   let description = "";
   let tags: string[] = [];
+  let category = "";
 
   if (slug) {
     try {
-      const post = getPostBySlug(slug);
-      title = post.title;
-      description = post.description;
-      tags = post.tags;
+      if (type === "doc") {
+        const doc = getDocBySlug(slug.split("/"));
+        title = doc.title;
+        description = doc.description;
+        category = doc.category;
+      } else if (type === "page") {
+        const page = getCustomPage(slug.split("/"));
+        title = page.title;
+        description = page.description;
+      } else {
+        const post = getPostBySlug(slug);
+        title = post.title;
+        description = post.description;
+        tags = post.tags;
+      }
     } catch {
       // fallback to defaults
     }
@@ -39,6 +52,19 @@ export async function GET(request: NextRequest) {
         }}
       >
         <div style={{ display: "flex", flexDirection: "column" }}>
+          {category && (
+            <span
+              style={{
+                fontSize: 18,
+                color: "#4fd0ff",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: 12,
+              }}
+            >
+              {category}
+            </span>
+          )}
           <h1
             style={{
               fontSize: 56,
