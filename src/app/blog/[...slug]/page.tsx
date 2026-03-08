@@ -113,9 +113,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           {postLocales.length > 0 && (
             <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
               <span>🌐</span>
-              <span className={!postLocales.includes(locale) ? "font-medium text-foreground" : ""}>
-                {locale === "ru" ? "Оригинал" : "Original"}
-              </span>
+              <PostLocaleLink
+                locale={config.i18n.defaultLocale as typeof locale}
+                currentLocale={locale}
+                label={locale === "ru" ? "Оригинал" : "Original"}
+              />
               {postLocales.map((loc) => (
                 <PostLocaleLink key={loc} locale={loc} currentLocale={locale} />
               ))}

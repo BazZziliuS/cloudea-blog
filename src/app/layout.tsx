@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { RouteProgress } from "@/components/route-progress";
 import { getConfig, seo } from "@/lib/config";
 import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
@@ -88,6 +89,7 @@ export default async function RootLayout({
           defaultTheme={config.themeConfig.colorMode.defaultMode}
           enableSystem={config.themeConfig.colorMode.respectPrefersColorScheme}
         >
+          <RouteProgress />
           <div className="flex min-h-screen flex-col">
             <Header dict={dict} locale={locale} />
             <main className="flex-1">{children}</main>

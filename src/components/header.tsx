@@ -33,8 +33,11 @@ export function Header({ dict, locale }: HeaderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
 
+  const isSupabaseAuth = config.comments.provider === "supabase";
+
   useEffect(() => {
     setMounted(true);
+    if (!isSupabaseAuth) return;
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
 
@@ -45,7 +48,7 @@ export function Header({ dict, locale }: HeaderProps) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isSupabaseAuth]);
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
@@ -109,7 +112,7 @@ export function Header({ dict, locale }: HeaderProps) {
             </Link>
           )}
 
-          {user ? (
+          {isSupabaseAuth && (user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="hidden md:inline-flex">
@@ -141,7 +144,7 @@ export function Header({ dict, locale }: HeaderProps) {
                 {dict.nav.signIn}
               </Button>
             </Link>
-          )}
+          ))}
 
           <Button
             variant="ghost"
@@ -189,7 +192,7 @@ export function Header({ dict, locale }: HeaderProps) {
               )}
             </div>
 
-            {!user && (
+            {isSupabaseAuth && !user && (
               <Link href="/auth/login" className="block pt-2">
                 <Button variant="outline" size="sm" className="w-full gap-2">
                   <Github className="h-4 w-4" />

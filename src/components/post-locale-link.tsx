@@ -16,9 +16,10 @@ const localeNames: Record<string, string> = {
 interface PostLocaleLinkProps {
   locale: Locale;
   currentLocale: Locale;
+  label?: string;
 }
 
-export function PostLocaleLink({ locale, currentLocale }: PostLocaleLinkProps) {
+export function PostLocaleLink({ locale, currentLocale, label }: PostLocaleLinkProps) {
   const isActive = locale === currentLocale;
 
   const handleSwitch = async () => {
@@ -42,7 +43,7 @@ export function PostLocaleLink({ locale, currentLocale }: PostLocaleLinkProps) {
           : "hover:text-foreground hover:bg-accent/50"
       }`}
     >
-      {localeNames[locale] ?? locale.toUpperCase()}
+      {label ?? localeNames[locale] ?? locale.toUpperCase()}
     </button>
   );
 }
