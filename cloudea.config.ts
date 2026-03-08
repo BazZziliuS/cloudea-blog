@@ -23,6 +23,12 @@ const config: CloudeaConfig = {
   //   { code: "console.log('Hello from Cloudea!')", strategy: "lazyOnload" },
   // ],
 
+  // Аналитика
+  // analytics: {
+  //   gtag: "G-XXXXXXXXXX",          // Google Analytics
+  //   yandexMetrika: "12345678",      // Яндекс.Метрика
+  // },
+
   i18n: {
     defaultLocale: "ru",
     locales: ["ru", "en"],
@@ -82,6 +88,14 @@ const config: CloudeaConfig = {
         { href: "/blog", label: { ru: "Блог", en: "Blog" } },
         { href: "/docs", label: { ru: "Документация", en: "Docs" } },
         { href: "/about", label: { ru: "О проекте", en: "About" } },
+        {
+          label: { ru: "Другое", en: "More" },
+          items: [
+            { href: "/about", label: { ru: "О проекте", en: "About" } },
+            { href: "/blog/2025/05-17-n8n", label: "n8n Guide" },
+            { href: "https://example.com", label: "External", external: true },
+          ],
+        },
       ],
     },
 
@@ -102,6 +116,12 @@ const config: CloudeaConfig = {
           ],
         },
       ],
+    },
+
+    // Кнопка "Поддержать" в навбаре
+    donateLink: {
+      href: "https://t.me/tribute/app?startapp=dtnH",
+      label: { ru: "Поддержать", en: "Donate" },
     },
 
     socials: {

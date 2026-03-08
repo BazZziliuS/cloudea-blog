@@ -7,6 +7,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { RouteProgress } from "@/components/route-progress";
+import { Analytics } from "@/components/analytics";
 import { getConfig, seo } from "@/lib/config";
 import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
@@ -107,6 +108,7 @@ export default async function RootLayout({
           <ScrollToTop />
         </ThemeProvider>
         {bodyScripts.map(renderScript)}
+        <Analytics />
       </body>
     </html>
   );

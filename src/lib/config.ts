@@ -9,6 +9,18 @@ export interface LocalizedString {
 export interface NavLink {
   href: string;
   label: string | LocalizedString;
+  external?: boolean;
+}
+
+export interface NavDropdown {
+  label: string | LocalizedString;
+  items: NavLink[];
+}
+
+export type NavItem = NavLink | NavDropdown;
+
+export function isNavDropdown(item: NavItem): item is NavDropdown {
+  return "items" in item;
 }
 
 export interface FooterLinkGroup {
@@ -93,6 +105,14 @@ export interface CloudeaConfig {
     position?: "head" | "body";
   }>;
 
+  /** Analytics integrations */
+  analytics?: {
+    /** Google Analytics / gtag measurement ID (e.g. "G-XXXXXXXXXX") */
+    gtag?: string;
+    /** Yandex.Metrika counter ID (e.g. "12345678") */
+    yandexMetrika?: string;
+  };
+
   i18n: {
     defaultLocale: string;
     locales: string[];
@@ -109,7 +129,13 @@ export interface CloudeaConfig {
     navbar: {
       title: string;
       logo?: string;
-      links: NavLink[];
+      links: NavItem[];
+    };
+
+    /** Donate / support button in navbar */
+    donateLink?: {
+      href: string;
+      label?: string | LocalizedString;
     };
 
     footer: {
@@ -158,10 +184,36 @@ export function getConfig(): CloudeaConfig {
 }
 
 export function getNavLinks(locale: string) {
-  return userConfig.themeConfig.navbar.links.map((link) => ({
-    href: link.href,
-    label: resolveLocalizedString(link.label, locale),
-  }));
+  return userConfig.themeConfig.navbar.links.map((item) => {
+    if (isNavDropdown(item)) {
+      return {
+        type: "dropdown" as const,
+        label: resolveLocalizedString(item.label, locale),
+        items: item.items.map((link) => ({
+          href: link.href,
+          label: resolveLocalizedString(link.label, locale),
+          external: link.external,
+        })),
+      };
+    }
+    return {
+      type: "link" as const,
+      href: item.href,
+      label: resolveLocalizedString(item.label, locale),
+      external: item.external,
+    };
+  });
+}
+
+export function getDonateLink(locale: string) {
+  const donate = userConfig.themeConfig.donateLink;
+  if (!donate) return null;
+  return {
+    href: donate.href,
+    label: donate.label
+      ? resolveLocalizedString(donate.label, locale)
+      : locale === "ru" ? "Поддержать" : "Donate",
+  };
 }
 
 export function getFooterLinks(locale: string) {

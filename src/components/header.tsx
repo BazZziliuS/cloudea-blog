@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Menu, X, Github, LogOut } from "lucide-react";
+import { Sun, Moon, Menu, X, Github, LogOut, ChevronDown, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getConfig, getNavLinks } from "@/lib/config";
+import { getConfig, getNavLinks, getDonateLink } from "@/lib/config";
 import { SearchButton } from "@/components/search";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { createClient } from "@/lib/supabase/client";
@@ -27,9 +27,11 @@ interface HeaderProps {
 
 export function Header({ dict, locale }: HeaderProps) {
   const config = getConfig();
-  const navLinks = getNavLinks(locale);
+  const navItems = getNavLinks(locale);
+  const donateLink = getDonateLink(locale);
   const { setTheme, resolvedTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -66,15 +68,47 @@ export function Header({ dict, locale }: HeaderProps) {
           </Link>
 
           <nav className="hidden items-center gap-6 md:flex">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navItems.map((item, i) =>
+              item.type === "dropdown" ? (
+                <DropdownMenu
+                  key={i}
+                  open={openDropdown === i}
+                  onOpenChange={(open) => setOpenDropdown(open ? i : null)}
+                >
+                  <DropdownMenuTrigger
+                    className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    onMouseEnter={() => setOpenDropdown(i)}
+                  >
+                    {item.label}
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    onMouseLeave={() => setOpenDropdown(null)}
+                  >
+                    {item.items.map((sub) => (
+                      <DropdownMenuItem key={sub.href} asChild>
+                        <Link
+                          href={sub.href}
+                          {...(sub.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                        >
+                          {sub.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
           </nav>
         </div>
 
@@ -108,6 +142,20 @@ export function Header({ dict, locale }: HeaderProps) {
             >
               <Button variant="ghost" size="icon" aria-label="GitHub">
                 <Github className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
+
+          {donateLink && (
+            <Link
+              href={donateLink.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden md:inline-flex"
+            >
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Heart className="h-4 w-4 fill-current" />
+                {donateLink.label}
               </Button>
             </Link>
           )}
@@ -161,16 +209,36 @@ export function Header({ dict, locale }: HeaderProps) {
       {mobileMenuOpen && (
         <div className="border-t border-border md:hidden">
           <div className="mx-auto max-w-7xl space-y-3 px-4 py-4 sm:px-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navItems.map((item, i) =>
+              item.type === "dropdown" ? (
+                <div key={i} className="space-y-1">
+                  <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                    {item.label}
+                  </span>
+                  {item.items.map((sub) => (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      className="block pl-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={() => setMobileMenuOpen(false)}
+                      {...(sub.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    >
+                      {sub.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="block text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  onClick={() => setMobileMenuOpen(false)}
+                  {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
 
             <div className="flex items-center gap-2 pt-2">
               {mounted && (
@@ -191,6 +259,15 @@ export function Header({ dict, locale }: HeaderProps) {
                 </Link>
               )}
             </div>
+
+            {donateLink && (
+              <Link href={donateLink.href} target="_blank" rel="noopener noreferrer" className="block pt-2">
+                <Button variant="outline" size="sm" className="w-full gap-2">
+                  <Heart className="h-4 w-4 fill-current" />
+                  {donateLink.label}
+                </Button>
+              </Link>
+            )}
 
             {isSupabaseAuth && !user && (
               <Link href="/auth/login" className="block pt-2">
