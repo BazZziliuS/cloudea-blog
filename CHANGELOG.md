@@ -1,3 +1,12 @@
+# [1.3.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.2.0...v1.3.0) (2026-03-08)
+
+
+### Features
+
+* add error boundaries, security headers, share buttons, doc timestamps, md support ([35adf6c](https://github.com/BazZziliuS/cloudea-blog/commit/35adf6c8e6a6adf45e0a483bf2f0181f5193955d))
+* add navbar dropdowns, donate button, analytics, scrollbar, license ([21c6aae](https://github.com/BazZziliuS/cloudea-blog/commit/21c6aae815b51fe0467c6d7880fa77e616d069f9))
+* **theme:** add cyan/teal color theme and inline custom CSS loading ([cb7ba01](https://github.com/BazZziliuS/cloudea-blog/commit/cb7ba018bfb522c96affee4d5e620568e82da8b2))
+
 # [1.2.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.1.0...v1.2.0) (2026-03-08)
 
 
