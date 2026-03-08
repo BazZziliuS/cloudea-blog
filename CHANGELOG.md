@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.1.0...v1.2.0) (2026-03-08)
+
+
+### Features
+
+* add route loading skeletons, hide login for non-supabase auth, fix locale switcher ([1156216](https://github.com/BazZziliuS/cloudea-blog/commit/11562164de58304b3846db87976e1599093f8368))
+
 # [1.1.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.0.0...v1.1.0) (2026-03-07)
 
 
