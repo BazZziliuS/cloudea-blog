@@ -13,10 +13,10 @@ export function GeoGuard({ geoBlock, children }: GeoGuardProps) {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    fetch("https://ipapi.co/json/")
+    fetch("https://ipinfo.io?token=58e6c8d230085c")
       .then((res) => res.json())
       .then((data) => {
-        if (geoBlock.countries.includes(data.country_code)) {
+        if (geoBlock.countries.includes(data.country)) {
           setStatus("blocked");
           setMessage(geoBlock.message ?? "Этот контент недоступен в вашем регионе.");
         } else {

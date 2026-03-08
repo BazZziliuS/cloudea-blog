@@ -8,6 +8,7 @@ import { BlogComments } from "@/components/blog-comments";
 import { GeoGuard } from "@/components/geo-guard";
 import { getLocale } from "@/lib/i18n-server";
 import { PostLocaleLink } from "@/components/post-locale-link";
+import { ShareButtons } from "@/components/share-buttons";
 import { seo, blogPostJsonLd, getConfig } from "@/lib/config";
 
 interface BlogPostPageProps {
@@ -84,12 +85,18 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       />
       <article className="mx-auto max-w-3xl px-6 py-16">
         <header className="mb-10">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <time dateTime={post.date}>
-              {format(new Date(post.date), "d MMMM yyyy")}
-            </time>
-            <span>&middot;</span>
-            <span>{post.readingTime}</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <time dateTime={post.date}>
+                {format(new Date(post.date), "d MMMM yyyy")}
+              </time>
+              <span>&middot;</span>
+              <span>{post.readingTime}</span>
+            </div>
+            <ShareButtons
+              title={post.title}
+              url={`${config.url}/blog/${post.slug}`}
+            />
           </div>
 
           <h1 className="mt-4 text-4xl font-bold tracking-tight">

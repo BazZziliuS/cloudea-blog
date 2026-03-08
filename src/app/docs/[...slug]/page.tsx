@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getAllDocs, getDocBySlug } from "@/lib/content";
+import { format } from "date-fns";
+import { getDocBySlug, getAllDocs } from "@/lib/content";
 import { compileMDX } from "@/lib/mdx";
 import { TableOfContents } from "@/components/toc";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -90,18 +91,22 @@ export default async function DocPage({ params }: DocPageProps) {
             {content}
           </div>
 
-          {editUrl && (
-            <div className="mt-10 border-t border-border pt-4">
+          <div className="mt-10 border-t border-border pt-4 flex items-center justify-between text-sm text-muted-foreground">
+            <span>
+              {locale === "ru" ? "Обновлено" : "Updated"}{" "}
+              {format(new Date(doc.lastModified), "d MMM yyyy")}
+            </span>
+            {editUrl && (
               <Link
                 href={editUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="hover:text-foreground transition-colors"
               >
-                ✏️ Редактировать эту страницу на GitHub
+                ✏️ {locale === "ru" ? "Редактировать на GitHub" : "Edit on GitHub"}
               </Link>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         <div className="hidden xl:block w-56 shrink-0 py-10">

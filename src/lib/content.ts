@@ -30,6 +30,7 @@ export interface Doc {
   content: string;
   category: string;
   order: number;
+  lastModified: string;
 }
 
 export interface SidebarCategory {
@@ -58,6 +59,39 @@ const CONTENT_DIR = path.join(process.cwd(), "content");
 const BLOG_DIR = path.join(CONTENT_DIR, "blog");
 const DOCS_DIR = path.join(CONTENT_DIR, "docs");
 
+const CONTENT_EXTS = [".mdx", ".md"] as const;
+
+/** Check if a file exists with any supported extension, return the path or null */
+function findContentFile(basePath: string): string | null {
+  for (const ext of CONTENT_EXTS) {
+    const p = basePath + ext;
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+/** Check if a directory-style index file exists (index.mdx or index.md) */
+function findIndexFile(dir: string, prefix = "index"): string | null {
+  for (const ext of CONTENT_EXTS) {
+    const p = path.join(dir, `${prefix}${ext}`);
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+/** Check if a file has a supported content extension */
+function isContentFile(name: string): boolean {
+  return CONTENT_EXTS.some((ext) => name.endsWith(ext));
+}
+
+/** Strip content extension from filename */
+function stripContentExt(name: string): string {
+  for (const ext of CONTENT_EXTS) {
+    if (name.endsWith(ext)) return name.slice(0, -ext.length);
+  }
+  return name;
+}
+
 // ---- Blog ----
 
 function walkBlogDir(dir: string, prefix: string[] = []): string[][] {
@@ -68,9 +102,8 @@ function walkBlogDir(dir: string, prefix: string[] = []): string[][] {
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      // Check if directory contains index.mdx (directory-style post)
-      const indexPath = path.join(dir, entry.name, "index.mdx");
-      if (fs.existsSync(indexPath)) {
+      // Check if directory contains index.mdx or index.md (directory-style post)
+      if (findIndexFile(path.join(dir, entry.name))) {
         slugs.push([...prefix, entry.name]);
       } else {
         // Recurse into subdirectory (year folders, etc.)
@@ -78,10 +111,10 @@ function walkBlogDir(dir: string, prefix: string[] = []): string[][] {
           ...walkBlogDir(path.join(dir, entry.name), [...prefix, entry.name])
         );
       }
-    } else if (entry.name.endsWith(".mdx")) {
+    } else if (isContentFile(entry.name)) {
       // Skip locale variants (e.g., hello-world.en.mdx) — handled by getPostBySlug
-      if (/\.[a-z]{2}\.mdx$/.test(entry.name)) continue;
-      slugs.push([...prefix, entry.name.replace(/\.mdx$/, "")]);
+      if (/\.[a-z]{2}\.(mdx|md)$/.test(entry.name)) continue;
+      slugs.push([...prefix, stripContentExt(entry.name)]);
     }
   }
 
@@ -89,31 +122,40 @@ function walkBlogDir(dir: string, prefix: string[] = []): string[][] {
 }
 
 /**
- * Resolve the MDX file path for a post, with optional locale.
+ * Resolve the content file path for a post, with optional locale.
+ * Supports both .mdx and .md extensions.
  * Lookup order (directory-style):
- *   1. content/blog/.../slug/index.{locale}.mdx
- *   2. content/blog/.../slug/index.mdx
+ *   1. content/blog/.../slug/index.{locale}.{mdx,md}
+ *   2. content/blog/.../slug/index.{mdx,md}
  * Lookup order (file-style):
- *   1. content/blog/.../slug.{locale}.mdx
- *   2. content/blog/.../slug.mdx
+ *   1. content/blog/.../slug.{locale}.{mdx,md}
+ *   2. content/blog/.../slug.{mdx,md}
  */
 function resolvePostPath(slug: string, locale?: Locale): string {
   const parts = slug.split("/");
-
-  // Directory-style
   const dirBase = path.join(BLOG_DIR, ...parts);
-  if (locale) {
-    const localeIndex = path.join(dirBase, `index.${locale}.mdx`);
-    if (fs.existsSync(localeIndex)) return localeIndex;
-  }
-  const defaultIndex = path.join(dirBase, "index.mdx");
-  if (fs.existsSync(defaultIndex)) return defaultIndex;
 
-  // File-style
+  // Directory-style with locale
   if (locale) {
-    const localeFile = path.join(BLOG_DIR, ...parts.slice(0, -1), `${parts[parts.length - 1]}.${locale}.mdx`);
-    if (fs.existsSync(localeFile)) return localeFile;
+    const localeIndex = findIndexFile(dirBase, `index.${locale}`);
+    if (localeIndex) return localeIndex;
   }
+  // Directory-style default
+  const defaultIndex = findIndexFile(dirBase);
+  if (defaultIndex) return defaultIndex;
+
+  // File-style with locale
+  if (locale) {
+    const localeFile = findContentFile(
+      path.join(BLOG_DIR, ...parts.slice(0, -1), `${parts[parts.length - 1]}.${locale}`)
+    );
+    if (localeFile) return localeFile;
+  }
+  // File-style default
+  const defaultFile = findContentFile(path.join(BLOG_DIR, ...parts));
+  if (defaultFile) return defaultFile;
+
+  // Fallback (will throw on read)
   return path.join(BLOG_DIR, ...parts) + ".mdx";
 }
 
@@ -124,10 +166,10 @@ export function getPostLocales(slug: string): Locale[] {
 
   // Check directory-style
   const dirBase = path.join(BLOG_DIR, ...parts);
-  if (fs.existsSync(path.join(dirBase, "index.mdx"))) {
+  if (findIndexFile(dirBase)) {
     const files = fs.readdirSync(dirBase);
     for (const f of files) {
-      const match = f.match(/^index\.([a-z]{2})\.mdx$/);
+      const match = f.match(/^index\.([a-z]{2})\.(mdx|md)$/);
       if (match) locales.push(match[1] as Locale);
     }
     return locales;
@@ -139,7 +181,7 @@ export function getPostLocales(slug: string): Locale[] {
   if (fs.existsSync(dir)) {
     const files = fs.readdirSync(dir);
     for (const f of files) {
-      const match = f.match(new RegExp(`^${escapeRegex(baseName)}\\.([a-z]{2})\\.mdx$`));
+      const match = f.match(new RegExp(`^${escapeRegex(baseName)}\\.([a-z]{2})\\.(mdx|md)$`));
       if (match) locales.push(match[1] as Locale);
     }
   }
@@ -170,19 +212,17 @@ export function getPostBySlug(slug: string, locale?: Locale): Post {
   };
 }
 
-/** Check if a post uses directory format (has index.mdx with co-located assets) */
+/** Check if a post uses directory format (has index.mdx/md with co-located assets) */
 export function isDirectoryPost(slug: string): boolean {
   const parts = slug.split("/");
-  return fs.existsSync(path.join(BLOG_DIR, ...parts, "index.mdx"));
+  return findIndexFile(path.join(BLOG_DIR, ...parts)) !== null;
 }
 
 /** Get the filesystem directory for a directory-style post's assets */
 export function getPostAssetDir(slug: string): string | null {
   const parts = slug.split("/");
   const dir = path.join(BLOG_DIR, ...parts);
-  if (fs.existsSync(path.join(dir, "index.mdx"))) {
-    return dir;
-  }
+  if (findIndexFile(dir)) return dir;
   return null;
 }
 
@@ -264,18 +304,21 @@ export function getPostsByYear(year: number): Post[] {
 // ---- Docs ----
 
 export function getDocBySlug(slug: string[]): Doc {
-  // Try file-style first: docs/getting-started/introduction.mdx
-  const filePath = path.join(DOCS_DIR, ...slug) + ".mdx";
-  // Then directory-style: docs/getting-started/index.mdx
-  const indexPath = path.join(DOCS_DIR, ...slug, "index.mdx");
+  // Try file-style first: docs/getting-started/introduction.{mdx,md}
+  const filePath = findContentFile(path.join(DOCS_DIR, ...slug));
+  // Then directory-style: docs/getting-started/index.{mdx,md}
+  const indexFilePath = findIndexFile(path.join(DOCS_DIR, ...slug));
 
-  const actualPath = fs.existsSync(filePath) ? filePath : indexPath;
+  const actualPath = filePath ?? indexFilePath;
+  if (!actualPath) throw new Error(`Doc not found: ${slug.join("/")}`);
+
   const fileContents = fs.readFileSync(actualPath, "utf-8");
   const { data, content } = matter(fileContents);
+  const stats = fs.statSync(actualPath);
 
   // If this is a category index page (e.g. ["getting-started"] from index.mdx),
   // the category is the slug itself
-  const isIndexPage = fs.existsSync(path.join(DOCS_DIR, ...slug, "index.mdx"));
+  const isIndexPage = indexFilePath !== null && !filePath;
   const category = isIndexPage ? slug[0] : slug.length > 1 ? slug[0] : "general";
 
   return {
@@ -285,6 +328,7 @@ export function getDocBySlug(slug: string[]): Doc {
     content,
     category,
     order: data.order ?? 0,
+    lastModified: stats.mtime.toISOString(),
   };
 }
 
@@ -296,17 +340,16 @@ function walkDocsDir(dir: string, prefix: string[] = []): string[][] {
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      // Check for index.mdx (category page)
-      const indexPath = path.join(dir, entry.name, "index.mdx");
-      if (fs.existsSync(indexPath)) {
+      // Check for index.{mdx,md} (category page)
+      if (findIndexFile(path.join(dir, entry.name))) {
         slugs.push([...prefix, entry.name]);
       }
       slugs.push(...walkDocsDir(path.join(dir, entry.name), [...prefix, entry.name]));
-    } else if (entry.name === "index.mdx") {
+    } else if (/^index\.(mdx|md)$/.test(entry.name)) {
       // Already handled above as directory page
       continue;
-    } else if (entry.name.endsWith(".mdx")) {
-      slugs.push([...prefix, entry.name.replace(/\.mdx$/, "")]);
+    } else if (isContentFile(entry.name)) {
+      slugs.push([...prefix, stripContentExt(entry.name)]);
     }
   }
 
@@ -362,7 +405,8 @@ export interface CustomPage {
 }
 
 export function getCustomPage(slug: string[]): CustomPage {
-  const filePath = path.join(PAGES_DIR, ...slug) + ".mdx";
+  const filePath = findContentFile(path.join(PAGES_DIR, ...slug));
+  if (!filePath) throw new Error(`Page not found: ${slug.join("/")}`);
   const fileContents = fs.readFileSync(filePath, "utf-8");
   const { data, content } = matter(fileContents);
 
@@ -383,8 +427,8 @@ export function getAllCustomPages(): CustomPage[] {
     for (const entry of entries) {
       if (entry.isDirectory()) {
         slugs.push(...walk(path.join(dir, entry.name), [...prefix, entry.name]));
-      } else if (entry.name.endsWith(".mdx")) {
-        slugs.push([...prefix, entry.name.replace(/\.mdx$/, "")]);
+      } else if (isContentFile(entry.name)) {
+        slugs.push([...prefix, stripContentExt(entry.name)]);
       }
     }
     return slugs;
@@ -394,8 +438,7 @@ export function getAllCustomPages(): CustomPage[] {
 }
 
 export function customPageExists(slug: string[]): boolean {
-  const filePath = path.join(PAGES_DIR, ...slug) + ".mdx";
-  return fs.existsSync(filePath);
+  return findContentFile(path.join(PAGES_DIR, ...slug)) !== null;
 }
 
 // ---- Search index ----

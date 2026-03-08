@@ -76,10 +76,10 @@ export function useUserCountry() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch("https://ipapi.co/json/")
+    fetch("https://ipinfo.io?token=58e6c8d230085c")
       .then((res) => res.json())
       .then((data) => {
-        setCountry(data.country_code ?? null);
+        setCountry(data.country ?? null);
         setLoaded(true);
       })
       .catch(() => {
