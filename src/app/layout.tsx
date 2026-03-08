@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -29,7 +31,14 @@ const feedLinks = [
   { rel: "alternate", type: "application/feed+json", title: `${config.title} JSON Feed`, href: `${config.url}/feed.json` },
 ];
 
-const customCssLinks = (config.customCss ?? []).map((cssPath) => `/api/custom-css/${cssPath}`);
+const customCssInline = (config.customCss ?? []).map((cssPath) => {
+  const filePath = path.join(process.cwd(), cssPath);
+  try {
+    return fs.readFileSync(filePath, "utf-8");
+  } catch {
+    return "";
+  }
+}).filter(Boolean);
 
 const customScripts = (config.customScripts ?? []).map((script, i) => {
   const strategy = script.strategy ?? "afterInteractive";
@@ -78,8 +87,8 @@ export default async function RootLayout({
         {feedLinks.map((link) => (
           <link key={link.type} rel={link.rel} type={link.type} title={link.title} href={link.href} />
         ))}
-        {customCssLinks.map((href) => (
-          <link key={href} rel="stylesheet" href={href} />
+        {customCssInline.map((css, i) => (
+          <style key={`custom-css-${i}`} dangerouslySetInnerHTML={{ __html: css }} />
         ))}
         {headScripts.map(renderScript)}
       </head>

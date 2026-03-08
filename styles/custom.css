@@ -1,19 +1,69 @@
 /*
- * Пользовательские стили.
- * Этот файл подключается через cloudea.config.ts → customCss.
- *
- * Здесь можно переопределять CSS-переменные темы,
- * добавлять свои стили для компонентов и т.д.
- *
- * Примеры:
- *
- * :root {
- *   --primary: #6366f1;
- *   --primary-foreground: #ffffff;
- * }
- *
- * .prose h2 {
- *   border-bottom: 1px solid var(--border);
- *   padding-bottom: 0.5rem;
- * }
+ * Custom styles for Cloudea Blog
+ * Cyan/teal theme adapted from Docusaurus Vendure theme
  */
+
+/* ---- Light theme color overrides ---- */
+:root {
+  --primary: oklch(0.55 0.13 230);           /* hsl(196 100% 35%) — cyan */
+  --primary-foreground: oklch(1 0 0);         /* white text on primary */
+  --ring: oklch(0.55 0.13 230);
+  --sidebar-primary: oklch(0.55 0.13 230);
+  --sidebar-primary-foreground: oklch(1 0 0);
+}
+
+/* ---- Dark theme color overrides ---- */
+.dark {
+  --background: oklch(0.07 0.025 265);        /* #000212 — deep navy */
+  --card: oklch(0.12 0.02 265);               /* slightly lighter navy */
+  --popover: oklch(0.12 0.02 265);
+  --primary: oklch(0.65 0.14 230);            /* hsl(196 100% 45%) — lighter cyan */
+  --primary-foreground: oklch(0.07 0.025 265);
+  --secondary: oklch(0.18 0.02 265);
+  --muted: oklch(0.18 0.02 265);
+  --accent: oklch(0.18 0.02 265);
+  --border: oklch(0.22 0.02 265);
+  --input: oklch(0.22 0.02 265);
+  --ring: oklch(0.65 0.14 230);
+  --sidebar: oklch(0.1 0.02 265);
+  --sidebar-primary: oklch(0.65 0.14 230);
+  --sidebar-primary-foreground: oklch(0.07 0.025 265);
+  --sidebar-border: oklch(0.22 0.02 265);
+  --sidebar-accent: oklch(0.18 0.02 265);
+}
+
+/* ---- Dark mode radial glow effect ---- */
+.dark body {
+  background-image: radial-gradient(
+    ellipse 80% 50% at 50% -20%,
+    rgba(79, 208, 255, 0.15),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* ---- Prose images — rounded corners ---- */
+.prose img {
+  border-radius: 0.5rem;
+}
+
+/* ---- Code blocks — tab size ---- */
+pre[class*="language-"],
+pre code {
+  tab-size: 4;
+}
+
+/* ---- Mobile: smaller post titles ---- */
+@media screen and (max-width: 768px) {
+  article header h1 {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* ---- Desktop: slightly smaller post titles ---- */
+@media screen and (min-width: 769px) {
+  article header h1 {
+    font-size: 2rem !important;
+  }
+}
