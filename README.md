@@ -1,239 +1,188 @@
 # Cloudea Blog
 
-Платформа для блогов и документации, вдохновлённая Docusaurus. Построена на Next.js 16, Tailwind CSS v4 и shadcn/ui.
+A modern blog and documentation platform inspired by Docusaurus. Built with Next.js 16, Tailwind CSS v4, and shadcn/ui.
 
-## Возможности
+> **[Русская версия (README.ru.md)](./README.ru.md)**
 
-- **Блог** — MDX-посты с подсветкой кода (Shiki), тегами, архивом по годам, временем чтения
-- **Вложенные папки** — посты в `content/blog/2025/my-post/index.mdx` с картинками рядом
-- **Черновики** — `draft: true` в frontmatter скрывает пост из всех списков и фидов
-- **Документация** — многоуровневая структура с sidebar, TOC и breadcrumbs
-- **Кастомные страницы** — MDX-страницы из `content/pages/` (About, Projects и т.д.)
-- **Конфигурация** — один файл `cloudea.config.ts` в стиле Docusaurus
-- **Тёмная тема** — light/dark/system через next-themes
-- **i18n** — русский и английский язык (cookie-based)
-- **Поиск** — глобальный поиск Ctrl+K по блогу и документации
-- **Комментарии** — Giscus (GitHub Discussions) или Supabase
-- **Авторизация** — GitHub OAuth через Supabase
-- **SEO** — авто-метатеги, sitemap.xml, robots.txt, JSON-LD, OG-изображения
-- **Фиды** — RSS, Atom, JSON Feed
-- **Гео-блокировка** — блокировка постов по странам через frontmatter
-- **Связанные посты** — рекомендации по тегам внизу статьи
-- **Редактирование** — ссылка «Редактировать на GitHub» в постах и документации
-- **Кнопка Copy** — копирование код-блоков одним кликом
-- **Кнопка «Наверх»** — плавающая кнопка прокрутки
-- **Кастомная 404** — страница «Не найдено»
-- **Custom CSS/JS** — подключение своих стилей и скриптов через конфиг
-- **Semantic Release** — автоматическое версионирование и CHANGELOG
+## Features
 
-## Стек
+- **Blog** — MDX and Markdown posts with syntax highlighting (Shiki), tags, yearly archive, reading time
+- **Nested folders** — posts in `content/blog/2025/my-post/index.mdx` with co-located assets
+- **Drafts** — `draft: true` in frontmatter hides posts from all listings and feeds
+- **Documentation** — multi-level structure with sidebar, TOC, breadcrumbs, and last modified date
+- **Custom pages** — MDX pages from `content/pages/` (About, Projects, etc.)
+- **Configuration** — single `cloudea.config.ts` file, Docusaurus-style
+- **Dark theme** — light/dark/system via next-themes with customizable color scheme
+- **i18n** — multilingual posts (`slug.en.mdx` alongside `slug.mdx`)
+- **Search** — global search with Ctrl+K across blog and docs
+- **Comments** — Giscus (GitHub Discussions) or Supabase
+- **Auth** — GitHub OAuth via Supabase (login button hidden when provider is not Supabase)
+- **SEO** — auto meta tags, sitemap.xml, robots.txt, JSON-LD, OG images
+- **Feeds** — RSS, Atom, JSON Feed
+- **Geo-blocking** — restrict posts by country via frontmatter
+- **Share buttons** — Twitter/X, Telegram, copy link
+- **Related posts** — tag-based recommendations at the bottom of articles
+- **Copy button** — one-click code block copying
+- **Error boundaries** — per-section error handling (blog, docs)
+- **Security headers** — CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy
+- **Loading skeletons** — animated placeholders during navigation
+- **Custom CSS/JS** — attach custom styles and scripts via config
+- **Semantic Release** — automatic versioning and CHANGELOG
 
-| Технология | Назначение |
+## Tech Stack
+
+| Technology | Purpose |
 |---|---|
 | [Next.js 16](https://nextjs.org) | App Router, RSC, Turbopack |
-| [Tailwind CSS v4](https://tailwindcss.com) | Стили |
-| [shadcn/ui](https://ui.shadcn.com) | UI-компоненты |
-| [Supabase](https://supabase.com) | Авторизация, комментарии |
-| [next-mdx-remote](https://github.com/hashicorp/next-mdx-remote) | Рендеринг MDX |
-| [Shiki](https://shiki.style) | Подсветка кода |
-| [Giscus](https://giscus.app) | Комментарии через GitHub Discussions |
-| [semantic-release](https://semantic-release.gitbook.io) | Автоматические релизы |
+| [Tailwind CSS v4](https://tailwindcss.com) | Styling |
+| [shadcn/ui](https://ui.shadcn.com) | UI components |
+| [Supabase](https://supabase.com) | Auth, comments |
+| [next-mdx-remote](https://github.com/hashicorp/next-mdx-remote) | MDX/Markdown rendering |
+| [Shiki](https://shiki.style) | Syntax highlighting |
+| [Giscus](https://giscus.app) | GitHub Discussions comments |
+| [semantic-release](https://semantic-release.gitbook.io) | Automated releases |
 
-## Быстрый старт
+## Quick Start
 
 ```bash
-# Клонирование
 git clone https://github.com/BazZziliuS/cloudea-blog.git
 cd cloudea-blog
-
-# Установка зависимостей
 npm install
-
-# Запуск dev-сервера
 npm run dev
 ```
 
-Откройте [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000).
 
-## Конфигурация
+## Configuration
 
-Вся настройка — в файле `cloudea.config.ts`:
+All settings live in `cloudea.config.ts`:
 
 ```ts
 const config: CloudeaConfig = {
   title: "My Blog",
   url: "https://example.com",
   homepage: "landing",     // "landing" | "blog" | "docs" | "about"
-  // customCss: ["styles/custom.css"],
+  customCss: ["styles/custom.css"],
   // customScripts: [{ src: "scripts/analytics.js" }],
 
-  supabase: {
-    url: "https://xxx.supabase.co",
-    anonKey: "your-anon-key",
+  i18n: {
+    defaultLocale: "ru",
+    locales: ["ru", "en"],
   },
 
   comments: {
     provider: "giscus",    // "giscus" | "supabase" | "none"
     giscus: { repo: "...", repoId: "...", category: "...", categoryId: "...", mapping: "pathname" },
   },
-  // ... seo, themeConfig, i18n
 };
 ```
 
-## Настройка GitHub OAuth
+## Theming
 
-1. Создайте проект в [Supabase](https://supabase.com)
-2. В Dashboard: **Authentication > Providers > GitHub**
-3. Создайте OAuth App в [GitHub Developer Settings](https://github.com/settings/developers):
-   - **Homepage URL:** `http://localhost:3000`
-   - **Authorization callback URL:** `https://<project>.supabase.co/auth/v1/callback`
-4. Скопируйте Client ID и Client Secret в Supabase
-5. Укажите `url` и `anonKey` в `cloudea.config.ts` → `supabase`
+Override CSS variables in `styles/custom.css`:
 
-## Структура проекта
+```css
+:root {
+  --primary: oklch(0.55 0.13 230);           /* cyan */
+  --primary-foreground: oklch(1 0 0);
+}
+
+.dark {
+  --background: oklch(0.07 0.025 265);       /* deep navy */
+  --primary: oklch(0.65 0.14 230);           /* lighter cyan */
+}
+```
+
+Custom CSS is inlined via `<style>` in `<head>`, ensuring it overrides the base theme.
+
+## Project Structure
 
 ```
-cloudea.config.ts                  # Конфигурация платформы
+cloudea.config.ts                  # Platform configuration
+styles/
+  custom.css                       # Custom theme (CSS variables)
 content/
-  blog/                            # Блог-посты
-    2026/hello-world.mdx           # Обычный пост
-    2025/05-17-n8n/                # Пост-директория
-      index.mdx                    # Контент поста
-      screenshot.png               # Ассеты рядом с постом
-  docs/                            # Документация
+  blog/                            # Blog posts (.mdx or .md)
+    2026/hello-world.mdx           # File-style post
+    2026/hello-world.en.mdx        # Post translation
+    2025/05-17-n8n/                # Directory-style post
+      index.mdx                    # Post content
+      screenshot.png               # Co-located assets
+  docs/                            # Documentation
     getting-started/
+      index.mdx                    # Category index page
       introduction.mdx
       installation.mdx
     guides/
       writing-content.mdx
-  pages/                           # Кастомные страницы
+  pages/                           # Custom pages
     about.mdx                      # → /about
 src/
-  app/
-    page.tsx                       # Главная (или redirect)
-    layout.tsx                     # Корневой layout
-    not-found.tsx                  # Кастомная 404
-    blog/[...slug]/page.tsx        # Страница поста
-    docs/[...slug]/page.tsx        # Страница документа
-    [...page]/page.tsx             # Кастомные страницы
-    rss.xml/route.ts               # RSS фид
-    atom.xml/route.ts              # Atom фид
-    feed.json/route.ts             # JSON Feed
-  components/
-    ui/                            # shadcn/ui
-    header.tsx, footer.tsx         # Шапка, подвал
-    sidebar.tsx, toc.tsx           # Навигация docs
-    breadcrumbs.tsx                # Хлебные крошки
-    search.tsx                     # Ctrl+K поиск
-    post-grid.tsx, post-card.tsx   # Карточки постов
-    geo-guard.tsx                  # Гео-блокировка
-    scroll-to-top.tsx              # Кнопка «Наверх»
-  lib/
-    config.ts                      # Загрузка конфига, SEO утилиты
-    content.ts                     # Загрузка контента
-    mdx.ts                         # Компиляция MDX
-    feed.ts                        # Генерация фидов
-    i18n.ts, i18n-server.ts        # Интернационализация
-    supabase/                      # Supabase клиенты
-styles/
-  custom.css                       # Пример кастомных стилей
+  app/                             # Next.js App Router
+    layout.tsx                     # Root layout
+    error.tsx                      # Error boundary
+    not-found.tsx                  # Custom 404
+    blog/[...slug]/page.tsx        # Blog post page
+    docs/[...slug]/page.tsx        # Documentation page
+  components/                      # React components
+  lib/                             # Utilities (content, config, i18n)
 ```
 
-## Добавление контента
+## Adding Content
 
-### Блог-пост (файл)
+### Blog Post
 
 ```mdx
 ---
-title: "Заголовок"
-description: "Описание"
+title: "Post Title"
+description: "Short description"
 date: "2026-03-07"
 tags: ["tag1", "tag2"]
 draft: false
 ---
 
-Содержимое...
+Post content...
 ```
 
-### Блог-пост (директория с ассетами)
+Both `.mdx` (with JSX components) and `.md` (plain Markdown) formats are supported.
 
-```
-content/blog/2025/my-post/
-  index.mdx        # контент, ссылается на ./image.png
-  image.png         # картинка рядом
-```
+### Multilingual Posts
 
-### Гео-блокировка поста
+- `hello-world.mdx` — default language
+- `hello-world.en.mdx` — English version
+
+For directory-style posts: `index.mdx` + `index.en.mdx`.
+
+### Geo-blocking
 
 ```yaml
 geo_block:
   countries: ["RU", "DE"]
-  message: "Контент недоступен в вашем регионе."
+  message: "This content is not available in your region."
 ```
 
-### Документация
+### Documentation
 
 ```mdx
 ---
-title: "Заголовок"
-description: "Описание"
+title: "Page Title"
+description: "Description"
 order: 1
 ---
-
-Содержимое...
 ```
 
-### Кастомная страница
+Category is determined by the folder name. An `index.mdx` inside a folder creates a category index page.
 
-Файл `content/pages/about.mdx` → доступна по `/about`. Добавьте в навбар через конфиг.
+## Scripts
 
-## Semantic Release
-
-Проект использует [semantic-release](https://semantic-release.gitbook.io) для автоматического версионирования и генерации CHANGELOG.
-
-### Как это работает
-
-При пуше в `main` GitHub Actions автоматически:
-1. Анализирует коммиты по [Conventional Commits](https://www.conventionalcommits.org)
-2. Определяет тип релиза (patch/minor/major)
-3. Обновляет `CHANGELOG.md` и `package.json`
-4. Создаёт GitHub Release с release notes
-
-### Формат коммитов
-
-| Префикс | Тип релиза | Пример |
-|---|---|---|
-| `fix:` | Patch (1.0.x) | `fix: исправить прокрутку якорей` |
-| `feat:` | Minor (1.x.0) | `feat: добавить RSS фид` |
-| `feat!:` или `BREAKING CHANGE:` | Major (x.0.0) | `feat!: переделать конфиг` |
-| `chore:`, `docs:`, `style:` | Нет релиза | `docs: обновить README` |
-
-### Локальный запуск (dry run)
-
-```bash
-GITHUB_TOKEN=your_token npx semantic-release --dry-run
-```
-
-### Настройка
-
-Конфигурация в `.releaserc.json`. Плагины:
-- **commit-analyzer** — анализ коммитов
-- **release-notes-generator** — генерация заметок
-- **changelog** — обновление CHANGELOG.md
-- **npm** — обновление version в package.json (без публикации)
-- **git** — коммит изменённых файлов
-- **github** — создание GitHub Release
-
-## Скрипты
-
-| Команда | Описание |
+| Command | Description |
 |---|---|
-| `npm run dev` | Запуск dev-сервера (Turbopack) |
-| `npm run build` | Production-сборка |
-| `npm run start` | Запуск production-сервера |
-| `npm run lint` | Линтинг |
-| `npm run release` | Запуск semantic-release |
+| `npm run dev` | Start dev server (Turbopack) |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run lint` | Linting |
+| `npm run release` | Run semantic-release |
 
-## Лицензия
+## License
 
 MIT

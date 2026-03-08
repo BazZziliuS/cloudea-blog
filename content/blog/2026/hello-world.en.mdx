@@ -13,11 +13,12 @@ Cloudea Blog is a modern platform for blogging and technical documentation, buil
 
 ### Content
 
-- **MDX** — write articles in Markdown with React component support
+- **MDX & Markdown** — write articles in `.mdx` with React components or plain `.md`
 - **Nested folders** — organize posts by year: `content/blog/2026/my-post/index.mdx`
 - **Co-located assets** — store images in the post folder and reference via `./image.png`
 - **Drafts** — add `draft: true` in frontmatter to hide a post
 - **Custom pages** — create `content/pages/about.mdx` for the `/about` page
+- **Multilingual** — add `slug.en.mdx` for English version of a post
 
 ### Navigation & Search
 
@@ -26,12 +27,19 @@ Cloudea Blog is a modern platform for blogging and technical documentation, buil
 - **Archive** — browse posts by year
 - **Breadcrumbs** — breadcrumbs in documentation
 - **Related posts** — tag-based recommendations at the bottom of articles
+- **Share buttons** — share posts on Twitter/X and Telegram
 
 ### SEO & Feeds
 
 - Auto-generated sitemap.xml, robots.txt, and OG images
 - RSS, Atom, and JSON Feed
 - JSON-LD markup (WebSite, BlogPosting, TechArticle)
+
+### Theming
+
+- Dark and light mode with toggle
+- Customizable color scheme via `styles/custom.css`
+- Custom CSS and scripts support via config
 
 <Callout type="tip">
 This post is available in multiple languages! Use the language switcher above to switch between versions.
@@ -68,6 +76,7 @@ All platform settings are in one file `cloudea.config.ts`:
 const config: CloudeaConfig = {
   title: "My Blog",
   homepage: "landing", // or "blog", "docs", "about"
+  customCss: ["styles/custom.css"],
   comments: {
     provider: "giscus",
   },

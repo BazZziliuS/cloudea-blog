@@ -32,14 +32,15 @@ const config: CloudeaConfig = {
   title: "My Blog",
   url: "https://example.com",
   homepage: "landing",
+  customCss: ["styles/custom.css"],
 
-  supabase: {
-    url: "https://xxx.supabase.co",
-    anonKey: "your-anon-key",
+  i18n: {
+    defaultLocale: "ru",
+    locales: ["ru", "en"],
   },
 
   comments: {
-    provider: "giscus",
+    provider: "giscus",       // "giscus" | "supabase" | "none"
     giscus: {
       repo: "user/repo",
       repoId: "R_xxx",
@@ -51,7 +52,25 @@ const config: CloudeaConfig = {
 };
 ```
 
-## Настройка GitHub OAuth
+## Кастомная тема
+
+Переопределите цвета в `styles/custom.css`:
+
+```css
+:root {
+  --primary: oklch(0.55 0.13 230);
+  --primary-foreground: oklch(1 0 0);
+}
+
+.dark {
+  --background: oklch(0.07 0.025 265);
+  --primary: oklch(0.65 0.14 230);
+}
+```
+
+Файл подключается через массив `customCss` в конфиге.
+
+## Настройка GitHub OAuth (для Supabase-комментариев)
 
 1. Создайте проект в [Supabase](https://supabase.com)
 2. В Dashboard: **Authentication > Providers > GitHub**
@@ -59,6 +78,13 @@ const config: CloudeaConfig = {
    - **Homepage URL:** `http://localhost:3000`
    - **Callback URL:** `https://<project>.supabase.co/auth/v1/callback`
 4. Скопируйте Client ID и Client Secret в Supabase
+
+## Настройка Giscus (альтернатива)
+
+1. Установите [Giscus App](https://github.com/apps/giscus) на репозиторий
+2. Включите GitHub Discussions в настройках репозитория
+3. Получите параметры на [giscus.app](https://giscus.app)
+4. Укажите их в `cloudea.config.ts` → `comments.giscus`
 
 ## Сборка для продакшена
 
