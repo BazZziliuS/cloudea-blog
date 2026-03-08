@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.3.0...v1.4.0) (2026-03-08)
+
+
+### Features
+
+* **seo:** add og image generation for docs and custom pages ([def5cd4](https://github.com/BazZziliuS/cloudea-blog/commit/def5cd4b7efe7d12c722b2baf3cb16d5caa548b7))
+
 # [1.3.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.2.0...v1.3.0) (2026-03-08)
 
 
