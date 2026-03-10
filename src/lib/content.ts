@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import readingTime from "reading-time";
+import { z } from "zod";
 import { defaultLocale, type Locale } from "@/lib/i18n";
 
 // ---- Types ----
@@ -21,6 +22,8 @@ export interface Post {
   readingTime: string;
   draft?: boolean;
   geoBlock?: GeoBlock;
+  series?: string;
+  seriesOrder?: number;
 }
 
 export interface Doc {
@@ -51,6 +54,104 @@ export interface SearchItem {
   href: string;
   tags?: string[];
   category?: string;
+}
+
+export interface PaginatedPosts {
+  posts: Post[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+}
+
+export interface SeriesInfo {
+  name: string;
+  posts: { slug: string; title: string; order: number }[];
+}
+
+// ---- Frontmatter Validation Schemas ----
+
+const postFrontmatterSchema = z.object({
+  title: z.string().min(1, "Post title is required"),
+  description: z.string().optional().default(""),
+  date: z.string().min(1, "Post date is required").refine(
+    (val) => !isNaN(Date.parse(val)),
+    "Post date must be a valid date string"
+  ),
+  tags: z.array(z.string()).optional().default([]),
+  draft: z.boolean().optional().default(false),
+  geo_block: z.object({
+    countries: z.array(z.string()),
+    message: z.string().optional(),
+  }).optional(),
+  geoBlock: z.object({
+    countries: z.array(z.string()),
+    message: z.string().optional(),
+  }).optional(),
+  series: z.string().optional(),
+  seriesOrder: z.number().optional(),
+  series_order: z.number().optional(),
+});
+
+const docFrontmatterSchema = z.object({
+  title: z.string().min(1, "Doc title is required"),
+  description: z.string().optional().default(""),
+  order: z.number().optional().default(0),
+});
+
+export interface ContentWarning {
+  file: string;
+  message: string;
+}
+
+const contentWarnings: ContentWarning[] = [];
+
+export function getContentWarnings(): ContentWarning[] {
+  return [...contentWarnings];
+}
+
+function validatePostFrontmatter(data: Record<string, unknown>, filePath: string): z.infer<typeof postFrontmatterSchema> {
+  const result = postFrontmatterSchema.safeParse(data);
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      contentWarnings.push({
+        file: filePath,
+        message: `${issue.path.join(".")}: ${issue.message}`,
+      });
+    }
+    // Return with defaults for missing fields
+    return {
+      title: (data.title as string) ?? "",
+      description: (data.description as string) ?? "",
+      date: (data.date as string) ?? "",
+      tags: (data.tags as string[]) ?? [],
+      draft: (data.draft as boolean) ?? false,
+      geo_block: data.geo_block as { countries: string[]; message?: string } | undefined,
+      geoBlock: data.geoBlock as { countries: string[]; message?: string } | undefined,
+      series: data.series as string | undefined,
+      seriesOrder: data.seriesOrder as number | undefined,
+      series_order: data.series_order as number | undefined,
+    };
+  }
+  return result.data;
+}
+
+function validateDocFrontmatter(data: Record<string, unknown>, filePath: string): z.infer<typeof docFrontmatterSchema> {
+  const result = docFrontmatterSchema.safeParse(data);
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      contentWarnings.push({
+        file: filePath,
+        message: `${issue.path.join(".")}: ${issue.message}`,
+      });
+    }
+    return {
+      title: (data.title as string) ?? "",
+      description: (data.description as string) ?? "",
+      order: (data.order as number) ?? 0,
+    };
+  }
+  return result.data;
 }
 
 // ---- Helpers ----
@@ -198,17 +299,20 @@ export function getPostBySlug(slug: string, locale?: Locale): Post {
   const fileContents = fs.readFileSync(actualPath, "utf-8");
   const { data, content } = matter(fileContents);
   const stats = readingTime(content);
+  const validated = validatePostFrontmatter(data, actualPath);
 
   return {
     slug,
-    title: data.title ?? "",
-    description: data.description ?? "",
-    date: data.date ?? "",
-    tags: data.tags ?? [],
+    title: validated.title,
+    description: validated.description,
+    date: validated.date,
+    tags: validated.tags,
     content,
     readingTime: stats.text,
-    draft: data.draft ?? false,
-    geoBlock: data.geo_block ?? data.geoBlock ?? undefined,
+    draft: validated.draft,
+    geoBlock: validated.geo_block ?? validated.geoBlock ?? undefined,
+    series: validated.series,
+    seriesOrder: validated.seriesOrder ?? validated.series_order,
   };
 }
 
@@ -241,6 +345,17 @@ export function getAllPosts(includeDrafts = false): Post[] {
   );
 }
 
+/** Get paginated posts */
+export function getPaginatedPosts(page = 1, perPage = 12, includeDrafts = false): PaginatedPosts {
+  const allPosts = getAllPosts(includeDrafts);
+  const total = allPosts.length;
+  const totalPages = Math.ceil(total / perPage);
+  const start = (page - 1) * perPage;
+  const posts = allPosts.slice(start, start + perPage);
+
+  return { posts, total, page, perPage, totalPages };
+}
+
 /** Get related posts by shared tags (excluding the current post) */
 export function getRelatedPosts(slug: string, tags: string[], limit = 3): Post[] {
   const allPosts = getAllPosts();
@@ -254,6 +369,32 @@ export function getRelatedPosts(slug: string, tags: string[], limit = 3): Post[]
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((p) => p.post);
+}
+
+// ---- Series ----
+
+/** Get all posts in a series, sorted by seriesOrder */
+export function getSeriesPosts(seriesName: string): Post[] {
+  const allPosts = getAllPosts();
+  return allPosts
+    .filter((p) => p.series === seriesName)
+    .sort((a, b) => (a.seriesOrder ?? 0) - (b.seriesOrder ?? 0));
+}
+
+/** Get series info for a post (prev/next navigation) */
+export function getSeriesInfo(post: Post): SeriesInfo | null {
+  if (!post.series) return null;
+  const seriesPosts = getSeriesPosts(post.series);
+  if (seriesPosts.length < 2) return null;
+
+  return {
+    name: post.series,
+    posts: seriesPosts.map((p) => ({
+      slug: p.slug,
+      title: p.title,
+      order: p.seriesOrder ?? 0,
+    })),
+  };
 }
 
 // ---- Tags ----
@@ -315,6 +456,7 @@ export function getDocBySlug(slug: string[]): Doc {
   const fileContents = fs.readFileSync(actualPath, "utf-8");
   const { data, content } = matter(fileContents);
   const stats = fs.statSync(actualPath);
+  const validated = validateDocFrontmatter(data, actualPath);
 
   // If this is a category index page (e.g. ["getting-started"] from index.mdx),
   // the category is the slug itself
@@ -323,11 +465,11 @@ export function getDocBySlug(slug: string[]): Doc {
 
   return {
     slug,
-    title: data.title ?? "",
-    description: data.description ?? "",
+    title: validated.title,
+    description: validated.description,
     content,
     category,
-    order: data.order ?? 0,
+    order: validated.order,
     lastModified: stats.mtime.toISOString(),
   };
 }
@@ -359,6 +501,27 @@ function walkDocsDir(dir: string, prefix: string[] = []): string[][] {
 export function getAllDocs(): Doc[] {
   const slugs = walkDocsDir(DOCS_DIR);
   return slugs.map((slug) => getDocBySlug(slug));
+}
+
+/** Get root docs/index.mdx content, or null if not found */
+export function getDocsIndex(): Doc | null {
+  const indexPath = findIndexFile(DOCS_DIR);
+  if (!indexPath) return null;
+
+  const fileContents = fs.readFileSync(indexPath, "utf-8");
+  const { data, content } = matter(fileContents);
+  const stats = fs.statSync(indexPath);
+  const validated = validateDocFrontmatter(data, indexPath);
+
+  return {
+    slug: [],
+    title: validated.title,
+    description: validated.description,
+    content,
+    category: "__root__",
+    order: validated.order,
+    lastModified: stats.mtime.toISOString(),
+  };
 }
 
 export function getDocsSidebar(): SidebarCategory[] {
@@ -441,9 +604,18 @@ export function customPageExists(slug: string[]): boolean {
   return findContentFile(path.join(PAGES_DIR, ...slug)) !== null;
 }
 
-// ---- Search index ----
+// ---- Search index (cached) ----
+
+let cachedSearchIndex: SearchItem[] | null = null;
+let searchIndexTimestamp = 0;
+const SEARCH_CACHE_TTL = 60_000; // 1 minute
 
 export function getSearchIndex(): SearchItem[] {
+  const now = Date.now();
+  if (cachedSearchIndex && now - searchIndexTimestamp < SEARCH_CACHE_TTL) {
+    return cachedSearchIndex;
+  }
+
   const posts = getAllPosts();
   const docs = getAllDocs();
 
@@ -469,5 +641,7 @@ export function getSearchIndex(): SearchItem[] {
     });
   }
 
+  cachedSearchIndex = items;
+  searchIndexTimestamp = now;
   return items;
 }

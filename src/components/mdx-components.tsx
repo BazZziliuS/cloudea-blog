@@ -2,6 +2,7 @@
 
 import React, { useState, type ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -127,6 +128,32 @@ export const mdxComponents: Record<string, React.ComponentType<Record<string, un
   tr: (props) => (
     <tr className="even:bg-muted/50" {...props} />
   ),
+  img: (props) => {
+    const src = (props.src as string) ?? "";
+    const alt = (props.alt as string) ?? "";
+    // Shields.io badges — render as plain inline img
+    if (src.includes("shields.io")) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={src} alt={alt} />;
+    }
+    // Use next/image for content API images and external URLs
+    if (src.startsWith("/api/content/") || src.startsWith("http")) {
+      return (
+        <Image
+          src={src}
+          alt={alt}
+          width={800}
+          height={450}
+          className="rounded-lg"
+          sizes="(max-width: 768px) 100vw, 800px"
+          loading="lazy"
+        />
+      );
+    }
+    // Fallback for other images
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img className="rounded-lg" {...props} alt={alt} />;
+  },
   hr: (props) => <hr className="my-8 border-border" {...props} />,
   pre: Pre as React.ComponentType<Record<string, unknown>>,
   code: (props) => {

@@ -31,7 +31,6 @@ export function Header({ dict, locale }: HeaderProps) {
   const donateLink = getDonateLink(locale);
   const { setTheme, resolvedTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -70,34 +69,38 @@ export function Header({ dict, locale }: HeaderProps) {
           <nav className="hidden items-center gap-6 md:flex">
             {navItems.map((item, i) =>
               item.type === "dropdown" ? (
-                <DropdownMenu
-                  key={i}
-                  open={openDropdown === i}
-                  onOpenChange={(open) => setOpenDropdown(open ? i : null)}
-                >
-                  <DropdownMenuTrigger
-                    className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    onMouseEnter={() => setOpenDropdown(i)}
-                  >
-                    {item.label}
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    onMouseLeave={() => setOpenDropdown(null)}
-                  >
-                    {item.items.map((sub) => (
-                      <DropdownMenuItem key={sub.href} asChild>
+                <div key={i} className="group/nav relative">
+                  {item.href ? (
+                    <Link
+                      href={item.href}
+                      className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {item.label}
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </Link>
+                  ) : (
+                    <button
+                      className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {item.label}
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <div className="invisible absolute left-0 top-full pt-2 opacity-0 transition-all group-hover/nav:visible group-hover/nav:opacity-100">
+                    <div className="min-w-[10rem] rounded-md border border-border bg-popover p-1 shadow-md">
+                      {item.items.map((sub) => (
                         <Link
+                          key={sub.href}
                           href={sub.href}
+                          className="block rounded-sm px-3 py-2 text-sm text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                           {...(sub.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                         >
                           {sub.label}
                         </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <Link
                   key={item.href}

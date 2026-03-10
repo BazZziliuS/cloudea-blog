@@ -1,0 +1,59 @@
+---
+title: "Payok AIO"
+description: "Асинхронная Python библиотека для работы с платежной системой Payok"
+order: 9
+---
+
+# Payok AIO
+
+## Описание
+Асинхронная Python библиотека для работы с платежной системой Payok. Предоставляет удобный интерфейс для интеграции платежей в ваши проекты.
+
+## Ссылки
+- [PyPI пакет](https://pypi.org/project/payok-aio/)
+- [Документация Payok](https://payok.io/)
+
+## Технологический стек
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Aiohttp](https://img.shields.io/badge/Aiohttp-2C5BB4?style=for-the-badge&logo=python&logoColor=white)
+![Pydantic](https://img.shields.io/badge/Pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
+
+**Основные библиотеки:**
+- `aiohttp` - асинхронные HTTP запросы
+- `pydantic` - валидация данных и типизация
+
+## Основные функции
+- **Создание платежей** - генерация ссылок на оплату
+- **Webhook обработка** - получение уведомлений о платежах
+- **Проверка статуса** - отслеживание транзакций
+- **Вывод средств** - автоматизация выплат
+- **Безопасность** - верификация подписей
+- **Асинхронность** - высокая производительность
+
+## Установка
+```bash
+pip install payok-aio
+```
+
+## Пример использования
+```python
+from payok_aio import Payok
+
+# Инициализация клиента
+payok = Payok(
+    api_id="your_api_id",
+    api_key="your_api_key",
+    shop_id="your_shop_id",
+    secret_key="your_secret_key"
+)
+
+# Создание платежа
+payment = await payok.create_payment(
+    amount=100,
+    description="Оплата товара",
+    currency="RUB"
+)
+```
+
+## Контакты
+Связаться: [BazZziliuS](https://discord.com/users/347880706724069376)

@@ -1,15 +1,17 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import Link from "next/link";
-import { getAllPosts, getPostBySlug, getRelatedPosts, isDirectoryPost, getPostLocales } from "@/lib/content";
+import { getAllPosts, getPostBySlug, getRelatedPosts, isDirectoryPost, getPostLocales, getSeriesInfo } from "@/lib/content";
 import { compileMDX } from "@/lib/mdx";
 import { Badge } from "@/components/ui/badge";
 import { BlogComments } from "@/components/blog-comments";
 import { GeoGuard } from "@/components/geo-guard";
 import { getLocale } from "@/lib/i18n-server";
-import { PostLocaleLink } from "@/components/post-locale-link";
 import { ShareButtons } from "@/components/share-buttons";
 import { seo, blogPostJsonLd, getConfig } from "@/lib/config";
+import { cookies } from "next/headers";
+
+export const revalidate = 3600;
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string[] }>;
@@ -27,6 +29,7 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
     const post = getPostBySlug(joined);
     const config = getConfig();
     const ogUrl = `${config.url}/api/og?slug=${encodeURIComponent(post.slug)}`;
+    const postLocales = getPostLocales(joined);
     const meta = seo({
       title: post.title,
       description: post.description,
@@ -37,8 +40,21 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
         tags: post.tags,
       },
     });
+
+    // Build hreflang alternates
+    const languages: Record<string, string> = {};
+    languages[config.i18n.defaultLocale] = `${config.url}/blog/${post.slug}`;
+    for (const loc of postLocales) {
+      languages[loc] = `${config.url}/blog/${post.slug}`;
+    }
+    languages["x-default"] = `${config.url}/blog/${post.slug}`;
+
     return {
       ...meta,
+      alternates: {
+        ...meta.alternates,
+        languages,
+      },
       openGraph: {
         ...meta.openGraph,
         images: [{ url: ogUrl, width: 1200, height: 630 }],
@@ -58,6 +74,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const joined = slug.join("/");
 
   const locale = await getLocale();
+  const cookieStore = await cookies();
+  const isPreview = cookieStore.get("preview_mode")?.value === "true";
 
   let post;
   try {
@@ -66,16 +84,26 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
-  const postLocales = getPostLocales(joined);
+  // Block access to drafts unless in preview mode
+  if (post.draft && !isPreview) {
+    notFound();
+  }
+
   const content = await compileMDX(post.content, post.slug);
   const jsonLd = blogPostJsonLd(post);
   const config = getConfig();
   const relatedPosts = getRelatedPosts(post.slug, post.tags);
+  const seriesInfo = getSeriesInfo(post);
 
   // Edit on GitHub link
   const githubRepo = config.themeConfig.socials?.github;
   const editFileName = isDirectoryPost(post.slug) ? `${post.slug}/index.mdx` : `${post.slug}.mdx`;
   const editUrl = githubRepo ? `${githubRepo}/edit/main/content/blog/${editFileName}` : null;
+
+  // Series navigation
+  const currentSeriesIndex = seriesInfo?.posts.findIndex((p) => p.slug === post.slug) ?? -1;
+  const prevInSeries = seriesInfo && currentSeriesIndex > 0 ? seriesInfo.posts[currentSeriesIndex - 1] : null;
+  const nextInSeries = seriesInfo && currentSeriesIndex < seriesInfo.posts.length - 1 ? seriesInfo.posts[currentSeriesIndex + 1] : null;
 
   const article = (
     <>
@@ -84,6 +112,17 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <article className="mx-auto max-w-3xl px-6 py-16">
+        {post.draft && isPreview && (
+          <div className="mb-6 rounded-lg border border-yellow-500/50 bg-yellow-50 p-4 dark:bg-yellow-900/20">
+            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              {locale === "ru" ? "Это черновик. Он виден только в режиме предпросмотра." : "This is a draft. It is only visible in preview mode."}
+              {" "}
+              <a href="/api/preview/exit" className="underline">
+                {locale === "ru" ? "Выйти из превью" : "Exit preview"}
+              </a>
+            </p>
+          </div>
+        )}
         <header className="mb-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -117,24 +156,59 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             ))}
           </div>
 
-          {postLocales.length > 0 && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <span>🌐</span>
-              <PostLocaleLink
-                locale={config.i18n.defaultLocale as typeof locale}
-                currentLocale={locale}
-                label={locale === "ru" ? "Оригинал" : "Original"}
-              />
-              {postLocales.map((loc) => (
-                <PostLocaleLink key={loc} locale={loc} currentLocale={locale} />
-              ))}
-            </div>
-          )}
         </header>
+
+        {seriesInfo && (
+          <div className="mb-8 rounded-lg border border-border bg-accent/30 p-4">
+            <p className="text-sm font-semibold text-foreground">
+              {locale === "ru" ? "Серия" : "Series"}: {seriesInfo.name}
+            </p>
+            <ol className="mt-2 space-y-1 text-sm">
+              {seriesInfo.posts.map((sp, i) => (
+                <li key={sp.slug} className="flex items-center gap-2">
+                  <span className="shrink-0 text-muted-foreground">{i + 1}.</span>
+                  {sp.slug === post.slug ? (
+                    <span className="font-medium text-foreground">{sp.title}</span>
+                  ) : (
+                    <Link
+                      href={`/blog/${sp.slug}`}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {sp.title}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
 
         <div className="prose prose-neutral dark:prose-invert max-w-none">
           {content}
         </div>
+
+        {seriesInfo && (prevInSeries || nextInSeries) && (
+          <div className="mt-10 border-t border-border pt-6 flex items-center justify-between gap-4">
+            {prevInSeries ? (
+              <Link
+                href={`/blog/${prevInSeries.slug}`}
+                className="flex flex-col text-sm hover:text-foreground transition-colors text-muted-foreground"
+              >
+                <span className="text-xs">{locale === "ru" ? "← Предыдущая" : "← Previous"}</span>
+                <span className="font-medium">{prevInSeries.title}</span>
+              </Link>
+            ) : <div />}
+            {nextInSeries ? (
+              <Link
+                href={`/blog/${nextInSeries.slug}`}
+                className="flex flex-col items-end text-sm hover:text-foreground transition-colors text-muted-foreground"
+              >
+                <span className="text-xs">{locale === "ru" ? "Следующая →" : "Next →"}</span>
+                <span className="font-medium">{nextInSeries.title}</span>
+              </Link>
+            ) : <div />}
+          </div>
+        )}
 
         {editUrl && (
           <div className="mt-10 border-t border-border pt-4">
@@ -144,14 +218,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               rel="noopener noreferrer"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              ✏️ Редактировать эту страницу на GitHub
+              ✏️ {locale === "ru" ? "Редактировать эту страницу на GitHub" : "Edit this page on GitHub"}
             </Link>
           </div>
         )}
 
         {relatedPosts.length > 0 && (
           <div className="mt-10 border-t border-border pt-8">
-            <h3 className="text-lg font-semibold mb-4">Похожие статьи</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {locale === "ru" ? "Похожие статьи" : "Related posts"}
+            </h3>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {relatedPosts.map((rp) => (
                 <Link

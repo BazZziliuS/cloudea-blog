@@ -1,0 +1,115 @@
+---
+title: "Архитектура"
+description: "Технологический стек и структура проекта"
+order: 1
+---
+
+# Архитектура
+
+## Технологический стек
+
+| Технология | Назначение |
+|---|---|
+| [Next.js 16](https://nextjs.org) | App Router, RSC, Turbopack |
+| [React 19](https://react.dev) | UI-библиотека |
+| [Tailwind CSS v4](https://tailwindcss.com) | Стилизация |
+| [shadcn/ui](https://ui.shadcn.com) | UI-компоненты (Radix UI) |
+| [next-mdx-remote](https://github.com/hashicorp/next-mdx-remote) | Рендеринг MDX/Markdown |
+| [Shiki](https://shiki.style) | Подсветка синтаксиса |
+| [Supabase](https://supabase.com) | Авторизация (GitHub OAuth), комментарии |
+| [Giscus](https://giscus.app) | Комментарии через GitHub Discussions |
+| [Zod](https://zod.dev) | Валидация данных |
+| [Vitest](https://vitest.dev) | Unit-тесты |
+| [Playwright](https://playwright.dev) | E2E-тесты |
+| [semantic-release](https://semantic-release.gitbook.io) | Автоматическое версионирование |
+
+## Возможности платформы
+
+### Блог
+
+- Посты в MDX и Markdown с подсветкой кода, тегами, временем чтения
+- Вложенные папки по годам (`content/blog/2025/my-post/index.mdx`)
+- Ассеты (картинки, файлы) рядом с постом
+- Черновики (`draft: true`) с режимом превью
+- Серии постов (`series` + `seriesOrder`)
+- Гео-блокировка по странам
+- Связанные посты по тегам
+- Кнопки «Поделиться» (Twitter/X, Telegram, копирование ссылки)
+- Серверная пагинация
+
+### Документация
+
+- Sidebar с категориями и сортировкой по `order`
+- Индексные страницы категорий (`index.mdx`)
+- Оглавление (TOC) из заголовков
+- Breadcrumbs-навигация
+- Дата последнего обновления
+
+### Платформа
+
+- Конфигурация через `cloudea.config.ts`
+- Настраиваемая главная (лендинг, блог, доки, кастомная страница)
+- Тёмная/светлая тема с кастомизацией через CSS-переменные
+- i18n (мультиязычные посты, авто-определение языка)
+- Глобальный поиск `Ctrl+K` с кэшированием индекса
+- RSS, Atom, JSON Feed с полным содержимым постов
+- SEO: sitemap, robots.txt, OG-изображения, JSON-LD, hreflang
+- Rate limiting для API-роутов
+- Валидация входных данных через Zod
+- Error boundaries, Security headers (CSP, X-Frame-Options)
+- View Transitions для плавных переходов
+- Skip-to-content для accessibility
+
+## Структура проекта
+
+```
+cloudea.config.ts                  # Конфигурация платформы
+locales/
+  ru.json                          # Переводы (русский)
+  en.json                          # Переводы (английский)
+styles/
+  custom.css                       # Кастомная тема (CSS-переменные)
+content/
+  blog/                            # Блог-посты (.mdx или .md)
+    2026/hello-world.mdx           # Файл-пост
+    2026/hello-world.en.mdx        # Перевод поста
+    2025/05-17-n8n/                # Директория-пост
+      index.mdx                    # Контент
+      screenshot.png               # Ассеты
+  docs/                            # Документация
+    getting-started/
+      index.mdx                    # Индекс категории
+      introduction.mdx
+      installation.mdx
+    guides/
+      writing-content.mdx
+    project/                       # Документация проекта
+      index.mdx
+      architecture.mdx
+      ...
+  pages/                           # Кастомные страницы
+    about.mdx                      # → /about
+src/
+  app/                             # Next.js App Router
+    layout.tsx                     # Root layout
+    page.tsx                       # Главная страница
+    blog/[...slug]/page.tsx        # Страница поста
+    docs/[...slug]/page.tsx        # Страница документации
+    api/                           # API-роуты
+      search/route.ts              # Поиск (с rate limiting)
+      comments/route.ts            # Комментарии (с Zod)
+      preview/route.ts             # Превью черновиков
+      og/route.tsx                 # OG-изображения
+  components/                      # React-компоненты
+  lib/                             # Утилиты
+    content.ts                     # Загрузка и валидация контента
+    config.ts                      # Конфигурация и SEO
+    i18n.ts                        # Интернационализация
+    rate-limit.ts                  # Rate limiting
+    feed.ts                        # RSS/Atom/JSON Feed
+  proxy.ts                         # Proxy (middleware) — security headers, locale
+__tests__/                         # Unit-тесты (Vitest)
+e2e/                               # E2E-тесты (Playwright)
+scripts/
+  validate-content.ts              # Валидация frontmatter
+```

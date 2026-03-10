@@ -1,0 +1,78 @@
+---
+title: "SEO и фиды"
+description: "Метатеги, sitemap, RSS, OG-изображения, JSON-LD"
+order: 4
+---
+
+# SEO и фиды
+
+## Метатеги
+
+Каждая страница автоматически получает:
+
+- `<title>` по шаблону `titleTemplate` из конфига
+- `<meta name="description">`
+- Open Graph теги (`og:title`, `og:description`, `og:image`, `og:url`)
+- Twitter Card теги (`twitter:card`, `twitter:title`, `twitter:image`)
+- Canonical URL
+- Verification теги (Google, Яндекс)
+
+Для блог-постов добавляются `og:type=article`, `article:published_time`, `article:tag`.
+
+## hreflang
+
+Для постов с переводами автоматически генерируются `<link rel="alternate" hreflang="...">`, чтобы поисковики корректно индексировали языковые версии.
+
+## JSON-LD
+
+Структурированные данные генерируются автоматически:
+
+- **Главная**: `WebSite` schema с `publisher` (Organization)
+- **Блог-пост**: `BlogPosting` с `headline`, `datePublished`, `keywords`, `author`
+- **Документация**: `TechArticle` с `headline`, `description`, `author`
+
+## OG-изображения
+
+Динамическая генерация через `/api/og`:
+
+```
+/api/og?slug=2026/hello-world          # Блог-пост
+/api/og?type=doc&slug=getting-started   # Документация
+/api/og?type=page&slug=about            # Кастомная страница
+```
+
+Размер: 1200×630px, тёмная тема с радиальным градиентом.
+
+## Sitemap
+
+Автоматически генерируется `sitemap.xml` со всеми страницами:
+
+- Статические страницы (главная, блог, доки, теги, архив)
+- Все блог-посты
+- Все страницы документации
+- Все теги
+
+## robots.txt
+
+Генерируется из конфига:
+
+```ts
+seo: {
+  robots: {
+    index: true,
+    follow: true,
+  },
+},
+```
+
+## RSS, Atom, JSON Feed
+
+Три формата фидов с полным содержимым постов:
+
+| URL | Формат |
+|---|---|
+| `/rss.xml` | RSS 2.0 с `content:encoded` |
+| `/atom.xml` | Atom с `content type="html"` |
+| `/feed.json` | JSON Feed 1.1 с `content_html` |
+
+Фиды исключают черновики. Ссылки на фиды добавляются в `<head>` автоматически.

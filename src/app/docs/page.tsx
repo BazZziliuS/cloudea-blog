@@ -1,22 +1,60 @@
 import Link from "next/link";
-import { getDocsSidebar } from "@/lib/content";
+import { getDocsSidebar, getDocsIndex } from "@/lib/content";
+import { compileMDX } from "@/lib/mdx";
+import { getLocale } from "@/lib/i18n-server";
+import { getDictionary } from "@/lib/i18n";
+import { seo } from "@/lib/config";
 
-export const metadata = {
-  title: "Documentation - Cloudea",
-  description: "Guides and reference documentation",
-};
+export const revalidate = 3600;
 
-export default function DocsPage() {
+export async function generateMetadata() {
+  const docsIndex = getDocsIndex();
+  return seo({
+    title: docsIndex?.title ?? "Documentation",
+    description: docsIndex?.description,
+    path: "/docs",
+  });
+}
+
+export default async function DocsPage() {
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
+  const docsIndex = getDocsIndex();
+
+  // If there's a root index.mdx, render it
+  if (docsIndex) {
+    const content = await compileMDX(docsIndex.content);
+
+    return (
+      <div className="py-10">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">{docsIndex.title}</h1>
+          {docsIndex.description && (
+            <p className="mt-2 text-lg text-muted-foreground">
+              {docsIndex.description}
+            </p>
+          )}
+        </header>
+
+        <div className="prose prose-neutral dark:prose-invert max-w-none">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback: show category overview
   const sidebar = getDocsSidebar();
-
-  // If there are docs, we could redirect to the first one,
-  // but showing an overview is more user-friendly.
 
   return (
     <div className="py-10">
-      <h1 className="text-4xl font-bold tracking-tight">Documentation</h1>
+      <h1 className="text-4xl font-bold tracking-tight">
+        {dict.blog.docs ?? "Documentation"}
+      </h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        Explore guides, tutorials, and reference materials.
+        {locale === "ru"
+          ? "Документация, вики и заметки."
+          : "Guides, wiki and notes."}
       </p>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2">
@@ -30,7 +68,18 @@ export default function DocsPage() {
               key={category.name}
               className="rounded-lg border border-border p-6"
             >
-              <h2 className="text-xl font-semibold">{formattedName}</h2>
+              <h2 className="text-xl font-semibold">
+                {category.indexSlug ? (
+                  <Link
+                    href={`/docs/${category.indexSlug.join("/")}`}
+                    className="hover:text-primary transition-colors"
+                  >
+                    {formattedName}
+                  </Link>
+                ) : (
+                  formattedName
+                )}
+              </h2>
               <ul className="mt-4 space-y-2">
                 {category.docs.map((doc) => (
                   <li key={doc.slug.join("/")}>

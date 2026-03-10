@@ -30,13 +30,13 @@ export function PostCard({
   const isBlocked = geoBlock && userCountry !== null && geoBlock.countries.includes(userCountry);
 
   const card = (
-    <div className="relative overflow-hidden rounded-lg border border-border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-accent/50">
+    <div className="relative flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-accent/50">
       {isBlocked && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-sm">
           <p className="text-sm text-muted-foreground">⛔ {geoBlock.message ?? "Недоступно в вашем регионе"}</p>
         </div>
       )}
-      <article className={isBlocked ? "blur-sm select-none" : ""}>
+      <article className={`flex flex-1 flex-col ${isBlocked ? "blur-sm select-none" : ""}`}>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <time dateTime={date}>
             {format(new Date(date), "d MMM yyyy")}
@@ -47,7 +47,7 @@ export function PostCard({
         <h2 className="mt-3 text-xl font-semibold group-hover:text-primary transition-colors">
           {title}
         </h2>
-        <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+        <p className="mt-2 line-clamp-3 flex-1 text-sm text-muted-foreground">
           {description}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">

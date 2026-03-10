@@ -20,11 +20,16 @@ const inter = Inter({
 
 const config = getConfig();
 
-export const metadata = seo({
-  title: config.title,
-  description: config.seo.defaultDescription,
-  path: "/",
-});
+export const metadata = {
+  ...seo({
+    title: config.title,
+    description: config.seo.defaultDescription,
+    path: "/",
+  }),
+  icons: {
+    icon: "/icon.svg",
+  },
+};
 
 const feedLinks = [
   { rel: "alternate", type: "application/rss+xml", title: `${config.title} RSS`, href: `${config.url}/rss.xml` },
@@ -99,10 +104,16 @@ export default async function RootLayout({
           defaultTheme={config.themeConfig.colorMode.defaultMode}
           enableSystem={config.themeConfig.colorMode.respectPrefersColorScheme}
         >
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
+          >
+            {locale === "ru" ? "Перейти к содержимому" : "Skip to content"}
+          </a>
           <RouteProgress />
           <div className="flex min-h-screen flex-col">
             <Header dict={dict} locale={locale} />
-            <main className="flex-1">{children}</main>
+            <main id="main-content" className="flex-1">{children}</main>
             <Footer dict={dict} locale={locale} />
           </div>
           <ScrollToTop />

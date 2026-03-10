@@ -1,0 +1,206 @@
+---
+title: "Конфигурация"
+description: "Настройка cloudea.config.ts"
+order: 2
+---
+
+# Конфигурация
+
+Вся настройка платформы живёт в одном файле `cloudea.config.ts` в корне проекта.
+
+## Базовые параметры
+
+```ts
+const config: CloudeaConfig = {
+  title: "My Blog",
+  tagline: "Описание сайта",
+  url: "https://example.com",
+  favicon: "/favicon.ico",
+
+  // Главная страница:
+  // "landing" — лендинг (по умолчанию)
+  // "blog"    — редирект на блог
+  // "docs"    — редирект на документацию
+  // "about"   — кастомная страница из content/pages/about.mdx
+  homepage: "landing",
+};
+```
+
+## Интернационализация
+
+```ts
+i18n: {
+  defaultLocale: "ru",
+  locales: ["ru", "en"],
+},
+```
+
+Переводы UI хранятся в `locales/ru.json` и `locales/en.json`. Язык определяется автоматически через `Accept-Language` при первом визите.
+
+## SEO
+
+```ts
+seo: {
+  titleTemplate: "%s | My Blog",
+  defaultDescription: "Описание сайта",
+  keywords: ["blog", "docs"],
+
+  openGraph: {
+    type: "website",
+    siteName: "My Blog",
+    locale: "ru_RU",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    site: "@yourhandle",
+  },
+
+  verification: {
+    google: "your-code",
+    yandex: "your-code",
+  },
+
+  structuredData: {
+    organization: {
+      name: "My Org",
+      url: "https://example.com",
+      logo: "https://example.com/logo.png",
+    },
+  },
+
+  robots: { index: true, follow: true },
+},
+```
+
+## Тема и навигация
+
+```ts
+themeConfig: {
+  colorMode: {
+    defaultMode: "system",   // "light" | "dark" | "system"
+    respectPrefersColorScheme: true,
+  },
+
+  navbar: {
+    title: "My Blog",
+    logo: "/logo.png",       // опционально
+    links: [
+      { href: "/blog", label: { ru: "Блог", en: "Blog" } },
+      { href: "/docs", label: { ru: "Документация", en: "Docs" } },
+      {
+        label: { ru: "Другое", en: "More" },
+        items: [
+          { href: "/about", label: { ru: "О проекте", en: "About" } },
+          { href: "https://example.com", label: "External", external: true },
+        ],
+      },
+    ],
+  },
+
+  donateLink: {
+    href: "https://example.com/donate",
+    label: { ru: "Поддержать", en: "Donate" },
+  },
+
+  footer: {
+    copyright: "My Blog",
+    links: [
+      {
+        title: { ru: "Ресурсы", en: "Resources" },
+        items: [
+          { label: { ru: "Блог", en: "Blog" }, href: "/blog" },
+        ],
+      },
+    ],
+  },
+
+  socials: {
+    github: "https://github.com/user/repo",
+    twitter: "https://twitter.com/handle",
+    discord: "https://discord.gg/invite",
+  },
+},
+```
+
+## Комментарии
+
+### Giscus (GitHub Discussions)
+
+```ts
+comments: {
+  provider: "giscus",
+  giscus: {
+    repo: "user/repo",
+    repoId: "R_xxx",
+    category: "comments",
+    categoryId: "DIC_xxx",
+    mapping: "pathname",
+  },
+},
+```
+
+1. Установите [Giscus App](https://github.com/apps/giscus) на репозиторий
+2. Включите GitHub Discussions в настройках репозитория
+3. Получите параметры на [giscus.app](https://giscus.app)
+
+### Supabase
+
+```ts
+comments: {
+  provider: "supabase",
+},
+supabase: {
+  url: "https://xxx.supabase.co",
+  anonKey: "eyJ...",
+},
+```
+
+### Без комментариев
+
+```ts
+comments: {
+  provider: "none",
+},
+```
+
+## Кастомные стили
+
+```ts
+customCss: ["styles/custom.css"],
+```
+
+Переопределите CSS-переменные:
+
+```css
+:root {
+  --primary: oklch(0.55 0.13 230);
+  --primary-foreground: oklch(1 0 0);
+}
+
+.dark {
+  --background: oklch(0.07 0.025 265);
+  --primary: oklch(0.65 0.14 230);
+}
+```
+
+## Кастомные скрипты
+
+```ts
+customScripts: [
+  { src: "scripts/analytics.js" },                                    // Локальный файл
+  { src: "https://example.com/script.js", external: true },           // Внешний URL
+  { code: "console.log('Hello!')", strategy: "lazyOnload" },          // Инлайн-код
+],
+```
+
+Опции: `strategy` (`beforeInteractive` | `afterInteractive` | `lazyOnload`), `position` (`head` | `body`).
+
+## Аналитика
+
+```ts
+analytics: {
+  gtag: "G-XXXXXXXXXX",        // Google Analytics
+  yandexMetrika: "12345678",   // Яндекс.Метрика
+},
+```

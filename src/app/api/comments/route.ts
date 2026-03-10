@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
+
+const commentBodySchema = z.object({
+  slug: z.string().min(1).max(500),
+  content: z.string().min(1).max(5000).transform((v) => v.trim()),
+  parent_id: z.string().uuid().nullable().optional(),
+});
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -24,6 +32,15 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const { success } = rateLimit(`comments:post:${ip}`, { windowMs: 60_000, max: 10 });
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
+  }
+
   const supabase = await createClient();
 
   const {
@@ -34,18 +51,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const { slug, content, parent_id } = body;
-
-  if (!slug || !content?.trim()) {
-    return NextResponse.json({ error: "slug and content required" }, { status: 400 });
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+
+  const parsed = commentBodySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+
+  const { slug, content, parent_id } = parsed.data;
 
   const { data, error } = await supabase
     .from("comments")
     .insert({
       slug,
-      content: content.trim(),
+      content,
       user_id: user.id,
       user_name: user.user_metadata?.user_name || user.email || "Anonymous",
       user_avatar: user.user_metadata?.avatar_url || "",
@@ -62,6 +89,15 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const ip = getClientIp(request);
+  const { success } = rateLimit(`comments:delete:${ip}`, { windowMs: 60_000, max: 20 });
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
+  }
+
   const supabase = await createClient();
 
   const {

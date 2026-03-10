@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { SidebarCategory } from "@/lib/content";
@@ -33,7 +33,12 @@ function SidebarSection({
   category: SidebarCategory;
   pathname: string;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const isCategoryPath = pathname.startsWith(`/docs/${category.name}`);
+  const [isOpen, setIsOpen] = useState(isCategoryPath);
+
+  useEffect(() => {
+    if (isCategoryPath) setIsOpen(true);
+  }, [isCategoryPath]);
 
   const formattedName =
     category.name.charAt(0).toUpperCase() +

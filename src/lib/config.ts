@@ -14,6 +14,7 @@ export interface NavLink {
 
 export interface NavDropdown {
   label: string | LocalizedString;
+  href?: string;
   items: NavLink[];
 }
 
@@ -189,6 +190,7 @@ export function getNavLinks(locale: string) {
       return {
         type: "dropdown" as const,
         label: resolveLocalizedString(item.label, locale),
+        href: item.href,
         items: item.items.map((link) => ({
           href: link.href,
           label: resolveLocalizedString(link.label, locale),

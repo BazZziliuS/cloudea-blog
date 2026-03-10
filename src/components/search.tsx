@@ -16,11 +16,12 @@ export function SearchButton({ dict }: { dict: BlogDict }) {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setOpen(true);
+        e.stopPropagation();
+        setOpen((prev) => !prev);
       }
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
   }, []);
 
   return (
@@ -108,9 +109,17 @@ function SearchDialog({ dict, onClose }: { dict: BlogDict; onClose: () => void }
   };
 
   return (
-    <div className="fixed inset-0 z-[100]">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed left-1/2 top-[15%] w-full max-w-xl -translate-x-1/2 px-4">
+    <div
+      className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Search"
+      onClick={onClose}
+    >
+      <div
+        className="fixed left-1/2 top-[15%] w-full max-w-xl -translate-x-1/2 px-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="overflow-hidden rounded-xl border border-border bg-background shadow-2xl">
           <div className="flex items-center border-b border-border px-4">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -120,6 +129,10 @@ function SearchDialog({ dict, onClose }: { dict: BlogDict; onClose: () => void }
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={onKeyDown}
               placeholder={dict.searchPlaceholder}
+              aria-label={dict.searchPlaceholder}
+              role="combobox"
+              aria-expanded={results.length > 0}
+              aria-autocomplete="list"
               className="flex-1 bg-transparent px-3 py-3 text-sm outline-none placeholder:text-muted-foreground"
             />
             {query && (
@@ -143,7 +156,7 @@ function SearchDialog({ dict, onClose }: { dict: BlogDict; onClose: () => void }
             )}
 
             {!loading && results.length > 0 && (
-              <ul className="p-2">
+              <ul className="p-2" role="listbox">
                 {results.map((item, i) => (
                   <li key={item.href}>
                     <button

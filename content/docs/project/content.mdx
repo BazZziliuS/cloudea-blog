@@ -1,0 +1,181 @@
+---
+title: "Контент"
+description: "Блог-посты, документация, кастомные страницы"
+order: 3
+---
+
+# Контент
+
+Контент пишется в формате MDX (`.mdx`) или Markdown (`.md`).
+
+## Блог-посты
+
+### Файл-пост
+
+Создайте `content/blog/my-post.mdx`:
+
+```markdown
+---
+title: "Заголовок"
+description: "Описание"
+date: "2026-03-07"
+tags: ["tag1", "tag2"]
+draft: false
+---
+
+Содержимое поста...
+```
+
+### Директория-пост (с ассетами)
+
+Для постов с картинками создайте папку:
+
+```
+content/blog/2025/my-post/
+  index.mdx          # контент
+  screenshot.png      # ассеты
+  diagram.svg
+```
+
+В контенте ссылайтесь на ассеты относительными путями:
+
+```markdown
+![Скриншот](./screenshot.png)
+```
+
+Изображения автоматически оптимизируются через `next/image`.
+
+### Frontmatter
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `title` | string | Заголовок (обязательно) |
+| `description` | string | Краткое описание |
+| `date` | string | Дата публикации YYYY-MM-DD (обязательно) |
+| `tags` | string[] | Теги |
+| `draft` | boolean | Черновик — скрыт из списков (по умолчанию `false`) |
+| `series` | string | Название серии |
+| `seriesOrder` | number | Порядок в серии |
+| `geo_block` | object | Гео-блокировка |
+
+Frontmatter валидируется через Zod при загрузке. Ошибки выводятся при запуске `npx tsx scripts/validate-content.ts`.
+
+### Серии постов
+
+Объединяйте посты в серии:
+
+```yaml
+---
+title: "React с нуля — часть 1"
+series: "React с нуля"
+seriesOrder: 1
+---
+```
+
+```yaml
+---
+title: "React с нуля — часть 2"
+series: "React с нуля"
+seriesOrder: 2
+---
+```
+
+На странице поста появится оглавление серии и навигация «Предыдущая / Следующая».
+
+### Мультиязычные посты
+
+Создайте перевод, добавив файл с суффиксом локали:
+
+- `hello-world.mdx` — основной (ru)
+- `hello-world.en.mdx` — английская версия
+
+Для директория-постов:
+
+- `index.mdx` — основной
+- `index.en.mdx` — перевод
+
+### Гео-блокировка
+
+```yaml
+geo_block:
+  countries: ["RU", "DE"]
+  message: "Контент недоступен в вашем регионе."
+```
+
+Заблокированные посты отображаются с блюром в списках.
+
+### Превью черновиков
+
+Черновики (`draft: true`) скрыты из списков и недоступны по прямой ссылке. Для предпросмотра:
+
+```
+/api/preview?secret=YOUR_PREVIEW_SECRET&slug=2026/my-draft-post
+```
+
+Установите переменную окружения `PREVIEW_SECRET`. Для выхода из превью: `/api/preview/exit`.
+
+## Документация
+
+Создайте `content/docs/<категория>/my-doc.mdx`:
+
+```markdown
+---
+title: "Заголовок"
+description: "Описание"
+order: 1
+---
+
+Содержимое документа...
+```
+
+| Поле | Тип | Описание |
+|---|---|---|
+| `title` | string | Заголовок (обязательно) |
+| `description` | string | Описание |
+| `order` | number | Порядок в sidebar |
+
+### Индексные страницы категорий
+
+Создайте `index.mdx` в папке категории:
+
+```
+content/docs/getting-started/
+  index.mdx              # → /docs/getting-started
+  introduction.mdx       # → /docs/getting-started/introduction
+```
+
+## Кастомные страницы
+
+Файл `content/pages/about.mdx` → доступен по `/about`.
+
+```markdown
+---
+title: "About"
+description: "О проекте"
+---
+
+Содержимое страницы...
+```
+
+Добавьте ссылку в навбар через `cloudea.config.ts`. Чтобы сделать кастомную страницу главной: `homepage: "about"`.
+
+## Форматирование
+
+MDX поддерживает JSX-компоненты:
+
+```mdx
+<Callout type="info">Информационное сообщение</Callout>
+<Callout type="tip">Полезный совет</Callout>
+<Callout type="warning">Предупреждение</Callout>
+<Callout type="danger">Критически важная информация</Callout>
+```
+
+Блоки кода с подсветкой синтаксиса и кнопкой Copy:
+
+````markdown
+```tsx
+function Hello() {
+  return <h1>Hello!</h1>;
+}
+```
+````

@@ -1,0 +1,225 @@
+---
+title: "Как я настроил MTProxy для Telegram с доменом и поддержкой рекламы"
+description: "Полное руководство по настройке MTProxy на Linux-сервере для обхода блокировок Telegram. Подключение домена, TLS 1.3, NGINX, настройка рекламы канала через MTProxybot и генерация защищенных ссылок."
+date: "2025-06-11"
+tags: ["telegram", "proxy", "linux", "self-hosting"]
+geo_block:
+  countries: ["RU"]
+  message: "Этот контент недоступен в вашем регионе."
+---
+
+Telegram часто блокируют, особенно в некоторых странах. Но **MTProxy** — официальный способ обойти это ограничение и при этом получить дополнительные плюшки: например, можно рекламировать свой канал прямо в Telegram.
+
+В этом посте я расскажу, как настроить MTProxy на Linux-сервере, подключить к нему доменное имя и включить рекламу с помощью [@MTProxybot](https://t.me/MTProxybot). Всё просто, стабильно и работает без костылей.
+
+---
+
+## ⚡ Что такое MTProxy?
+
+**MTProxy** — это официальный Telegram-прокси, использующий протокол [MTProto](https://core.telegram.org/mtproto). Он шифрует трафик и позволяет подключаться к Telegram даже при блокировках.
+
+Если ты хочешь:
+
+- иметь собственный стабильный прокси для себя или проекта;
+- делиться красивой ссылкой вида `t.me/proxy?...`;
+- рекламировать Telegram-канал через Telegram;
+
+...то этот гайд для тебя.
+
+---
+
+## 🌐 Требования
+
+Перед установкой убедись, что:
+
+- у тебя есть **VPS с Linux** (Debian/Ubuntu);
+- открыт хотя бы один порт (например, `443`, `8888`, `8443` или `7776`);
+- если хочешь использовать **домен**, должен быть корректно настроен **TLS 1.3** (см. ниже);
+- у домена установлен A/AAAA-запись на IP твоего сервера.
+
+> ❗ **Важно:** MTProxy *не* поддерживает TLS 1.2 — только **TLS 1.3**. Убедись, что твой проксирующий сервер его поддерживает.
+
+---
+
+## 🛠️ Установка и сборка MTProxy
+
+### 1. Установка зависимостей
+
+```bash
+apt update && apt install -y git curl build-essential libssl-dev zlib1g-dev
+```
+
+### 2. Клонирование репозитория и сборка
+
+```bash
+cd /opt
+git clone https://github.com/GetPageSpeed/MTProxy
+cd MTProxy
+make && cd objs/bin
+```
+
+Если сборка не прошла:
+
+```bash
+make clean && make && cd objs/bin
+```
+
+---
+
+## 🔑 Получение ключей Telegram
+
+### 1. Секрет от Telegram
+
+```bash
+curl -s https://core.telegram.org/getProxySecret -o proxy-secret
+```
+
+### 2. Конфигурация серверов Telegram
+
+```bash
+curl -s https://core.telegram.org/getProxyConfig -o proxy-multi.conf
+```
+
+### 3. Генерация пользовательского ключа (user secret)
+
+```bash
+head -c 16 /dev/urandom | xxd -ps
+```
+
+> 💡 Этот ключ нужен для подключения пользователей к прокси и создания ссылки.
+
+---
+
+## 🧩 Настройка systemd-сервиса
+
+Создаём unit-файл:
+
+```bash
+nano /etc/systemd/system/MTProxy.service
+```
+
+Пример содержимого:
+
+```ini
+[Unit]
+Description=MTProxy
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/MTProxy
+ExecStart=/opt/MTProxy/objs/bin/mtproto-proxy -u nobody -p 8888 -H 7776 -S 57bb1a7508969a0bd205f054ae367106 --aes-pwd /opt/MTProxy/proxy-secret /opt/MTProxy/proxy-multi.conf -C 4000 -P <твой_рекламный_тег>
+Restart=on-failure
+User=nobody
+Group=nogroup
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Далее активируем:
+
+```bash
+systemctl daemon-reload
+systemctl enable --now MTProxy.service
+systemctl status MTProxy.service
+```
+
+---
+
+## 🔗 Ссылка на подключение
+
+Пример ссылки:
+
+```
+https://t.me/proxy?server=proxy.example.com&port=7776&secret=57bb1a7508969a0bd205f054ae367106
+```
+
+> 🧠 Для повышения устойчивости к блокировкам добавь `dd` перед ключом (`dd57bb1a...`) — включится **random padding**.
+
+---
+
+## 📣 Настройка рекламы канала
+
+Telegram позволяет отображать баннер с твоим каналом при подключении через MTProxy. Чтобы это активировать:
+
+1. Перейди в [@MTProxybot](https://t.me/MTProxybot);
+2. Нажми `Создать прокси`;
+3. Введи IP-адрес и порт прокси;
+4. Введи сгенерированный secret;
+5. Получи рекламный тег;
+6. Укажи его в параметре `-P` systemd-файла.
+
+Рекламный баннер будет показан пользователю при подключении к прокси — даже при первом входе.
+
+---
+
+## 🌐 Подключение через домен и TLS 1.3
+
+### Что нужно:
+
+* Доменное имя, настроенное на IP сервера;
+* TLS-сертификат (например, от Let's Encrypt);
+* Прокси-сервер (NGINX, Caddy) с поддержкой TLS 1.3;
+* Проксирование трафика **в TCP**, не в HTTP.
+
+### Пример конфигурации NGINX:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name proxy.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/proxy.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/proxy.example.com/privkey.pem;
+    ssl_protocols TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    location / {
+        proxy_pass http://127.0.0.1:8888;
+        proxy_protocol on;
+    }
+}
+```
+
+> ⚠️ Используй `stream {}` блоки для настоящей TCP-проксировки, если хочешь стабильную работу.
+
+---
+
+## ✅ Результат
+
+В итоге у тебя есть:
+
+* собственный, стабильный MTProxy;
+* красивая ссылка с доменом и шифрованием;
+* поддержка random padding (`dd...`);
+* интеграция с рекламой Telegram-канала;
+* и всё это бесплатно и под твоим контролем.
+
+---
+
+## 🙋 Частые вопросы
+
+### Можно ли использовать Cloudflare?
+
+Нет. MTProxy работает только с **реальным TCP-проксированием**. Cloudflare подходит только для HTTP/HTTPS.
+
+### MTProxy не работает, хотя всё настроено?
+
+* Проверь TLS 1.3 — это **частая причина**.
+* Убедись, что домен указывает на IP сервера.
+* Проверь логи `journalctl -u MTProxy`.
+
+---
+
+## 🔗 Полезные ссылки
+
+* [Документация Telegram о MTProxy](https://core.telegram.org/mtproto/mtproto-transports)
+* [@MTProxybot для генерации тегов](https://t.me/MTProxybot)
+* [Проект GetPageSpeed/MTProxy на GitHub](https://github.com/GetPageSpeed/MTProxy)
+
+---
+
+> Надеюсь, гайд оказался полезным. Если хочешь просто использовать мой прокси:
+> 👉 [Подключиться](https://t.me/proxy?server=swe1.cloudea.org&port=7776&secret=dd57bb1a7508969a0bd205f054ae367106)

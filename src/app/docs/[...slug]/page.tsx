@@ -9,6 +9,8 @@ import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
 import { seo, docJsonLd, getConfig } from "@/lib/config";
 
+export const revalidate = 3600;
+
 interface DocPageProps {
   params: Promise<{ slug: string[] }>;
 }

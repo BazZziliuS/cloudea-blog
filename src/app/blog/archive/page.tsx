@@ -6,6 +6,8 @@ import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
 import { seo } from "@/lib/config";
 
+export const revalidate = 3600;
+
 export const metadata = seo({
   title: "Archive",
   path: "/blog/archive",

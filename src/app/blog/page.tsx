@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { getAllPosts, getAllTags, getAllYears } from "@/lib/content";
+import { getAllPosts, getAllTags, getAllYears, getPaginatedPosts } from "@/lib/content";
 import { PostGrid } from "@/components/post-grid";
 import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
 import { seo } from "@/lib/config";
+
+export const revalidate = 3600;
 
 export const metadata = seo({
   title: "Blog",
@@ -11,12 +13,19 @@ export const metadata = seo({
   path: "/blog",
 });
 
-export default async function BlogPage() {
+interface BlogPageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function BlogPage({ searchParams }: BlogPageProps) {
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const t = dict.blog;
+  const params = await searchParams;
 
-  const posts = getAllPosts();
+  const currentPage = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
+  const perPage = 12;
+  const { posts, total, totalPages } = getPaginatedPosts(currentPage, perPage);
   const tags = getAllTags();
   const years = getAllYears();
 
@@ -32,17 +41,60 @@ export default async function BlogPage() {
           {posts.length === 0 ? (
             <p className="text-muted-foreground">{t.noPosts}</p>
           ) : (
-            <PostGrid
-              posts={posts.map((post) => ({
-                slug: post.slug,
-                title: post.title,
-                description: post.description,
-                date: post.date,
-                readingTime: post.readingTime,
-                tags: post.tags,
-                geoBlock: post.geoBlock,
-              }))}
-            />
+            <>
+              <PostGrid
+                posts={posts.map((post) => ({
+                  slug: post.slug,
+                  title: post.title,
+                  description: post.description,
+                  date: post.date,
+                  readingTime: post.readingTime,
+                  tags: post.tags,
+                  geoBlock: post.geoBlock,
+                }))}
+              />
+
+              {totalPages > 1 && (
+                <nav className="mt-10 flex items-center justify-center gap-2" aria-label="Pagination">
+                  {currentPage > 1 && (
+                    <Link
+                      href={currentPage === 2 ? "/blog" : `/blog?page=${currentPage - 1}`}
+                      className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:bg-accent"
+                    >
+                      {locale === "ru" ? "← Назад" : "← Prev"}
+                    </Link>
+                  )}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <Link
+                      key={p}
+                      href={p === 1 ? "/blog" : `/blog?page=${p}`}
+                      className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                        p === currentPage
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border hover:bg-accent"
+                      }`}
+                      aria-current={p === currentPage ? "page" : undefined}
+                    >
+                      {p}
+                    </Link>
+                  ))}
+                  {currentPage < totalPages && (
+                    <Link
+                      href={`/blog?page=${currentPage + 1}`}
+                      className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:bg-accent"
+                    >
+                      {locale === "ru" ? "Далее →" : "Next →"}
+                    </Link>
+                  )}
+                </nav>
+              )}
+
+              {total > perPage && (
+                <p className="mt-4 text-center text-xs text-muted-foreground">
+                  {posts.length} {t.ofTotal} {total}
+                </p>
+              )}
+            </>
           )}
         </div>
 
@@ -74,11 +126,11 @@ export default async function BlogPage() {
               </div>
             )}
 
-            {posts.length > 0 && (
+            {total > 0 && (
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-3">{t.recentPosts}</h3>
                 <ul className="space-y-1">
-                  {posts.slice(0, 5).map((post) => (
+                  {getAllPosts().slice(0, 5).map((post) => (
                     <li key={post.slug}>
                       <Link
                         href={`/blog/${post.slug}`}

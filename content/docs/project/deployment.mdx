@@ -1,0 +1,88 @@
+---
+title: "Деплой"
+description: "Сборка, продакшен, CI/CD"
+order: 6
+---
+
+# Деплой
+
+## Требования
+
+- **Node.js** 18.17+
+- **npm**, **pnpm** или **yarn**
+- **Git**
+
+## Установка
+
+```bash
+git clone https://github.com/BazZziliuS/cloudea-blog.git
+cd cloudea-blog
+npm install
+npm run dev
+```
+
+Приложение будет доступно на [http://localhost:3000](http://localhost:3000).
+
+## Сборка для продакшена
+
+```bash
+npm run build
+npm run start
+```
+
+## Скрипты
+
+| Команда | Описание |
+|---|---|
+| `npm run dev` | Dev-сервер (Turbopack) |
+| `npm run build` | Production-сборка |
+| `npm run start` | Запуск production-сервера |
+| `npm run lint` | Линтинг |
+| `npm run test` | Unit-тесты (Vitest) |
+| `npm run test:e2e` | E2E-тесты (Playwright) |
+| `npm run release` | Semantic Release |
+
+## Переменные окружения
+
+| Переменная | Описание |
+|---|---|
+| `PREVIEW_SECRET` | Секрет для превью черновиков (`/api/preview?secret=...`) |
+
+Supabase-ключи задаются в `cloudea.config.ts` (публичный `anonKey`).
+
+## CI/CD (Semantic Release)
+
+Проект использует [semantic-release](https://semantic-release.gitbook.io) для автоматического версионирования.
+
+Конфигурация в `.releaserc.json`:
+
+- Анализ коммитов (conventional commits)
+- Генерация CHANGELOG.md
+- Обновление package.json
+- Создание GitHub Release
+
+Workflow (`.github/workflows/release.yml`) запускается на каждый push в `main`.
+
+### Формат коммитов
+
+| Префикс | Результат |
+|---|---|
+| `feat:` | Minor-версия (1.x.0) |
+| `fix:` | Patch-версия (1.0.x) |
+| `feat!:` или `BREAKING CHANGE:` | Major-версия (x.0.0) |
+| `chore:`, `docs:`, `style:` | Без релиза |
+
+## Настройка GitHub OAuth
+
+Для Supabase-комментариев:
+
+1. Создайте проект в [Supabase](https://supabase.com)
+2. Dashboard → **Authentication → Providers → GitHub**
+3. Создайте OAuth App в [GitHub Developer Settings](https://github.com/settings/developers):
+   - **Homepage URL:** `http://localhost:3000`
+   - **Callback URL:** `https://<project>.supabase.co/auth/v1/callback`
+4. Скопируйте Client ID и Client Secret в Supabase
+
+## Возможные проблемы
+
+Если при установке возникают ошибки с нативными модулями, удалите `node_modules` и `package-lock.json`, затем выполните `npm install` заново.

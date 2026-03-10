@@ -11,7 +11,7 @@ const config: CloudeaConfig = {
   // "blog"    — редирект на блог
   // "docs"    — редирект на документацию
   // "about"   — кастомная страница из content/pages/about.mdx
-  homepage: "landing",
+  homepage: "blog",
 
   // Кастомные CSS-файлы (пути от корня проекта)
   // customCss: ["styles/custom.css"],
@@ -85,17 +85,28 @@ const config: CloudeaConfig = {
     navbar: {
       title: "Cloudea",
       links: [
-        { href: "/blog", label: { ru: "Блог", en: "Blog" } },
-        { href: "/docs", label: { ru: "Документация", en: "Docs" } },
-        { href: "/about", label: { ru: "О проекте", en: "About" } },
         {
-          label: { ru: "Другое", en: "More" },
+          label: { ru: "Блог", en: "Blog" },
+          href: "/blog",
           items: [
-            { href: "/about", label: { ru: "О проекте", en: "About" } },
-            { href: "/blog/2025/05-17-n8n", label: "n8n Guide" },
-            { href: "https://example.com", label: "External", external: true },
+            { href: "/blog", label: { ru: "Статьи", en: "Posts" } },
+            { href: "/blog/tags", label: { ru: "Теги", en: "Tags" } },
+            { href: "/blog/archive", label: { ru: "Архив", en: "Archive" } },
           ],
         },
+        {
+          label: { ru: "Вики", en: "Wiki" },
+          href: "/docs",
+          items: [
+            { href: "/docs/bots", label: { ru: "Боты", en: "Bots" } },
+            { href: "/docs/minecraft", label: "Minecraft" },
+            { href: "/docs/garrysmod", label: "Garry's Mod" },
+            { href: "/docs/javascript", label: "JavaScript" },
+            { href: "/docs/windows", label: "Windows" },
+          ],
+        },
+        { href: "/docs/project", label: { ru: "Документация", en: "Docs" } },
+        { href: "/about", label: { ru: "Обо мне", en: "About" } },
       ],
     },
 

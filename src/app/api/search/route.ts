@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
 import { getSearchIndex } from "@/lib/content";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
+  const ip = getClientIp(request);
+  const { success } = rateLimit(`search:${ip}`, { windowMs: 60_000, max: 60 });
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q")?.toLowerCase().trim();
 
