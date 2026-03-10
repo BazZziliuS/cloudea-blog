@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/BazZziliuS/cloudea-blog/compare/v1.10.0...v1.10.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* **i18n:** pass locale to blog post listing functions ([4f91971](https://github.com/BazZziliuS/cloudea-blog/commit/4f91971a2d5861ae77142aa71b34a71b9704f04a))
+
 # [1.10.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.9.1...v1.10.0) (2026-03-10)
 
 
