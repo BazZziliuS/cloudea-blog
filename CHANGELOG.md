@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/BazZziliuS/cloudea-blog/compare/v1.11.0...v1.11.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* **search:** render dialog via portal to cover full page ([938bd21](https://github.com/BazZziliuS/cloudea-blog/commit/938bd21d6a94da3bd09ac7f86aedd9832550cd64))
+
 # [1.11.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.10.1...v1.11.0) (2026-03-10)
 
 
