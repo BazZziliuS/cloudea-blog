@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { Sun, Moon, Menu, X, Github, LogOut, ChevronDown, Heart } from "lucide-react";
+import { getIcon } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -88,16 +89,20 @@ export function Header({ dict, locale }: HeaderProps) {
                   )}
                   <div className="invisible absolute left-0 top-full pt-2 opacity-0 translate-y-1 transition-all duration-200 ease-out group-hover/nav:visible group-hover/nav:opacity-100 group-hover/nav:translate-y-0">
                     <div className="min-w-[10rem] rounded-md border border-border bg-popover p-1 shadow-md">
-                      {item.items.map((sub) => (
-                        <Link
-                          key={sub.href}
-                          href={sub.href}
-                          className="block rounded-sm px-3 py-2 text-sm text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                          {...(sub.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                        >
-                          {sub.label}
-                        </Link>
-                      ))}
+                      {item.items.map((sub) => {
+                        const Icon = getIcon(sub.icon);
+                        return (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm text-popover-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                            {...(sub.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                          >
+                            {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+                            {sub.label}
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

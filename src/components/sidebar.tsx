@@ -196,10 +196,10 @@ function SidebarSection({
               isCategoryActive ? "text-primary" : "text-foreground hover:text-primary"
             )}
           >
-            {formatName(category.name)}
+            {category.title ?? formatName(category.name)}
           </Link>
         ) : (
-          <span className="text-foreground">{formatName(category.name)}</span>
+          <span className="text-foreground">{category.title ?? formatName(category.name)}</span>
         )}
         <button onClick={() => setIsOpen(!isOpen)} className="rounded-md p-0.5 hover:bg-muted hover:text-primary transition-colors">
           <ChevronIcon open={isOpen} />

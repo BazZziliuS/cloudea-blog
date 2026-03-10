@@ -9,6 +9,7 @@ export interface LocalizedString {
 export interface NavLink {
   href: string;
   label: string | LocalizedString;
+  icon?: string;
   external?: boolean;
 }
 
@@ -29,6 +30,7 @@ export interface FooterLinkGroup {
   items: Array<{
     label: string | LocalizedString;
     href: string;
+    icon?: string;
     external?: boolean;
   }>;
 }
@@ -194,6 +196,7 @@ export function getNavLinks(locale: string) {
         items: item.items.map((link) => ({
           href: link.href,
           label: resolveLocalizedString(link.label, locale),
+          icon: link.icon,
           external: link.external,
         })),
       };
@@ -224,6 +227,7 @@ export function getFooterLinks(locale: string) {
     items: group.items.map((item) => ({
       label: resolveLocalizedString(item.label, locale),
       href: item.href,
+      icon: item.icon,
       external: item.external,
     })),
   }));

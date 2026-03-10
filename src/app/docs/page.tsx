@@ -72,42 +72,41 @@ export default async function DocsPage() {
           : "Guides, wiki and notes."}
       </p>
 
-      <div className="mt-10 grid gap-6 sm:grid-cols-2">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sidebar.map((category) => {
-          const formattedName =
-            category.name.charAt(0).toUpperCase() +
-            category.name.slice(1).replace(/-/g, " ");
+          const displayName = category.title ?? category.name.charAt(0).toUpperCase() + category.name.slice(1).replace(/-/g, " ");
+          const totalDocs = category.docs.length +
+            category.subcategories.reduce((sum, sub) => sum + sub.docs.length, 0);
 
           return (
-            <div
+            <Link
               key={category.name}
-              className="rounded-lg border border-border p-6"
+              href={category.indexSlug ? `/docs/${category.indexSlug.join("/")}` : `/docs/${category.name}`}
+              className="group rounded-lg border border-border p-5 transition-colors hover:border-primary/50 hover:bg-muted/50"
             >
-              <h2 className="text-xl font-semibold">
-                {category.indexSlug ? (
-                  <Link
-                    href={`/docs/${category.indexSlug.join("/")}`}
-                    className="hover:text-primary transition-colors"
-                  >
-                    {formattedName}
-                  </Link>
-                ) : (
-                  formattedName
-                )}
-              </h2>
-              <ul className="mt-4 space-y-2">
-                {category.docs.map((doc) => (
-                  <li key={doc.slug.join("/")}>
-                    <Link
-                      href={`/docs/${doc.slug.join("/")}`}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              <div>
+                <h2 className="text-base font-semibold group-hover:text-primary transition-colors">
+                  {displayName}
+                </h2>
+                  <p className="text-xs text-muted-foreground">
+                    {totalDocs} {locale === "ru"
+                      ? (totalDocs === 1 ? "документ" : totalDocs < 5 ? "документа" : "документов")
+                      : (totalDocs === 1 ? "doc" : "docs")}
+                  </p>
+              </div>
+              {category.subcategories.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {category.subcategories.map((sub) => (
+                    <span
+                      key={sub.name}
+                      className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground"
                     >
-                      {doc.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                      {sub.title ?? sub.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </Link>
           );
         })}
       </div>

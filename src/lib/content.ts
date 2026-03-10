@@ -51,6 +51,7 @@ export interface SidebarSubcategory {
 
 export interface SidebarCategory {
   name: string;
+  title?: string;
   indexSlug?: string[];
   docs: SidebarDoc[];
   subcategories: SidebarSubcategory[];
@@ -554,6 +555,7 @@ export function getDocsSidebar(): SidebarCategory[] {
     const isIndex = doc.slug.length === 1 && doc.slug[0] === categoryName;
     if (isIndex) {
       cat.indexSlug = doc.slug;
+      cat.title = doc.title;
       continue;
     }
 

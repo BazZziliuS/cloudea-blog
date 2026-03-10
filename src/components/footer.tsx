@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Github } from "lucide-react";
+import { getIcon } from "@/lib/icons";
 import { getConfig, getFooterLinks } from "@/lib/config";
 import type { Dictionary, Locale } from "@/lib/i18n";
 
@@ -26,13 +27,19 @@ export function Footer({ dict, locale }: { dict: Dictionary; locale: Locale }) {
                 <ul className="mt-3 space-y-2">
                   {group.items.map((item) => (
                     <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                        {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                      >
-                        {item.label}
-                      </Link>
+                      {(() => {
+                        const Icon = getIcon(item.icon);
+                        return (
+                          <Link
+                            href={item.href}
+                            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                            {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                          >
+                            {Icon && <Icon className="h-3.5 w-3.5" />}
+                            {item.label}
+                          </Link>
+                        );
+                      })()}
                     </li>
                   ))}
                 </ul>
