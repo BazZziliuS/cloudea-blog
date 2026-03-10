@@ -9,7 +9,7 @@ A modern blog and documentation platform inspired by Docusaurus. Built with Next
 - **Blog** — MDX and Markdown posts with syntax highlighting (Shiki), tags, yearly archive, reading time
 - **Nested folders** — posts in `content/blog/2025/my-post/index.mdx` with co-located assets
 - **Drafts** — `draft: true` in frontmatter hides posts from all listings and feeds
-- **Documentation** — multi-level structure with sidebar, TOC, breadcrumbs, and last modified date
+- **Documentation** — multi-level structure with sidebar, subcategories, TOC, breadcrumbs, and last modified date
 - **Custom pages** — MDX pages from `content/pages/` (About, Projects, etc.)
 - **Configuration** — single `cloudea.config.ts` file, Docusaurus-style
 - **Dark theme** — light/dark/system via next-themes with customizable color scheme
@@ -19,7 +19,8 @@ A modern blog and documentation platform inspired by Docusaurus. Built with Next
 - **Auth** — GitHub OAuth via Supabase (login button hidden when provider is not Supabase)
 - **SEO** — auto meta tags, sitemap.xml, robots.txt, JSON-LD, OG images
 - **Feeds** — RSS, Atom, JSON Feed
-- **Geo-blocking** — restrict posts by country via frontmatter
+- **Analytics** — Google Analytics (gtag) and Yandex Metrika via config
+- **Geo-blocking** — restrict posts by country via frontmatter, or hide sections with `<GeoHide>` component
 - **Share buttons** — Twitter/X, Telegram, copy link
 - **Related posts** — tag-based recommendations at the bottom of articles
 - **Copy button** — one-click code block copying
@@ -64,6 +65,11 @@ const config: CloudeaConfig = {
   homepage: "landing",     // "landing" | "blog" | "docs" | "about"
   customCss: ["styles/custom.css"],
   // customScripts: [{ src: "scripts/analytics.js" }],
+
+  analytics: {
+    yandexMetrika: "101940986",   // Yandex Metrika
+    // gtag: "G-XXXXXXXXXX",      // Google Analytics
+  },
 
   i18n: {
     defaultLocale: "ru",
@@ -113,8 +119,14 @@ content/
       index.mdx                    # Category index page
       introduction.mdx
       installation.mdx
-    guides/
-      writing-content.mdx
+    bots/
+      index.mdx                    # Category index
+      orders/                      # Subcategory
+        index.mdx                  # Subcategory index
+        project-a.mdx
+      personal/
+        index.mdx
+        project-b.mdx
   pages/                           # Custom pages
     about.mdx                      # → /about
 src/
@@ -171,7 +183,23 @@ order: 1
 ---
 ```
 
-Category is determined by the folder name. An `index.mdx` inside a folder creates a category index page.
+Category is determined by the folder name. An `index.mdx` inside a folder creates a category index page. Nested folders create subcategories with collapsible sections in the sidebar.
+
+### Section Geo-blocking
+
+Use `<GeoHide>` in MDX to hide specific sections by country:
+
+```mdx
+<GeoHide countries={["RU"]}>
+
+## VPN Tools
+
+Content hidden for users in Russia...
+
+</GeoHide>
+```
+
+Blocked content is shown with a blur overlay and a message.
 
 ## Scripts
 

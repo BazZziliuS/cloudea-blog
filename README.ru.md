@@ -9,7 +9,7 @@
 - **Блог** — посты в MDX и Markdown с подсветкой кода (Shiki), тегами, архивом по годам, временем чтения
 - **Вложенные папки** — посты в `content/blog/2025/my-post/index.mdx` с картинками рядом
 - **Черновики** — `draft: true` в frontmatter скрывает пост из всех списков и фидов
-- **Документация** — многоуровневая структура с sidebar, TOC, breadcrumbs и датой обновления
+- **Документация** — многоуровневая структура с sidebar, подкатегориями, TOC, breadcrumbs и датой обновления
 - **Кастомные страницы** — MDX-страницы из `content/pages/` (About, Projects и т.д.)
 - **Конфигурация** — один файл `cloudea.config.ts` в стиле Docusaurus
 - **Тёмная тема** — light/dark/system через next-themes с кастомной цветовой схемой
@@ -19,7 +19,8 @@
 - **Авторизация** — GitHub OAuth через Supabase (кнопка скрывается если провайдер не Supabase)
 - **SEO** — авто-метатеги, sitemap.xml, robots.txt, JSON-LD, OG-изображения
 - **Фиды** — RSS, Atom, JSON Feed
-- **Гео-блокировка** — блокировка постов по странам через frontmatter
+- **Аналитика** — Google Analytics (gtag) и Яндекс.Метрика через конфиг
+- **Гео-блокировка** — блокировка постов по странам через frontmatter или скрытие секций компонентом `<GeoHide>`
 - **Кнопки «Поделиться»** — Twitter/X, Telegram, копирование ссылки
 - **Связанные посты** — рекомендации по тегам внизу статьи
 - **Кнопка Copy** — копирование код-блоков одним кликом
@@ -64,6 +65,11 @@ const config: CloudeaConfig = {
   homepage: "landing",     // "landing" | "blog" | "docs" | "about"
   customCss: ["styles/custom.css"],
   // customScripts: [{ src: "scripts/analytics.js" }],
+
+  analytics: {
+    yandexMetrika: "101940986",   // Яндекс.Метрика
+    // gtag: "G-XXXXXXXXXX",      // Google Analytics
+  },
 
   i18n: {
     defaultLocale: "ru",
@@ -113,8 +119,14 @@ content/
       index.mdx                    # Индекс категории
       introduction.mdx
       installation.mdx
-    guides/
-      writing-content.mdx
+    bots/
+      index.mdx                    # Индекс категории
+      orders/                      # Подкатегория
+        index.mdx                  # Индекс подкатегории
+        project-a.mdx
+      personal/
+        index.mdx
+        project-b.mdx
   pages/                           # Кастомные страницы
     about.mdx                      # → /about
 src/
@@ -171,7 +183,23 @@ order: 1
 ---
 ```
 
-Категория определяется именем папки. `index.mdx` в папке создаёт индексную страницу категории.
+Категория определяется именем папки. `index.mdx` в папке создаёт индексную страницу категории. Вложенные папки создают подкатегории со сворачиваемыми секциями в sidebar.
+
+### Гео-блокировка секций
+
+Используйте `<GeoHide>` в MDX для скрытия отдельных секций по стране:
+
+```mdx
+<GeoHide countries={["RU"]}>
+
+## VPN-инструменты
+
+Контент скрыт для пользователей из России...
+
+</GeoHide>
+```
+
+Заблокированный контент отображается с блюром и сообщением.
 
 ## Скрипты
 
