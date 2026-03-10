@@ -1,3 +1,16 @@
+# [1.11.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.10.1...v1.11.0) (2026-03-10)
+
+
+### Bug Fixes
+
+* **docs:** remove duplicate titles from index pages and restore sidebar nav ([f3ce463](https://github.com/BazZziliuS/cloudea-blog/commit/f3ce463462d8cc21f9a5cee4a41e143fb9ce8dbb))
+* **ui:** improve geo-hide, sidebar toggle, navbar alignment and reading time ([9bd5225](https://github.com/BazZziliuS/cloudea-blog/commit/9bd5225f7eb4c7af13666856f7184b29074681dc))
+
+
+### Features
+
+* **ui:** add decorative line after tags in post card ([fb3dbb3](https://github.com/BazZziliuS/cloudea-blog/commit/fb3dbb3195e0a8b89a2de2491478fa8bd814f11f))
+
 ## [1.10.1](https://github.com/BazZziliuS/cloudea-blog/compare/v1.10.0...v1.10.1) (2026-03-10)
 
 
