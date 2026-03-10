@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/BazZziliuS/cloudea-blog/compare/v1.9.0...v1.9.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* **docs:** update bot links to match subcategory paths ([a4efaf5](https://github.com/BazZziliuS/cloudea-blog/commit/a4efaf53ea4854dbeebd6c04eaec71728f6ff697))
+
 # [1.9.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.8.0...v1.9.0) (2026-03-10)
 
 
