@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.8.0...v1.9.0) (2026-03-10)
+
+
+### Features
+
+* **ui:** add smooth animations and enable yandex metrika ([a0eea75](https://github.com/BazZziliuS/cloudea-blog/commit/a0eea75a9302fee944bf3ddb3b960af944da6072))
+
 # [1.8.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.7.0...v1.8.0) (2026-03-10)
 
 
