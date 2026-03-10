@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.9.1...v1.10.0) (2026-03-10)
+
+
+### Features
+
+* **ui:** add config-driven icons and emoji category titles ([2706db7](https://github.com/BazZziliuS/cloudea-blog/commit/2706db7ee7f0c096df0c5349359726e62adc408d))
+
 ## [1.9.1](https://github.com/BazZziliuS/cloudea-blog/compare/v1.9.0...v1.9.1) (2026-03-10)
 
 
