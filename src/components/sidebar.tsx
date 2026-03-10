@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { SidebarCategory, SidebarSubcategory } from "@/lib/content";
@@ -47,7 +47,7 @@ function formatName(name: string): string {
 function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
-      className={cn("h-4 w-4 transition-transform", open && "rotate-90")}
+      className={cn("h-4 w-4 transition-transform duration-200", open && "rotate-90")}
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -55,6 +55,42 @@ function ChevronIcon({ open }: { open: boolean }) {
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
     </svg>
+  );
+}
+
+function CollapsibleContent({ open, children }: { open: boolean; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(open ? undefined : 0);
+  const firstRender = useRef(true);
+
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      setHeight(open ? undefined : 0);
+      return;
+    }
+    if (open) {
+      const h = ref.current?.scrollHeight ?? 0;
+      setHeight(h);
+      const timer = setTimeout(() => setHeight(undefined), 200);
+      return () => clearTimeout(timer);
+    } else {
+      const h = ref.current?.scrollHeight ?? 0;
+      setHeight(h);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setHeight(0));
+      });
+    }
+  }, [open]);
+
+  return (
+    <div
+      ref={ref}
+      className="overflow-hidden transition-[height] duration-200 ease-out"
+      style={{ height: height !== undefined ? `${height}px` : "auto" }}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -115,17 +151,17 @@ function SidebarSubcategorySection({
         ) : (
           <span className="text-foreground">{displayName}</span>
         )}
-        <button onClick={() => setIsOpen(!isOpen)} className="hover:text-primary transition-colors">
+        <button onClick={() => setIsOpen(!isOpen)} className="rounded-md p-0.5 hover:bg-muted hover:text-primary transition-colors">
           <ChevronIcon open={isOpen} />
         </button>
       </div>
-      {isOpen && (
+      <CollapsibleContent open={isOpen}>
         <ul className="mt-1 space-y-1 pl-3">
           {sub.docs.map((doc) => (
             <DocLink key={doc.slug.join("/")} slug={doc.slug} title={doc.title} pathname={pathname} />
           ))}
         </ul>
-      )}
+      </CollapsibleContent>
     </li>
   );
 }
@@ -165,11 +201,11 @@ function SidebarSection({
         ) : (
           <span className="text-foreground">{formatName(category.name)}</span>
         )}
-        <button onClick={() => setIsOpen(!isOpen)} className="hover:text-primary transition-colors">
+        <button onClick={() => setIsOpen(!isOpen)} className="rounded-md p-0.5 hover:bg-muted hover:text-primary transition-colors">
           <ChevronIcon open={isOpen} />
         </button>
       </div>
-      {isOpen && (
+      <CollapsibleContent open={isOpen}>
         <ul className="mt-1 space-y-1 pl-3">
           {category.docs.map((doc) => (
             <DocLink key={doc.slug.join("/")} slug={doc.slug} title={doc.title} pathname={pathname} />
@@ -183,7 +219,7 @@ function SidebarSection({
             />
           ))}
         </ul>
-      )}
+      </CollapsibleContent>
     </div>
   );
 }

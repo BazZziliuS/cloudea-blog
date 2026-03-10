@@ -24,10 +24,9 @@ const config: CloudeaConfig = {
   // ],
 
   // Аналитика
-  // analytics: {
-  //   gtag: "G-XXXXXXXXXX",          // Google Analytics
-  //   yandexMetrika: "12345678",      // Яндекс.Метрика
-  // },
+  analytics: {
+    yandexMetrika: "101940986",
+  },
 
   i18n: {
     defaultLocale: "ru",

@@ -76,17 +76,17 @@ export function Header({ dict, locale }: HeaderProps) {
                       className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {item.label}
-                      <ChevronDown className="h-3.5 w-3.5" />
+                      <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-hover/nav:rotate-180" />
                     </Link>
                   ) : (
                     <button
                       className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {item.label}
-                      <ChevronDown className="h-3.5 w-3.5" />
+                      <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-hover/nav:rotate-180" />
                     </button>
                   )}
-                  <div className="invisible absolute left-0 top-full pt-2 opacity-0 transition-all group-hover/nav:visible group-hover/nav:opacity-100">
+                  <div className="invisible absolute left-0 top-full pt-2 opacity-0 translate-y-1 transition-all duration-200 ease-out group-hover/nav:visible group-hover/nav:opacity-100 group-hover/nav:translate-y-0">
                     <div className="min-w-[10rem] rounded-md border border-border bg-popover p-1 shadow-md">
                       {item.items.map((sub) => (
                         <Link
