@@ -8,13 +8,27 @@ import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   categories: SidebarCategory[];
+  indexTitle?: string;
 }
 
-export function Sidebar({ categories }: SidebarProps) {
+export function Sidebar({ categories, indexTitle }: SidebarProps) {
   const pathname = usePathname();
 
   return (
     <nav className="space-y-4 py-4">
+      {indexTitle && (
+        <Link
+          href="/docs"
+          className={cn(
+            "block px-3 py-2 text-sm font-semibold transition-colors",
+            pathname === "/docs"
+              ? "text-primary"
+              : "text-foreground hover:text-primary"
+          )}
+        >
+          {indexTitle}
+        </Link>
+      )}
       {categories.map((category) => (
         <SidebarSection
           key={category.name}

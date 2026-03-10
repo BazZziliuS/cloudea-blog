@@ -1,4 +1,4 @@
-import { getDocsSidebar } from "@/lib/content";
+import { getDocsSidebar, getDocsIndex } from "@/lib/content";
 import { Sidebar } from "@/components/sidebar";
 
 export default function DocsLayout({
@@ -7,13 +7,14 @@ export default function DocsLayout({
   children: React.ReactNode;
 }) {
   const sidebar = getDocsSidebar();
+  const docsIndex = getDocsIndex();
 
   return (
     <div className="mx-auto flex max-w-7xl px-6">
       {/* Sidebar */}
       <aside className="hidden md:block w-[280px] shrink-0 border-r border-border pr-6">
         <div className="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto">
-          <Sidebar categories={sidebar} />
+          <Sidebar categories={sidebar} indexTitle={docsIndex?.title} />
         </div>
       </aside>
 

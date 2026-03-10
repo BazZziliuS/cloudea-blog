@@ -3,7 +3,7 @@ import type { CloudeaConfig } from "./src/lib/config";
 const config: CloudeaConfig = {
   title: "Cloudea Blog",
   tagline: "Платформа для блогов и документации",
-  url: "https://cloudea-blog.vercel.app/",
+  url: "https://blog.cloudea.org/",
   favicon: "/favicon.ico",
 
   // Главная страница:
@@ -64,8 +64,8 @@ const config: CloudeaConfig = {
       // Организация / автор для schema.org
       organization: {
         name: "Cloudea",
-        url: "https://cloudea-blog.vercel.app/",
-        logo: "https://cloudea-blog.vercel.app/logo.png",
+        url: "https://blog.cloudea.org/",
+        logo: "https://blog.cloudea.org/logo.png",
       },
     },
 
@@ -106,7 +106,6 @@ const config: CloudeaConfig = {
           ],
         },
         { href: "/docs/project", label: { ru: "Документация", en: "Docs" } },
-        { href: "/about", label: { ru: "Обо мне", en: "About" } },
       ],
     },
 
@@ -118,6 +117,7 @@ const config: CloudeaConfig = {
           items: [
             { label: { ru: "Блог", en: "Blog" }, href: "/blog" },
             { label: { ru: "Документация", en: "Docs" }, href: "/docs" },
+            { label: { ru: "Обо мне", en: "About" }, href: "/about" },
           ],
         },
         {
