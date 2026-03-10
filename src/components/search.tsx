@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Search, FileText, BookOpen, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,7 +46,10 @@ export function SearchButton({ dict }: { dict: BlogDict }) {
         <Search className="h-5 w-5" />
       </button>
 
-      {open && <SearchDialog dict={dict} onClose={() => setOpen(false)} />}
+      {open && createPortal(
+        <SearchDialog dict={dict} onClose={() => setOpen(false)} />,
+        document.body
+      )}
     </>
   );
 }
