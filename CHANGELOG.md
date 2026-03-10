@@ -1,3 +1,11 @@
+# [1.8.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.7.0...v1.8.0) (2026-03-10)
+
+
+### Features
+
+* **docs:** add subcategories and fix inline code styling ([a2152d5](https://github.com/BazZziliuS/cloudea-blog/commit/a2152d519e2c444c55b41cc7807bda49a46c7419))
+* **geo:** add GeoHide component for section-level geo-blocking ([355e336](https://github.com/BazZziliuS/cloudea-blog/commit/355e336a11c7d89269c14b1702393b6015fe2b2b))
+
 # [1.7.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.6.0...v1.7.0) (2026-03-10)
 
 
