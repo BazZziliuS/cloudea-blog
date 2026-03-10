@@ -1,3 +1,11 @@
+# [1.6.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.5.0...v1.6.0) (2026-03-10)
+
+
+### Features
+
+* **i18n:** add chinese locale and auto-detect locales from config ([5516e38](https://github.com/BazZziliuS/cloudea-blog/commit/5516e38c412c4417f7036279915de641bafdc8b6))
+* **nav:** add docs index to sidebar and move about link to footer ([3b15958](https://github.com/BazZziliuS/cloudea-blog/commit/3b159588885c800df7de870e506a6ed37e89fcfd))
+
 # [1.5.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.4.0...v1.5.0) (2026-03-10)
 
 
