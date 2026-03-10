@@ -63,6 +63,7 @@ export default async function TagPage({ params }: TagPageProps) {
       </div>
 
       <PostGrid
+        locale={locale}
         posts={posts.map((post) => ({
           slug: post.slug,
           title: post.title,

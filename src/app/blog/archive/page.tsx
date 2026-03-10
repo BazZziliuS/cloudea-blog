@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { format } from "date-fns";
+import { ru, enUS, zhCN } from "date-fns/locale";
 import { getAllPosts, getAllYears } from "@/lib/content";
+
+const dateLocales: Record<string, import("date-fns").Locale> = {
+  ru,
+  en: enUS,
+  zh: zhCN,
+};
 import { Badge } from "@/components/ui/badge";
 import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
@@ -51,7 +58,7 @@ export default async function ArchivePage() {
                       dateTime={post.date}
                       className="shrink-0 text-sm tabular-nums text-muted-foreground"
                     >
-                      {format(new Date(post.date), "dd.MM")}
+                      {format(new Date(post.date), "d MMM", { locale: dateLocales[locale] ?? enUS })}
                     </time>
                     <div>
                       <h3 className="font-medium group-hover:text-primary transition-colors">

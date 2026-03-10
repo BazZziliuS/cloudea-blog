@@ -3,8 +3,28 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { ru, enUS, zhCN } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import type { GeoBlock } from "@/lib/content";
+
+const dateLocales: Record<string, import("date-fns").Locale> = {
+  ru,
+  en: enUS,
+  zh: zhCN,
+};
+
+const readingTimeLabels: Record<string, string> = {
+  ru: "мин чтения",
+  en: "min read",
+  zh: "分钟阅读",
+};
+
+function localizeReadingTime(readingTime: string, locale: string): string {
+  const match = readingTime.match(/(\d+)/);
+  if (!match) return readingTime;
+  const minutes = match[1];
+  return `${minutes} ${readingTimeLabels[locale] ?? readingTimeLabels.en}`;
+}
 
 interface PostCardProps {
   slug: string;
@@ -13,6 +33,7 @@ interface PostCardProps {
   date: string;
   readingTime: string;
   tags: string[];
+  locale?: string;
   geoBlock?: GeoBlock;
   userCountry: string | null;
 }
@@ -24,6 +45,7 @@ export function PostCard({
   date,
   readingTime,
   tags,
+  locale = "en",
   geoBlock,
   userCountry,
 }: PostCardProps) {
@@ -39,10 +61,10 @@ export function PostCard({
       <article className={`flex flex-1 flex-col ${isBlocked ? "blur-sm select-none" : ""}`}>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <time dateTime={date}>
-            {format(new Date(date), "d MMM yyyy")}
+            {format(new Date(date), "d MMM yyyy", { locale: dateLocales[locale] ?? enUS })}
           </time>
           <span>&middot;</span>
-          <span>{readingTime}</span>
+          <span>{localizeReadingTime(readingTime, locale)}</span>
         </div>
         <h2 className="mt-3 text-xl font-semibold group-hover:text-primary transition-colors">
           {title}

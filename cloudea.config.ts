@@ -105,7 +105,6 @@ const config: CloudeaConfig = {
             { href: "/docs/windows", label: "Windows" },
           ],
         },
-        { href: "/docs/project", label: { ru: "Документация", en: "Docs" } },
       ],
     },
 
@@ -113,16 +112,28 @@ const config: CloudeaConfig = {
       copyright: "Cloudea",
       links: [
         {
-          title: { ru: "Ресурсы", en: "Resources" },
+          title: { ru: "Блог", en: "Blog" },
           items: [
-            { label: { ru: "Блог", en: "Blog" }, href: "/blog" },
-            { label: { ru: "Документация", en: "Docs" }, href: "/docs" },
-            { label: { ru: "Обо мне", en: "About" }, href: "/about" },
+            { label: { ru: "Все статьи", en: "All Posts" }, href: "/blog" },
+            { label: { ru: "Теги", en: "Tags" }, href: "/blog/tags" },
+            { label: { ru: "Архив", en: "Archive" }, href: "/blog/archive" },
           ],
         },
         {
-          title: { ru: "Сообщество", en: "Community" },
+          title: { ru: "Вики", en: "Wiki" },
           items: [
+            { label: { ru: "Боты", en: "Bots" }, href: "/docs/bots" },
+            { label: "Minecraft", href: "/docs/minecraft" },
+            { label: "Garry's Mod", href: "/docs/garrysmod" },
+            { label: "JavaScript", href: "/docs/javascript" },
+            { label: "Windows", href: "/docs/windows" },
+          ],
+        },
+        {
+          title: { ru: "Проект", en: "Project" },
+          items: [
+            { label: { ru: "Документация", en: "Docs" }, href: "/docs/project" },
+            { label: { ru: "Обо мне", en: "About" }, href: "/about" },
             { label: "GitHub", href: "https://github.com/BazZziliuS/cloudea-blog", external: true },
           ],
         },

@@ -3,17 +3,32 @@ import { getDocsSidebar, getDocsIndex } from "@/lib/content";
 import { compileMDX } from "@/lib/mdx";
 import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
-import { seo } from "@/lib/config";
+import { seo, getConfig } from "@/lib/config";
 
 export const revalidate = 3600;
 
 export async function generateMetadata() {
   const docsIndex = getDocsIndex();
-  return seo({
-    title: docsIndex?.title ?? "Documentation",
-    description: docsIndex?.description,
-    path: "/docs",
-  });
+  const config = getConfig();
+  const title = docsIndex?.title ?? "Documentation";
+  const description = docsIndex?.description;
+  const ogUrl = `${config.url}/api/og?type=page&slug=docs`;
+  return {
+    ...seo({
+      title,
+      description,
+      path: "/docs",
+    }),
+    openGraph: {
+      title,
+      description,
+      images: [{ url: ogUrl, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      images: [ogUrl],
+    },
+  };
 }
 
 export default async function DocsPage() {

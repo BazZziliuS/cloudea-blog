@@ -16,10 +16,11 @@ interface PostData {
 
 interface PostGridProps {
   posts: PostData[];
+  locale?: string;
   perPage?: number;
 }
 
-export function PostGrid({ posts, perPage = 12 }: PostGridProps) {
+export function PostGrid({ posts, locale = "en", perPage = 12 }: PostGridProps) {
   const hasGeoBlocked = posts.some((p) => p.geoBlock);
   const { country, loaded } = useUserCountry();
   const [page, setPage] = useState(1);
@@ -42,6 +43,7 @@ export function PostGrid({ posts, perPage = 12 }: PostGridProps) {
             date={post.date}
             readingTime={post.readingTime}
             tags={post.tags}
+            locale={locale}
             geoBlock={post.geoBlock}
             userCountry={resolvedCountry}
           />
@@ -54,7 +56,7 @@ export function PostGrid({ posts, perPage = 12 }: PostGridProps) {
             onClick={() => setPage((p) => p + 1)}
             className="rounded-lg border border-border px-6 py-2.5 text-sm font-medium transition-colors hover:bg-accent hover:border-primary/50"
           >
-            Показать ещё
+            {locale === "ru" ? "Показать ещё" : locale === "zh" ? "显示更多" : "Show more"}
           </button>
         </div>
       )}

@@ -22,9 +22,15 @@ export async function GET(request: NextRequest) {
         description = doc.description;
         category = doc.category;
       } else if (type === "page") {
-        const page = getCustomPage(slug.split("/"));
-        title = page.title;
-        description = page.description;
+        try {
+          const page = getCustomPage(slug.split("/"));
+          title = page.title;
+          description = page.description;
+        } catch {
+          // Not a custom page — use slug as title fallback
+          title = slug.charAt(0).toUpperCase() + slug.slice(1);
+          description = config.tagline;
+        }
       } else {
         const post = getPostBySlug(slug);
         title = post.title;
