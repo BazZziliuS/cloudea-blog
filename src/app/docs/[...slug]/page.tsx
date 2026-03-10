@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
+import { ru, enUS, zhCN } from "date-fns/locale";
+
+const dateLocales: Record<string, import("date-fns").Locale> = { ru, en: enUS, zh: zhCN };
 import { getDocBySlug, getAllDocs } from "@/lib/content";
 import { compileMDX } from "@/lib/mdx";
 import { TableOfContents } from "@/components/toc";
@@ -111,7 +114,7 @@ export default async function DocPage({ params }: DocPageProps) {
           <div className="mt-10 border-t border-border pt-4 flex items-center justify-between text-sm text-muted-foreground">
             <span>
               {locale === "ru" ? "Обновлено" : "Updated"}{" "}
-              {format(new Date(doc.lastModified), "d MMM yyyy")}
+              {format(new Date(doc.lastModified), "d MMM yyyy", { locale: dateLocales[locale] ?? enUS })}
             </span>
             {editUrl && (
               <Link

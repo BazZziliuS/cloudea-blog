@@ -36,10 +36,24 @@ export interface Doc {
   lastModified: string;
 }
 
+export interface SidebarDoc {
+  slug: string[];
+  title: string;
+  order: number;
+}
+
+export interface SidebarSubcategory {
+  name: string;
+  title?: string;
+  indexSlug?: string[];
+  docs: SidebarDoc[];
+}
+
 export interface SidebarCategory {
   name: string;
   indexSlug?: string[];
-  docs: { slug: string[]; title: string; order: number }[];
+  docs: SidebarDoc[];
+  subcategories: SidebarSubcategory[];
 }
 
 export interface TagInfo {
@@ -532,23 +546,57 @@ export function getDocsSidebar(): SidebarCategory[] {
   for (const doc of docs) {
     const categoryName = doc.category;
     if (!categories.has(categoryName)) {
-      categories.set(categoryName, { name: categoryName, docs: [] });
+      categories.set(categoryName, { name: categoryName, docs: [], subcategories: [] });
     }
-    // If this is the category index page (slug matches category name), set as indexSlug
+    const cat = categories.get(categoryName)!;
+
+    // Category index page (e.g. ["bots"])
     const isIndex = doc.slug.length === 1 && doc.slug[0] === categoryName;
     if (isIndex) {
-      categories.get(categoryName)!.indexSlug = doc.slug;
+      cat.indexSlug = doc.slug;
       continue;
     }
-    categories.get(categoryName)!.docs.push({
-      slug: doc.slug,
-      title: doc.title,
-      order: doc.order,
-    });
+
+    // Subcategory: slug has 3+ parts or slug[1] is a directory with its own docs
+    // e.g. ["bots", "orders", "auroralands"] → subcategory "orders" in category "bots"
+    if (doc.slug.length >= 3) {
+      const subName = doc.slug[1];
+      let sub = cat.subcategories.find((s) => s.name === subName);
+      if (!sub) {
+        sub = { name: subName, docs: [] };
+        cat.subcategories.push(sub);
+      }
+      sub.docs.push({ slug: doc.slug, title: doc.title, order: doc.order });
+      continue;
+    }
+
+    // Subcategory index page (e.g. ["bots", "orders"])
+    if (doc.slug.length === 2) {
+      const subName = doc.slug[1];
+      // Check if this is actually a subcategory index (has folder with same name)
+      const subDir = path.join(DOCS_DIR, doc.slug[0], subName);
+      if (fs.existsSync(subDir) && fs.statSync(subDir).isDirectory()) {
+        let sub = cat.subcategories.find((s) => s.name === subName);
+        if (!sub) {
+          sub = { name: subName, docs: [] };
+          cat.subcategories.push(sub);
+        }
+        sub.indexSlug = doc.slug;
+        sub.title = doc.title;
+        continue;
+      }
+    }
+
+    // Regular doc in category
+    cat.docs.push({ slug: doc.slug, title: doc.title, order: doc.order });
   }
 
   for (const category of categories.values()) {
     category.docs.sort((a, b) => a.order - b.order);
+    for (const sub of category.subcategories) {
+      sub.docs.sort((a, b) => a.order - b.order);
+    }
+    category.subcategories.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   return Array.from(categories.values()).sort((a, b) =>

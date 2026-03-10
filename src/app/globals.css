@@ -15,6 +15,20 @@ html {
   border-radius: 0.25rem;
 }
 
+.prose :where(code):not(:where(pre *))::before,
+.prose :where(code):not(:where(pre *))::after {
+  content: none;
+}
+
+.prose :where(code):not(:where(pre *)) {
+  background-color: var(--muted);
+  border-radius: 0.25rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.875em;
+  font-weight: 500;
+}
+
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

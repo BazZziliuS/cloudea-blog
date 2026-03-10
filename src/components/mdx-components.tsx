@@ -157,16 +157,17 @@ export const mdxComponents: Record<string, React.ComponentType<Record<string, un
   hr: (props) => <hr className="my-8 border-border" {...props} />,
   pre: Pre as React.ComponentType<Record<string, unknown>>,
   code: (props) => {
-    // Inline code (not inside pre)
-    const isInline = !(props as Record<string, unknown>)["data-language"];
-    if (isInline) {
-      return (
-        <code
-          className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm"
-          {...props}
-        />
-      );
+    const p = props as Record<string, unknown>;
+    // Code block inside <pre> (has data-language from rehype-pretty-code)
+    if (p["data-language"]) {
+      return <code {...props} />;
     }
-    return <code {...props} />;
+    // Inline code (plain or rehype-pretty-code inline)
+    return (
+      <code
+        className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm"
+        {...props}
+      />
+    );
   },
 };

@@ -1,5 +1,9 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
+import { ru, enUS, zhCN } from "date-fns/locale";
+
+const dateLocales: Record<string, import("date-fns").Locale> = { ru, en: enUS, zh: zhCN };
+const readingTimeLabels: Record<string, string> = { ru: "мин чтения", en: "min read", zh: "分钟阅读" };
 import Link from "next/link";
 import { getAllPosts, getPostBySlug, getRelatedPosts, isDirectoryPost, getPostLocales, getSeriesInfo } from "@/lib/content";
 import { compileMDX } from "@/lib/mdx";
@@ -127,10 +131,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <time dateTime={post.date}>
-                {format(new Date(post.date), "d MMMM yyyy")}
+                {format(new Date(post.date), "d MMMM yyyy", { locale: dateLocales[locale] ?? enUS })}
               </time>
               <span>&middot;</span>
-              <span>{post.readingTime}</span>
+              <span>{(post.readingTime.match(/\d+/) ?? ["1"])[0]} {readingTimeLabels[locale] ?? readingTimeLabels.en}</span>
             </div>
             <ShareButtons
               title={post.title}
@@ -236,7 +240,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   className="rounded-lg border border-border p-4 transition-colors hover:border-primary/50 hover:bg-accent/50"
                 >
                   <p className="text-xs text-muted-foreground">
-                    {format(new Date(rp.date), "d MMM yyyy")}
+                    {format(new Date(rp.date), "d MMM yyyy", { locale: dateLocales[locale] ?? enUS })}
                   </p>
                   <h4 className="mt-1 font-medium leading-snug">{rp.title}</h4>
                   <div className="mt-2 flex flex-wrap gap-1">
