@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FileText, Moon, Github } from "lucide-react";
+import { FileText, Moon } from "lucide-react";
+import { GitHubIcon } from "@/components/icons";
 import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
 import { getConfig, websiteJsonLd } from "@/lib/config";
@@ -50,7 +51,7 @@ export default async function HomePage() {
   const features = [
     { icon: FileText, title: t.mdxTitle, description: t.mdxDesc },
     { icon: Moon, title: t.darkTitle, description: t.darkDesc },
-    { icon: Github, title: t.authTitle, description: t.authDesc },
+    { icon: GitHubIcon, title: t.authTitle, description: t.authDesc },
   ];
 
   return (

@@ -13,10 +13,16 @@ export function GeoGuard({ geoBlock, children }: GeoGuardProps) {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    fetch("https://ipinfo.io?token=58e6c8d230085c")
-      .then((res) => res.json())
+    fetch("https://ipinfo.io/json?token=58e6c8d230085c")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
-        if (geoBlock.countries.includes(data.country)) {
+        if (!data.country) {
+          setStatus("blocked");
+          setMessage("Не удалось определить регион. Отключите AdBlock и перезагрузите страницу.");
+        } else if (geoBlock.countries.includes(data.country)) {
           setStatus("blocked");
           setMessage(geoBlock.message ?? "Этот контент недоступен в вашем регионе.");
         } else {
@@ -25,7 +31,7 @@ export function GeoGuard({ geoBlock, children }: GeoGuardProps) {
       })
       .catch(() => {
         setStatus("blocked");
-        setMessage("Не удалось определить ваш регион. Отключите AdBlock или VPN и перезагрузите страницу.");
+        setMessage("Не удалось определить регион. Отключите AdBlock и перезагрузите страницу.");
       });
   }, [geoBlock]);
 

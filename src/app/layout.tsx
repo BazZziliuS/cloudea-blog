@@ -20,6 +20,11 @@ const inter = Inter({
 
 const config = getConfig();
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata = {
   ...seo({
     title: config.title,

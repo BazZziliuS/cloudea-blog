@@ -1,10 +1,11 @@
 import {
   FileText, Tags, Archive, Bot, Blocks, Gamepad2, Code, Monitor,
-  BookOpen, User, Github, ExternalLink, Globe, Heart, Star,
+  BookOpen, User, ExternalLink, Globe, Heart, Star,
   FolderOpen, Home, Settings, Terminal, Database, Shield, Zap,
   Package, Coffee, Rocket, MessageCircle, Mail, Bookmark,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { GitHubIcon } from "@/components/icons";
 
 const iconMap: Record<string, LucideIcon> = {
   "file-text": FileText,
@@ -17,7 +18,7 @@ const iconMap: Record<string, LucideIcon> = {
   "monitor": Monitor,
   "book-open": BookOpen,
   "user": User,
-  "github": Github,
+  "github": GitHubIcon as unknown as LucideIcon,
   "external-link": ExternalLink,
   "globe": Globe,
   "heart": Heart,

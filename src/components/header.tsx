@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Menu, X, Github, LogOut, ChevronDown, Heart } from "lucide-react";
+import { Sun, Moon, Menu, X, LogOut, ChevronDown, Heart } from "lucide-react";
+import { GitHubIcon } from "@/components/icons";
 import { getIcon } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -149,7 +150,7 @@ export function Header({ dict, locale }: HeaderProps) {
               className="hidden md:inline-flex"
             >
               <Button variant="ghost" size="icon" aria-label="GitHub">
-                <Github className="h-5 w-5" />
+                <GitHubIcon className="h-5 w-5" />
               </Button>
             </Link>
           )}
@@ -196,7 +197,7 @@ export function Header({ dict, locale }: HeaderProps) {
           ) : (
             <Link href="/auth/login" className="hidden md:inline-flex">
               <Button variant="outline" size="sm" className="gap-2">
-                <Github className="h-4 w-4" />
+                <GitHubIcon className="h-4 w-4" />
                 {dict.nav.signIn}
               </Button>
             </Link>
@@ -262,7 +263,7 @@ export function Header({ dict, locale }: HeaderProps) {
               {config.themeConfig.socials?.github && (
                 <Link href={config.themeConfig.socials.github} target="_blank" rel="noopener noreferrer">
                   <Button variant="ghost" size="icon" aria-label="GitHub">
-                    <Github className="h-5 w-5" />
+                    <GitHubIcon className="h-5 w-5" />
                   </Button>
                 </Link>
               )}
@@ -280,7 +281,7 @@ export function Header({ dict, locale }: HeaderProps) {
             {isSupabaseAuth && !user && (
               <Link href="/auth/login" className="block pt-2">
                 <Button variant="outline" size="sm" className="w-full gap-2">
-                  <Github className="h-4 w-4" />
+                  <GitHubIcon className="h-4 w-4" />
                   {dict.nav.signIn}
                 </Button>
               </Link>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Github } from "lucide-react";
+import { GitHubIcon } from "@/components/icons";
 import { getDictionary, defaultLocale, type Locale, locales } from "@/lib/i18n";
 
 export default function LoginPage() {
@@ -38,7 +38,7 @@ export default function LoginPage() {
           {t.subtitle}
         </p>
         <Button onClick={handleGitHubLogin} className="w-full gap-3" size="lg">
-          <Github className="h-5 w-5" />
+          <GitHubIcon className="h-5 w-5" />
           {t.signInGithub}
         </Button>
       </div>

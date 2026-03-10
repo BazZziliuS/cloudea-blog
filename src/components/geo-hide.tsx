@@ -18,13 +18,13 @@ export function GeoHide({ countries, children }: GeoHideProps) {
       })
       .then((data) => {
         if (!data.country) {
-          setStatus("allowed");
+          setStatus("error");
           return;
         }
         setStatus(countries.includes(data.country) ? "blocked" : "allowed");
       })
       .catch(() => {
-        setStatus("allowed");
+        setStatus("error");
       });
   }, [countries]);
 

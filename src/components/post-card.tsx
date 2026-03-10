@@ -101,8 +101,11 @@ export function useUserCountry() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch("https://ipinfo.io?token=58e6c8d230085c")
-      .then((res) => res.json())
+    fetch("https://ipinfo.io/json?token=58e6c8d230085c")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         setCountry(data.country ?? null);
         setLoaded(true);

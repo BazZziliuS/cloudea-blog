@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Github } from "lucide-react";
+import { GitHubIcon } from "@/components/icons";
 import { getIcon } from "@/lib/icons";
 import { getConfig, getFooterLinks } from "@/lib/config";
 import type { Dictionary, Locale } from "@/lib/i18n";
@@ -62,7 +62,7 @@ export function Footer({ dict, locale }: { dict: Dictionary; locale: Locale }) {
                 className="text-muted-foreground transition-colors hover:text-foreground"
                 aria-label="GitHub"
               >
-                <Github className="h-5 w-5" />
+                <GitHubIcon className="h-5 w-5" />
               </Link>
             )}
 
