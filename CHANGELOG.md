@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.6.0...v1.7.0) (2026-03-10)
+
+
+### Features
+
+* **i18n:** localize dates and reading time in blog cards ([8cb1121](https://github.com/BazZziliuS/cloudea-blog/commit/8cb112191112c1d09d47fb6239e737b054c64526))
+
 # [1.6.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.5.0...v1.6.0) (2026-03-10)
 
 
