@@ -60,7 +60,7 @@ export function SupabaseComments({ slug, locale }: CommentsProps) {
   const [replyContent, setReplyContent] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const labels = t[locale] ?? t.ru;
+  const labels = t[locale as keyof typeof t] ?? t.ru;
   const dateLocale: DateLocale = locale === "ru" ? ru : enUS;
 
   const fetchComments = useCallback(async () => {

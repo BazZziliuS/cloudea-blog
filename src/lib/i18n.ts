@@ -1,17 +1,21 @@
+import { getConfig } from "./config";
+
 import ruDict from "../../locales/ru.json";
 import enDict from "../../locales/en.json";
+import zhDict from "../../locales/zh.json";
 
-export const locales = ["ru", "en"] as const;
+const config = getConfig();
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const allDictionaries: Record<string, any> = { ru: ruDict, en: enDict, zh: zhDict };
+
+export const locales = config.i18n.locales as readonly string[];
 export type Locale = (typeof locales)[number];
-export const defaultLocale: Locale = "ru";
+export const defaultLocale = config.i18n.defaultLocale as Locale;
 
-const dictionaries: Record<Locale, typeof ruDict> = {
-  ru: ruDict,
-  en: enDict,
-};
-
-export type Dictionary = typeof ruDict;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Dictionary = Record<string, any>;
 
 export function getDictionary(locale: Locale): Dictionary {
-  return dictionaries[locale] ?? dictionaries[defaultLocale];
+  return allDictionaries[locale] ?? allDictionaries[defaultLocale] ?? {};
 }

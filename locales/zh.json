@@ -1,0 +1,60 @@
+{
+  "nav": {
+    "blog": "博客",
+    "docs": "文档",
+    "search": "搜索...",
+    "signIn": "登录",
+    "signOut": "退出"
+  },
+  "home": {
+    "subtitle": "博客与文档平台",
+    "readBlog": "阅读博客",
+    "documentation": "文档",
+    "features": "功能",
+    "featuresSubtitle": "创建现代文档和博客所需的一切",
+    "mdxTitle": "MDX 支持",
+    "mdxDesc": "使用 MDX 编写内容，在 Markdown 文档中直接使用 React 组件。",
+    "darkTitle": "深色模式",
+    "darkDesc": "内置明暗主题切换，自动检测系统偏好设置。",
+    "authTitle": "GitHub 认证",
+    "authDesc": "通过 GitHub 认证进行内容管理和平台交互。"
+  },
+  "blog": {
+    "title": "博客",
+    "subtitle": "文章、教程和公告",
+    "noPosts": "暂无文章。",
+    "tags": "标签",
+    "allTags": "所有博客标签",
+    "archive": "归档",
+    "archiveSubtitle": "按年份查看所有博客文章",
+    "allTagsLink": "全部",
+    "post": "篇文章",
+    "posts2_4": "篇文章",
+    "posts5": "篇文章",
+    "noTags": "暂无标签。",
+    "backToTags": "所有标签",
+    "searchPlaceholder": "搜索博客和文档...",
+    "noResults": "未找到结果",
+    "minChars": "请输入至少2个字符",
+    "searching": "搜索中...",
+    "navigation": "导航",
+    "open": "打开",
+    "close": "关闭",
+    "onThisPage": "本页目录",
+    "blogLabel": "博客",
+    "docsLabel": "文档",
+    "docs": "文档",
+    "showMore": "显示更多",
+    "ofTotal": "共",
+    "recentPosts": "最新文章"
+  },
+  "auth": {
+    "title": "登录",
+    "subtitle": "使用 GitHub 登录以访问平台",
+    "signInGithub": "使用 GitHub 登录"
+  },
+  "footer": {
+    "rights": "保留所有权利。",
+    "builtWith": "构建于"
+  }
+}

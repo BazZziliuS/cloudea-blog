@@ -1,0 +1,108 @@
+---
+title: "Migrating from Docusaurus to My Own Platform"
+description: "Why I moved away from Docusaurus to my own Cloudea Blog platform built on Next.js, what I gained and how the migration went."
+date: "2026-03-10"
+tags: ["cloudea", "nextjs", "docusaurus", "self-hosting"]
+---
+
+# Migrating from Docusaurus to My Own Platform
+
+> When off-the-shelf solutions no longer cut it — it's time to build your own.
+
+---
+
+## Backstory
+
+For almost two years my blog and wiki lived on [Docusaurus](https://docusaurus.io/). It's a great tool — quick setup, MDX out of the box, convenient documentation structure. I even [wrote a post about it](/blog/2025/01-10-docusaurus).
+
+But over time the limitations started piling up: I wanted more control over navigation, custom components, proper auth, comments and SEO — all the things that required hacks or plugins in Docusaurus.
+
+The old Docusaurus blog is still available in the repository: [github.com/BazZziliuS/docusaurus](https://github.com/BazZziliuS/docusaurus).
+
+---
+
+## Why Not Docusaurus
+
+Docusaurus is a great tool, but I wanted more:
+
+* **Full customization** — I wanted to keep everything in my own hands: from navigation and layouts to rendering logic. In Docusaurus any deviation from the standard hits swizzling walls and framework limitations
+* **Modern library support** — Docusaurus is built on React, but its architecture doesn't always play nicely with the latest library versions. On my own platform I can freely use any packages without conflicts or workarounds
+* **Project ownership** — when the platform is yours, you don't depend on someone else's release cycle. Need a new feature — just build it, instead of waiting for a PR or looking for workarounds
+
+---
+
+## What is Cloudea Blog
+
+[Cloudea Blog](https://github.com/BazZziliuS/cloudea-blog) is my own platform for blogs and documentation, built on:
+
+* **Next.js** (App Router) — server components, ISR, API routes
+* **MDX** — content is written in the same `.mdx` files as before
+* **Tailwind CSS** + **shadcn/ui** — modern and customizable UI
+* **Supabase** / **Giscus** — comments, your choice
+* **i18n** — multilingual support (ru/en) out of the box
+
+### What's New
+
+* Full control over navigation — hover dropdowns with clickable headings
+* On-the-fly OG image generation
+* Geo-blocking posts via frontmatter
+* Full-text search across blog and docs
+* Tag pages and yearly archive
+* Documentation sidebar with auto-expanding active category
+* View Transitions for smooth page navigation
+
+---
+
+## How the Migration Went
+
+Content moved over with almost no changes — MDX works on both sides. Key points:
+
+1. **Posts** — copied from `blog/` to `content/blog/`, removed `<!-- truncate -->`, adapted image paths
+2. **Documentation** — moved from `docs/` to `content/docs/` preserving category structure
+3. **Admonitions** — Docusaurus `:::tip` syntax replaced with `<Callout>` component
+4. **Frontmatter** — added new fields (`geo_block`, `order`), removed Docusaurus-specific ones
+5. **Components** — `GeoCheck`, `DocCardList`, `Backlink` replaced with built-in alternatives or removed
+
+The whole process took one evening. Most of the time was spent debugging small things like nested `<a>` tags in headings and inline rendering of shields.io badges.
+
+---
+
+## Configuration
+
+The entire site configuration lives in a single `cloudea.config.ts` file:
+
+```typescript
+const config: CloudeaConfig = {
+  title: "Cloudea Blog",
+  url: "https://blog.cloudea.org/",
+  homepage: "blog",
+
+  themeConfig: {
+    navbar: {
+      title: "Cloudea",
+      links: [
+        {
+          label: "Blog",
+          href: "/blog",
+          items: [
+            { href: "/blog", label: "Posts" },
+            { href: "/blog/tags", label: "Tags" },
+            { href: "/blog/archive", label: "Archive" },
+          ],
+        },
+        // ...
+      ],
+    },
+  },
+};
+```
+
+---
+
+## Conclusion
+
+Moving from Docusaurus to my own platform gave me full control over every aspect of the site. Yes, it's more work to maintain, but in return — no limitations or compromises.
+
+If Docusaurus works for you — use it, it's a great tool. But if you're hitting its boundaries and want more — maybe it's time to build your own.
+
+The platform source code is open: [github.com/BazZziliuS/cloudea-blog](https://github.com/BazZziliuS/cloudea-blog).

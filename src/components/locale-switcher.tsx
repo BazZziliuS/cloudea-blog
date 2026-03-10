@@ -9,11 +9,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Locale } from "@/lib/i18n";
+import { locales, type Locale } from "@/lib/i18n";
 
-const labels: Record<string, string> = {
+const nativeNames: Record<string, string> = {
   ru: "Русский",
   en: "English",
+  zh: "中文",
+  ja: "日本語",
+  ko: "한국어",
+  de: "Deutsch",
+  fr: "Français",
+  es: "Español",
+  pt: "Português",
+  it: "Italiano",
+  ar: "العربية",
+  hi: "हिन्दी",
+  tr: "Türkçe",
+  pl: "Polski",
+  uk: "Українська",
 };
 
 export function LocaleSwitcher({ current }: { current: Locale }) {
@@ -28,6 +41,8 @@ export function LocaleSwitcher({ current }: { current: Locale }) {
     router.refresh();
   };
 
+  if (locales.length <= 1) return null;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -36,13 +51,13 @@ export function LocaleSwitcher({ current }: { current: Locale }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {Object.entries(labels).map(([code, label]) => (
+        {locales.map((code) => (
           <DropdownMenuItem
             key={code}
             onClick={() => switchLocale(code)}
             className={current === code ? "font-semibold" : ""}
           >
-            {label}
+            {nativeNames[code] ?? code.toUpperCase()}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

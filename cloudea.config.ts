@@ -31,7 +31,7 @@ const config: CloudeaConfig = {
 
   i18n: {
     defaultLocale: "ru",
-    locales: ["ru", "en"],
+    locales: ["ru", "en", "zh"],
   },
 
   seo: {
