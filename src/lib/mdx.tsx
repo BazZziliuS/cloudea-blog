@@ -8,6 +8,7 @@ import React from "react";
 import type { ReactElement } from "react";
 import { Callout } from "@/components/callout";
 import { CodeBlockWrapper } from "@/components/copy-button";
+import { GeoHide } from "@/components/geo-hide";
 
 /**
  * Rewrite relative image/link paths in MDX content to point to the content API.
@@ -67,6 +68,7 @@ export async function compileMDX(
     components: {
       ...mdxComponents,
       Callout,
+      GeoHide,
       figure: (props: React.ComponentPropsWithoutRef<"figure">) => {
         // rehype-pretty-code wraps code blocks in <figure data-rehype-pretty-code-figure>
         if ((props as Record<string, unknown>)["data-rehype-pretty-code-figure"] !== undefined) {
