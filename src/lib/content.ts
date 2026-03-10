@@ -345,13 +345,13 @@ export function getPostAssetDir(slug: string): string | null {
   return null;
 }
 
-export function getAllPosts(includeDrafts = false): Post[] {
+export function getAllPosts(includeDrafts = false, locale?: Locale): Post[] {
   const slugParts = walkBlogDir(BLOG_DIR);
 
   const posts = slugParts
     .map((parts) => {
       const slug = parts.join("/");
-      return getPostBySlug(slug);
+      return getPostBySlug(slug, locale);
     })
     .filter((post) => includeDrafts || !post.draft);
 
@@ -361,8 +361,8 @@ export function getAllPosts(includeDrafts = false): Post[] {
 }
 
 /** Get paginated posts */
-export function getPaginatedPosts(page = 1, perPage = 12, includeDrafts = false): PaginatedPosts {
-  const allPosts = getAllPosts(includeDrafts);
+export function getPaginatedPosts(page = 1, perPage = 12, includeDrafts = false, locale?: Locale): PaginatedPosts {
+  const allPosts = getAllPosts(includeDrafts, locale);
   const total = allPosts.length;
   const totalPages = Math.ceil(total / perPage);
   const start = (page - 1) * perPage;
@@ -372,8 +372,8 @@ export function getPaginatedPosts(page = 1, perPage = 12, includeDrafts = false)
 }
 
 /** Get related posts by shared tags (excluding the current post) */
-export function getRelatedPosts(slug: string, tags: string[], limit = 3): Post[] {
-  const allPosts = getAllPosts();
+export function getRelatedPosts(slug: string, tags: string[], limit = 3, locale?: Locale): Post[] {
+  const allPosts = getAllPosts(false, locale);
   return allPosts
     .filter((p) => p.slug !== slug)
     .map((p) => ({
@@ -389,17 +389,17 @@ export function getRelatedPosts(slug: string, tags: string[], limit = 3): Post[]
 // ---- Series ----
 
 /** Get all posts in a series, sorted by seriesOrder */
-export function getSeriesPosts(seriesName: string): Post[] {
-  const allPosts = getAllPosts();
+export function getSeriesPosts(seriesName: string, locale?: Locale): Post[] {
+  const allPosts = getAllPosts(false, locale);
   return allPosts
     .filter((p) => p.series === seriesName)
     .sort((a, b) => (a.seriesOrder ?? 0) - (b.seriesOrder ?? 0));
 }
 
 /** Get series info for a post (prev/next navigation) */
-export function getSeriesInfo(post: Post): SeriesInfo | null {
+export function getSeriesInfo(post: Post, locale?: Locale): SeriesInfo | null {
   if (!post.series) return null;
-  const seriesPosts = getSeriesPosts(post.series);
+  const seriesPosts = getSeriesPosts(post.series, locale);
   if (seriesPosts.length < 2) return null;
 
   return {
@@ -429,8 +429,8 @@ export function getAllTags(): TagInfo[] {
     .sort((a, b) => b.count - a.count);
 }
 
-export function getPostsByTag(tag: string): Post[] {
-  return getAllPosts().filter((post) =>
+export function getPostsByTag(tag: string, locale?: Locale): Post[] {
+  return getAllPosts(false, locale).filter((post) =>
     post.tags.some((t) => t.toLowerCase() === tag.toLowerCase())
   );
 }
@@ -451,8 +451,8 @@ export function getAllYears(): { year: number; count: number }[] {
     .sort((a, b) => b.year - a.year);
 }
 
-export function getPostsByYear(year: number): Post[] {
-  return getAllPosts().filter(
+export function getPostsByYear(year: number, locale?: Locale): Post[] {
+  return getAllPosts(false, locale).filter(
     (post) => new Date(post.date).getFullYear() === year
   );
 }

@@ -40,7 +40,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
   const currentPage = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const perPage = 12;
-  const { posts, total, totalPages } = getPaginatedPosts(currentPage, perPage);
+  const { posts, total, totalPages } = getPaginatedPosts(currentPage, perPage, false, locale);
   const tags = getAllTags();
   const years = getAllYears();
 
@@ -146,7 +146,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-3">{t.recentPosts}</h3>
                 <ul className="space-y-1">
-                  {getAllPosts().slice(0, 5).map((post) => (
+                  {getAllPosts(false, locale).slice(0, 5).map((post) => (
                     <li key={post.slug}>
                       <Link
                         href={`/blog/${post.slug}`}

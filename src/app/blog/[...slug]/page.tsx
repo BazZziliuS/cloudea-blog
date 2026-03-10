@@ -96,8 +96,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const content = await compileMDX(post.content, post.slug);
   const jsonLd = blogPostJsonLd(post);
   const config = getConfig();
-  const relatedPosts = getRelatedPosts(post.slug, post.tags);
-  const seriesInfo = getSeriesInfo(post);
+  const relatedPosts = getRelatedPosts(post.slug, post.tags, 3, locale);
+  const seriesInfo = getSeriesInfo(post, locale);
 
   // Edit on GitHub link
   const githubRepo = config.themeConfig.socials?.github;

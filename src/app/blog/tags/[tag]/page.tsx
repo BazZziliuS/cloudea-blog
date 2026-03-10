@@ -30,9 +30,8 @@ export async function generateMetadata({ params }: TagPageProps) {
 export default async function TagPage({ params }: TagPageProps) {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag);
-  const posts = getPostsByTag(decoded);
-
   const locale = await getLocale();
+  const posts = getPostsByTag(decoded, locale);
   const dict = getDictionary(locale);
   const t = dict.blog;
 

@@ -26,7 +26,7 @@ export default async function ArchivePage() {
   const t = dict.blog;
 
   const years = getAllYears();
-  const posts = getAllPosts();
+  const posts = getAllPosts(false, locale);
 
   const postsByYear = new Map<number, typeof posts>();
   for (const post of posts) {
