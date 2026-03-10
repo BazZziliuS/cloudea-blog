@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.4.0...v1.5.0) (2026-03-10)
+
+
+### Features
+
+* migrate docusaurus content and improve navbar/sidebar UX ([1b36566](https://github.com/BazZziliuS/cloudea-blog/commit/1b36566f05eac42b0c6c63f3b8525908296fa7f8))
+
 # [1.4.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.3.0...v1.4.0) (2026-03-08)
 
 
