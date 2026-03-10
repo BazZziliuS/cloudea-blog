@@ -72,12 +72,15 @@ export function PostCard({
         <p className="mt-2 line-clamp-3 flex-1 text-sm text-muted-foreground">
           {description}
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
+        <div className="mt-4 flex items-center gap-2">
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          <div className="h-px flex-1 bg-border" />
         </div>
       </article>
     </div>
