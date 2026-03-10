@@ -313,7 +313,7 @@ export function getPostBySlug(slug: string, locale?: Locale): Post {
   const actualPath = resolvePostPath(slug, locale);
   const fileContents = fs.readFileSync(actualPath, "utf-8");
   const { data, content } = matter(fileContents);
-  const stats = readingTime(content);
+  const stats = readingTime(content, { wordsPerMinute: 130 });
   const validated = validatePostFrontmatter(data, actualPath);
 
   return {

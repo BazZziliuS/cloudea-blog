@@ -131,30 +131,22 @@ function SidebarSubcategorySection({
     if (isSubPath) setIsOpen(true);
   }, [isSubPath]);
 
-  const indexHref = sub.indexSlug ? `/docs/${sub.indexSlug.join("/")}` : null;
-  const isSubActive = indexHref ? pathname === indexHref : false;
   const displayName = sub.title ?? formatName(sub.name);
 
   return (
     <li>
-      <div className="flex items-center justify-between px-3 py-1.5 text-sm font-medium">
-        {indexHref ? (
-          <Link
-            href={indexHref}
-            className={cn(
-              "transition-colors",
-              isSubActive ? "text-primary" : "text-foreground hover:text-primary"
-            )}
-          >
-            {displayName}
-          </Link>
-        ) : (
-          <span className="text-foreground">{displayName}</span>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "flex w-full items-center justify-between rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+          isOpen
+            ? "bg-muted/60 text-primary"
+            : "text-foreground hover:bg-muted/50 hover:text-primary"
         )}
-        <button onClick={() => setIsOpen(!isOpen)} className="rounded-md p-0.5 hover:bg-muted hover:text-primary transition-colors">
-          <ChevronIcon open={isOpen} />
-        </button>
-      </div>
+      >
+        <span>{displayName}</span>
+        <ChevronIcon open={isOpen} />
+      </button>
       <CollapsibleContent open={isOpen}>
         <ul className="mt-1 space-y-1 pl-3">
           {sub.docs.map((doc) => (
@@ -180,31 +172,20 @@ function SidebarSection({
     if (isCategoryPath) setIsOpen(true);
   }, [isCategoryPath]);
 
-  const indexHref = category.indexSlug
-    ? `/docs/${category.indexSlug.join("/")}`
-    : null;
-  const isCategoryActive = indexHref ? pathname === indexHref : false;
-
   return (
     <div>
-      <div className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold">
-        {indexHref ? (
-          <Link
-            href={indexHref}
-            className={cn(
-              "transition-colors",
-              isCategoryActive ? "text-primary" : "text-foreground hover:text-primary"
-            )}
-          >
-            {category.title ?? formatName(category.name)}
-          </Link>
-        ) : (
-          <span className="text-foreground">{category.title ?? formatName(category.name)}</span>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-semibold transition-colors",
+          isOpen
+            ? "bg-muted text-primary"
+            : "text-foreground hover:bg-muted/50 hover:text-primary"
         )}
-        <button onClick={() => setIsOpen(!isOpen)} className="rounded-md p-0.5 hover:bg-muted hover:text-primary transition-colors">
-          <ChevronIcon open={isOpen} />
-        </button>
-      </div>
+      >
+        <span>{category.title ?? formatName(category.name)}</span>
+        <ChevronIcon open={isOpen} />
+      </button>
       <CollapsibleContent open={isOpen}>
         <ul className="mt-1 space-y-1 pl-3">
           {category.docs.map((doc) => (

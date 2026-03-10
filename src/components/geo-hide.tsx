@@ -11,13 +11,20 @@ export function GeoHide({ countries, children }: GeoHideProps) {
   const [status, setStatus] = useState<"loading" | "allowed" | "blocked" | "error">("loading");
 
   useEffect(() => {
-    fetch("https://ipinfo.io?token=58e6c8d230085c")
-      .then((res) => res.json())
+    fetch("https://ipinfo.io/json?token=58e6c8d230085c")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
+        if (!data.country) {
+          setStatus("allowed");
+          return;
+        }
         setStatus(countries.includes(data.country) ? "blocked" : "allowed");
       })
       .catch(() => {
-        setStatus("error");
+        setStatus("allowed");
       });
   }, [countries]);
 
