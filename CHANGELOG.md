@@ -1,3 +1,10 @@
+## [1.11.2](https://github.com/BazZziliuS/cloudea-blog/compare/v1.11.1...v1.11.2) (2026-03-10)
+
+
+### Bug Fixes
+
+* replace deprecated lucide Github icon, fix geo-detection and add viewport ([bb3e892](https://github.com/BazZziliuS/cloudea-blog/commit/bb3e892cab5ec47baf5e5a8bd2d283934ea1bbe2))
+
 ## [1.11.1](https://github.com/BazZziliuS/cloudea-blog/compare/v1.11.0...v1.11.1) (2026-03-10)
 
 
