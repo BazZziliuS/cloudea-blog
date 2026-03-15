@@ -3,18 +3,59 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FileText, Moon } from "lucide-react";
 import { GitHubIcon } from "@/components/icons";
+import { BlogContent } from "@/components/blog-content";
 import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
-import { getConfig, websiteJsonLd } from "@/lib/config";
+import { getConfig, seo, websiteJsonLd } from "@/lib/config";
 import { getCustomPage, customPageExists } from "@/lib/content";
 import { compileMDX } from "@/lib/mdx";
 
-export default async function HomePage() {
+export async function generateMetadata() {
   const config = getConfig();
   const homepage = config.homepage ?? "landing";
 
-  // Redirect to blog or docs
-  if (homepage === "blog") redirect("/blog");
+  if (homepage === "blog") {
+    const ogUrl = `${config.url}/api/og?type=page&slug=blog`;
+    return {
+      ...seo({
+        title: config.title,
+        description: config.seo.defaultDescription,
+        path: "/",
+      }),
+      openGraph: {
+        title: config.title,
+        description: config.seo.defaultDescription,
+        images: [{ url: ogUrl, width: 1200, height: 630 }],
+      },
+    };
+  }
+
+  return seo({
+    title: config.title,
+    description: config.seo.defaultDescription,
+    path: "/",
+  });
+}
+
+interface HomePageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const config = getConfig();
+  const homepage = config.homepage ?? "landing";
+
+  // Рендерим блог прямо на главной (как Docusaurus)
+  if (homepage === "blog") {
+    const locale = await getLocale();
+    const dict = getDictionary(locale);
+    const params = await searchParams;
+    const currentPage = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
+
+    return <BlogContent locale={locale} dict={dict} currentPage={currentPage} basePath="/" />;
+  }
+
+  // Redirect to docs
   if (homepage === "docs") redirect("/docs");
 
   // Custom page from content/pages/

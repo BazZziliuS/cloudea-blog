@@ -267,7 +267,8 @@ export function seo(options: SeoOptions = {}): Metadata {
     noIndex = false,
   } = options;
 
-  const url = `${config.url}${path}`;
+  const baseUrl = config.url.replace(/\/+$/, "");
+  const url = `${baseUrl}${path}`;
   const seoConfig = config.seo;
 
   const metadata: Metadata = {

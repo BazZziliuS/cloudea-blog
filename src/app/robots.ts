@@ -10,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: config.seo.robots?.index ? "/" : undefined,
       disallow: config.seo.robots?.index ? ["/api/", "/auth/"] : "/",
     },
-    sitemap: `${config.url}/sitemap.xml`,
+    sitemap: `${config.url.replace(/\/+$/, "")}/sitemap.xml`,
   };
 }

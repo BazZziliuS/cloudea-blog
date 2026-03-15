@@ -3,7 +3,7 @@ import type { CloudeaConfig } from "./src/lib/config";
 const config: CloudeaConfig = {
   title: "Cloudea Blog",
   tagline: "Платформа для блогов и документации",
-  url: "https://blog.cloudea.org/",
+  url: "https://blog.cloudea.org",
   favicon: "/favicon.ico",
 
   // Главная страница:
@@ -63,7 +63,7 @@ const config: CloudeaConfig = {
       // Организация / автор для schema.org
       organization: {
         name: "Cloudea",
-        url: "https://blog.cloudea.org/",
+        url: "https://blog.cloudea.org",
         logo: "https://blog.cloudea.org/logo.png",
       },
     },
