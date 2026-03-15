@@ -1,3 +1,10 @@
+## [1.11.3](https://github.com/BazZziliuS/cloudea-blog/compare/v1.11.2...v1.11.3) (2026-03-15)
+
+
+### Bug Fixes
+
+* **seo:** remove trailing slash, fix sitemap dates and render blog on homepage ([8f2f2c7](https://github.com/BazZziliuS/cloudea-blog/commit/8f2f2c70712c865486a12ce7113f03b2cdca1625))
+
 ## [1.11.2](https://github.com/BazZziliuS/cloudea-blog/compare/v1.11.1...v1.11.2) (2026-03-10)
 
 
