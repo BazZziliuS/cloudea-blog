@@ -1,0 +1,547 @@
+---
+title: "Supabase Self-Hosted: поднимаем свой Backend-as-a-Service"
+description: "Полное руководство по развёртыванию Supabase на своём сервере с Docker Compose. Настройка PostgreSQL, Auth, Storage, Studio и reverse proxy через NGINX."
+date: "2026-03-19"
+tags: ["self-hosting", "supabase", "docker", "postgresql"]
+---
+
+> Все возможности Firebase — но на своём железе и с PostgreSQL под капотом.
+
+---
+
+## Что такое Supabase?
+
+[Supabase](https://supabase.com) — это open-source альтернатива Firebase, построенная поверх PostgreSQL. Из коробки даёт:
+
+* **PostgreSQL** — полноценная реляционная база данных
+* **Auth** — аутентификация через email, OAuth (GitHub, Google, Discord и др.)
+* **Storage** — S3-совместимое хранилище файлов с политиками доступа
+* **Realtime** — подписки на изменения в БД через WebSocket
+* **Edge Functions** — серверные функции на Deno
+* **Studio** — веб-панель для управления всем этим
+
+Облачный Supabase бесплатен для небольших проектов, но имеет лимиты. Self-hosted версия снимает все ограничения.
+
+---
+
+## Supabase vs чистый PostgreSQL vs другие
+
+Прежде чем разворачивать Supabase — стоит понять, чем он отличается от голого PostgreSQL и других решений.
+
+### Supabase vs PostgreSQL
+
+| | PostgreSQL | Supabase |
+|---|---|---|
+| **База данных** | PostgreSQL | PostgreSQL (тот же движок) |
+| **API** | Нет — нужен свой бэкенд (Express, FastAPI и т.д.) | REST и GraphQL из коробки через PostgREST |
+| **Аутентификация** | Нет — реализуешь сам или берёшь Keycloak, Auth0 | Встроенный Auth с OAuth, email, MFA |
+| **Хранилище файлов** | Нет — отдельно настраиваешь MinIO, S3 и т.д. | S3-совместимый Storage с RLS-политиками |
+| **Realtime** | LISTEN/NOTIFY (низкоуровневый) | WebSocket-подписки на таблицы из коробки |
+| **Панель управления** | pgAdmin / DBeaver (отдельно) | Studio — всё в одном |
+| **Потребление ресурсов** | ~100 МБ RAM | ~2–4 ГБ RAM (13+ контейнеров) |
+| **Сложность настройки** | Минимальная | Средняя (Docker Compose + секреты) |
+
+**Когда хватит чистого PostgreSQL:**
+* Уже есть бэкенд на Express/FastAPI/Django
+* Не нужна встроенная аутентификация — используешь свою или внешнюю
+* Важна минимальная нагрузка на сервер
+* Нужен максимальный контроль над каждым компонентом
+
+**Когда стоит взять Supabase:**
+* Хочешь быстро получить API без написания бэкенда
+* Нужны Auth, Storage и Realtime из коробки
+* Пишешь фронтенд-first приложение (Next.js, Nuxt, SvelteKit)
+* Не хочешь склеивать 5 разных инструментов вручную
+
+### Supabase vs Firebase
+
+| | Firebase | Supabase |
+|---|---|---|
+| **База данных** | Firestore (NoSQL, документы) | PostgreSQL (реляционная) |
+| **Запросы** | Ограниченные — нет JOIN, нет SQL | Полноценный SQL, JOIN-ы, индексы, CTE |
+| **Open Source** | Нет | Да |
+| **Self-hosted** | Нет (только Google Cloud) | Да |
+| **Vendor lock-in** | Сильный — миграция болезненна | Минимальный — это просто PostgreSQL |
+| **Ценообразование** | Pay-per-read/write (может удивить) | Фиксированная цена или бесплатно (self-hosted) |
+| **Realtime** | Встроенный, зрелый | Встроенный, активно развивается |
+| **Edge Functions** | Cloud Functions (Node.js) | Edge Functions (Deno) |
+
+### Supabase vs Appwrite
+
+| | Appwrite | Supabase |
+|---|---|---|
+| **База данных** | MariaDB (скрыта за SDK) | PostgreSQL (прямой доступ) |
+| **SQL-доступ** | Нет — только SDK/REST | Полный SQL + SDK + REST |
+| **Расширения БД** | Нет | pgvector, PostGIS, pg_cron и сотни других |
+| **Self-hosted** | Да | Да |
+| **Панель** | Своя (красивая) | Studio |
+| **Зрелость** | Моложе, API может меняться | Стабильнее, основан на проверенных инструментах |
+
+### Итог сравнения
+
+* **Чистый PostgreSQL** — если уже есть бэкенд и нужна только база
+* **Firebase** — если устраивает NoSQL, vendor lock-in и Google Cloud
+* **Appwrite** — если не нужен прямой SQL и нравится их SDK-подход
+* **Supabase** — если хочешь полноценный PostgreSQL с батарейками в комплекте
+
+### А что насчёт S3, Redis и MongoDB?
+
+Supabase часто воспринимают как «замену всему», но это не совсем так.
+
+**S3 / файловое хранилище** — да, частично заменяет. Supabase Storage предоставляет S3-совместимый API для хранения файлов (аватарки, документы, изображения). Под капотом можно использовать локальное хранилище, MinIO или настоящий AWS S3 / Cloudflare R2 как бэкенд. Но это именно файловое хранилище с RLS-политиками, а не полноценный object storage для терабайтов данных — для такого масштаба лучше напрямую MinIO или S3.
+
+**Redis** — нет, не заменяет. Redis — это in-memory хранилище совсем другого класса:
+
+| Задача | Redis | Supabase / PostgreSQL |
+|--------|-------|----------------------|
+| Кэширование | Микросекунды, TTL из коробки | Нет встроенного кэша |
+| Очереди задач | BullMQ, Celery, Sidekiq | Нет (нужен отдельный воркер) |
+| Pub/Sub | Микросекундная задержка | LISTEN/NOTIFY — работает, но медленнее |
+| Rate limiting | Атомарные счётчики, скрипты Lua | Возможно, но не идиоматично |
+| Сессии | Стандартный подход | Можно, но Redis быстрее |
+
+Если нужен кэш, очереди или rate limiting — Redis по-прежнему нужен отдельно.
+
+**MongoDB** — частично заменяет, зависит от задачи:
+
+| Задача | MongoDB | PostgreSQL (Supabase) |
+|--------|---------|----------------------|
+| JSON-документы | Родной формат (BSON) | `jsonb` — покрывает 90% кейсов с индексами |
+| Schema-less | Да | `jsonb` колонки — гибко, но можно миксовать со строгой схемой |
+| SQL и JOIN-ы | Нет (aggregation pipeline) | Полноценный SQL |
+| Горизонтальный шардинг | Встроенный | Нет из коробки (нужен Citus) |
+| Полнотекстовый поиск | Atlas Search | `tsvector` / `pg_trgm` — работает, но проще взять Meilisearch |
+| Расширения | Нет | pgvector, PostGIS, pg_cron и сотни других |
+
+Если используешь MongoDB только для хранения JSON — PostgreSQL с `jsonb` это покроет, причём с бонусом в виде транзакций, JOIN-ов и строгой типизации там, где она нужна. Но если нужен горизонтальный шардинг на десятки серверов — PostgreSQL так не умеет без расширений.
+
+---
+
+## Зачем хостить самому?
+
+* **Без лимитов** — никаких ограничений на количество строк, запросов или файлов
+* **Контроль данных** — всё хранится на твоём сервере
+* **Кастомизация** — свои расширения PostgreSQL, настройки Auth, кастомные SMTP
+* **Стоимость** — VPS за $5–10/мес вместо платных планов Supabase
+
+---
+
+## Требования
+
+| Ресурс | Минимум | Рекомендуется |
+|--------|---------|---------------|
+| RAM    | 4 ГБ   | 8 ГБ+        |
+| CPU    | 2 ядра | 4 ядра+       |
+| Диск   | 50 ГБ SSD | 80 ГБ+ SSD |
+
+Также понадобятся:
+
+* **VPS с Linux** (Ubuntu 22.04+ / Debian 12+)
+* **Docker** и **Docker Compose** v2
+* **Домен** с DNS A-записью на IP сервера (для production)
+* **NGINX** или **Caddy** для HTTPS (рекомендуется для OAuth)
+
+> Если не нужны все сервисы, можно отключить Logflare, Realtime, Storage, imgproxy или Edge Runtime — это снизит потребление ресурсов.
+
+---
+
+## Установка Docker
+
+Если Docker ещё не установлен:
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+```
+
+Перелогинься, чтобы применить группу:
+
+```bash
+newgrp docker
+```
+
+---
+
+## Подготовка проекта
+
+Клонируем репозиторий Supabase и копируем Docker-окружение в отдельную директорию:
+
+```bash
+git clone --depth 1 https://github.com/supabase/supabase
+
+# Копируем только Docker-файлы в свой проект
+mkdir supabase-project
+cp -rf supabase/docker/* supabase-project
+cp supabase/docker/.env.example supabase-project/.env
+cd supabase-project
+
+# Подтягиваем образы
+docker compose pull
+```
+
+Если хочешь минимизировать объём загрузки, можно использовать sparse checkout:
+
+```bash
+git clone --filter=blob:none --no-checkout https://github.com/supabase/supabase
+cd supabase
+git sparse-checkout set --cone docker && git checkout master
+cd ..
+mkdir supabase-project
+cp -rf supabase/docker/* supabase-project
+cp supabase/docker/.env.example supabase-project/.env
+cd supabase-project
+docker compose pull
+```
+
+---
+
+## Генерация секретов
+
+> **Важно:** Никогда не запускай Supabase с дефолтными ключами из `.env.example`. Все секреты нужно заменить до первого запуска.
+
+В репозитории есть готовый скрипт для генерации ключей:
+
+```bash
+sh ./utils/generate-keys.sh
+```
+
+Скрипт сгенерирует `JWT_SECRET`, `ANON_KEY` и `SERVICE_ROLE_KEY` и покажет их в выводе. Проверь результат и убедись, что `.env` обновлён.
+
+### Что генерируется
+
+* **JWT_SECRET** — секрет для подписи и проверки JWT-токенов. Используется в Auth, PostgREST и других сервисах
+* **ANON_KEY** — публичный ключ с ролью `anon`. Безопасен для клиентского кода (ограниченные RLS-права)
+* **SERVICE_ROLE_KEY** — серверный ключ с ролью `service_role`. Полный доступ к БД — никогда не используй во фронтенде
+
+### Дополнительные секреты
+
+Помимо JWT-ключей, нужно сгенерировать ещё несколько секретов:
+
+| Переменная | Назначение | Генерация |
+|-----------|-----------|-----------|
+| `SECRET_KEY_BASE` | Шифрование в Realtime/Supavisor (64+ символов) | `openssl rand -base64 48` |
+| `VAULT_ENC_KEY` | Шифрование конфигов Supavisor (ровно 32 символа) | `openssl rand -hex 16` |
+| `PG_META_CRYPTO_KEY` | Шифрование connection string (32+ символов) | `openssl rand -base64 24` |
+| `LOGFLARE_PUBLIC_ACCESS_TOKEN` | Приём логов (32+ символов) | `openssl rand -base64 24` |
+| `LOGFLARE_PRIVATE_ACCESS_TOKEN` | Управление логами (32+ символов) | `openssl rand -base64 24` |
+| `S3_PROTOCOL_ACCESS_KEY_ID` | S3 логин | `openssl rand -hex 16` |
+| `S3_PROTOCOL_ACCESS_KEY_SECRET` | S3 пароль | `openssl rand -hex 32` |
+| `MINIO_ROOT_PASSWORD` | Пароль MinIO (8+ символов) | `openssl rand -hex 16` |
+
+---
+
+## Настройка .env
+
+Открываем `.env` и заполняем основные параметры:
+
+```bash
+############
+# Secrets — обязательно замени все значения!
+############
+POSTGRES_PASSWORD=your-super-secret-password   # Только буквы и цифры (без спецсимволов)
+JWT_SECRET=your-jwt-secret-here
+ANON_KEY=your-anon-key
+SERVICE_ROLE_KEY=your-service-role-key
+
+############
+# Dashboard
+############
+DASHBOARD_USERNAME=admin
+DASHBOARD_PASSWORD=your-dashboard-password     # Должен содержать хотя бы одну букву
+
+############
+# URLs
+############
+SUPABASE_PUBLIC_URL=https://supabase.your-domain.com  # Базовый URL для доступа
+API_EXTERNAL_URL=https://supabase.your-domain.com     # Внешний URL Auth
+SITE_URL=https://your-domain.com                       # URL приложения (редирект после OAuth)
+
+############
+# SMTP (опционально, для отправки email)
+############
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_SENDER_NAME=Your App
+SMTP_ADMIN_EMAIL=your-email@gmail.com
+```
+
+> **Про POSTGRES_PASSWORD:** используй только буквы и цифры — спецсимволы могут вызвать проблемы с URL-кодированием в connection string.
+
+---
+
+## Запуск
+
+```bash
+docker compose up -d
+```
+
+Проверяем, что всё поднялось:
+
+```bash
+docker compose ps
+```
+
+Все сервисы должны перейти в состояние `Up (healthy)` в течение минуты. Если что-то не запустилось — смотрим логи:
+
+```bash
+docker compose logs <service-name>
+```
+
+### Открытые порты
+
+| Порт | Сервис | Описание |
+|------|--------|----------|
+| 8000 | Kong Gateway | Dashboard + все API (REST, Auth, Storage, Realtime) |
+| 5432 | Supavisor | PostgreSQL (session mode) |
+| 6543 | Supavisor | PostgreSQL (transaction pooling) |
+
+Остальные сервисы работают внутри Docker-сети и не имеют внешних портов.
+
+---
+
+## Доступ к Studio
+
+Studio доступна через Kong API Gateway на порту `8000`:
+
+* Локально: `http://localhost:8000`
+* На VPS: `http://<your-ip>:8000`
+* С доменом: `https://supabase.your-domain.com` (через reverse proxy)
+
+Логин и пароль — из `DASHBOARD_USERNAME` и `DASHBOARD_PASSWORD`.
+
+---
+
+## Настройка NGINX reverse proxy
+
+Для production рекомендуется HTTPS — он обязателен для OAuth-провайдеров.
+
+```nginx
+# /etc/nginx/sites-available/supabase
+server {
+    listen 80;
+    server_name supabase.your-domain.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name supabase.your-domain.com;
+
+    ssl_certificate /etc/letsencrypt/live/supabase.your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/supabase.your-domain.com/privkey.pem;
+
+    # Все API и Dashboard проксируются через Kong
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Realtime (WebSocket)
+    location /realtime/ {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+```
+
+Активируем и получаем SSL-сертификат:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/supabase /etc/nginx/sites-enabled/
+sudo certbot --nginx -d supabase.your-domain.com
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+---
+
+## Edge Functions
+
+Edge Functions хранятся в `volumes/functions`. По умолчанию доступна функция `hello`:
+
+```
+https://supabase.your-domain.com/functions/v1/hello
+```
+
+Для добавления своей функции создай файл `volumes/functions/<name>/index.ts` и перезапусти сервис:
+
+```bash
+docker compose restart functions --no-deps
+```
+
+---
+
+## Подключение из приложения
+
+Устанавливаем клиент:
+
+```bash
+npm install @supabase/supabase-js
+```
+
+Подключаемся к self-hosted инстансу:
+
+```typescript
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  "https://supabase.your-domain.com",
+  "your-anon-key"
+);
+
+// Пример: получить данные из таблицы
+const { data, error } = await supabase
+  .from("posts")
+  .select("*");
+```
+
+Всё работает точно так же, как с облачным Supabase — те же SDK, те же методы.
+
+### Подключение к PostgreSQL напрямую
+
+Через Supavisor (рекомендуется):
+
+```bash
+# Session mode
+psql 'postgres://postgres.your-tenant-id:PASSWORD@supabase.your-domain.com:5432/postgres'
+
+# Transaction pooling
+psql 'postgres://postgres.your-tenant-id:PASSWORD@supabase.your-domain.com:6543/postgres'
+```
+
+---
+
+## Обновление
+
+Стабильные релизы выходят примерно раз в месяц. Для обновления:
+
+1. Проверь [changelog](https://github.com/supabase/supabase/blob/master/docker/CHANGELOG.md) и новые версии на [Docker Hub](https://hub.docker.com/u/supabase)
+2. Обнови теги образов в `docker-compose.yml` (формат: `supabase/service:YYYY.MM.DD-sha-hash`)
+3. Применяем:
+
+```bash
+docker compose pull
+docker compose down && docker compose up -d
+```
+
+> **Внимание:** Обновление вызывает даунтайм приложения. Перед обновлением обязательно сделай бэкап.
+
+---
+
+## Бэкапы
+
+### Ручной бэкап
+
+```bash
+docker exec supabase-db pg_dump -U postgres | gzip > backup_$(date +%Y%m%d).sql.gz
+```
+
+### Автоматический бэкап через cron
+
+```bash
+crontab -e
+
+# Бэкап каждый день в 3:00
+0 3 * * * docker exec supabase-db pg_dump -U postgres | gzip > /backups/supabase_$(date +\%Y\%m\%d).sql.gz
+```
+
+Не забудь создать директорию `/backups` и настроить ротацию старых файлов.
+
+---
+
+## Смена пароля PostgreSQL
+
+Если нужно изменить пароль базы данных:
+
+```bash
+sh ./utils/db-passwd.sh
+```
+
+Скрипт сгенерирует новый пароль, обновит роли в БД и `.env`. После этого перезапусти сервисы:
+
+```bash
+docker compose up -d --force-recreate
+```
+
+---
+
+## Возможные проблемы
+
+### Контейнер auth постоянно перезапускается
+
+```bash
+docker compose logs auth
+```
+
+Чаще всего причина — неправильный `JWT_SECRET` или отсутствие SMTP-настроек.
+
+### Studio не открывается
+
+Убедись, что Kong-контейнер запущен и порт `8000` доступен:
+
+```bash
+docker compose ps kong
+docker compose logs kong
+```
+
+### Ошибки CORS
+
+Добавь свой домен в `SITE_URL` и `ADDITIONAL_REDIRECT_URLS` в `.env`.
+
+### Rootless Docker
+
+Если используешь rootless Docker, укажи путь к сокету в `.env`:
+
+```bash
+DOCKER_SOCKET_LOCATION=/run/user/1000/docker.sock
+```
+
+---
+
+## Безопасность
+
+* Не коммить `.env` в репозиторий — добавь его в `.gitignore`
+* Для production используй менеджеры секретов (Doppler, Infisical, HashiCorp Vault, AWS Secrets Manager)
+* Обязательно настрой HTTPS — без него OAuth-провайдеры не работают
+* Ограничь доступ к PostgreSQL через файрвол, если открываешь порты наружу
+* Включи MFA для OAuth-провайдеров где возможно
+
+---
+
+## Удаление
+
+Если нужно полностью удалить Supabase:
+
+```bash
+# Остановить и удалить контейнеры + volumes
+docker compose down -v
+
+# Удалить данные (необратимо!)
+rm -rf volumes/db/data
+rm -rf volumes/storage
+```
+
+---
+
+## Итого
+
+Self-hosted Supabase — это полноценный BaaS на своём сервере:
+
+* PostgreSQL с realtime-подписками и connection pooling через Supavisor
+* Аутентификация с OAuth-провайдерами
+* S3-совместимое хранилище файлов с RLS-политиками
+* Edge Functions на Deno
+* Веб-панель Studio для управления
+
+Всё это бесплатно, без лимитов и с полным контролем над данными. Для pet-проектов и средних приложений — отличная альтернатива облаку.
+
+---
+
+Если что-то не работает — пиши в комментариях, разберёмся вместе.

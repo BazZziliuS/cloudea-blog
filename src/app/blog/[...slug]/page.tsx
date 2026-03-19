@@ -13,6 +13,8 @@ import { GeoGuard } from "@/components/geo-guard";
 import { getLocale } from "@/lib/i18n-server";
 import { ShareButtons } from "@/components/share-buttons";
 import { seo, blogPostJsonLd, getConfig } from "@/lib/config";
+import { TableOfContents } from "@/components/toc";
+import { getDictionary } from "@/lib/i18n";
 import { cookies } from "next/headers";
 
 export const revalidate = 3600;
@@ -98,6 +100,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const config = getConfig();
   const relatedPosts = getRelatedPosts(post.slug, post.tags, 3, locale);
   const seriesInfo = getSeriesInfo(post, locale);
+  const dict = await getDictionary(locale);
 
   // Edit on GitHub link
   const githubRepo = config.themeConfig.socials?.github;
@@ -115,7 +118,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <article className="mx-auto max-w-3xl px-6 py-16">
+      <div className="mx-auto max-w-5xl px-6 flex gap-10">
+      <article className="min-w-0 flex-1 py-16">
         {post.draft && isPreview && (
           <div className="mb-6 rounded-lg border border-yellow-500/50 bg-yellow-50 p-4 dark:bg-yellow-900/20">
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
@@ -258,6 +262,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         <BlogComments slug={post.slug} locale={locale} />
       </article>
+
+      <div className="hidden xl:block w-56 shrink-0 py-16">
+        <TableOfContents label={dict.blog.onThisPage} />
+      </div>
+      </div>
     </>
   );
 

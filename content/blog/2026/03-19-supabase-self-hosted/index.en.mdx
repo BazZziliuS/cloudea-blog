@@ -1,0 +1,547 @@
+---
+title: "Supabase Self-Hosted: Deploy Your Own Backend-as-a-Service"
+description: "Complete guide to deploying Supabase on your own server with Docker Compose. Setting up PostgreSQL, Auth, Storage, Studio and reverse proxy with NGINX."
+date: "2026-03-19"
+tags: ["self-hosting", "supabase", "docker", "postgresql"]
+---
+
+> All the power of Firebase — but on your own hardware with PostgreSQL under the hood.
+
+---
+
+## What is Supabase?
+
+[Supabase](https://supabase.com) is an open-source Firebase alternative built on top of PostgreSQL. Out of the box it provides:
+
+* **PostgreSQL** — a full-featured relational database
+* **Auth** — authentication via email, OAuth (GitHub, Google, Discord, etc.)
+* **Storage** — S3-compatible file storage with access policies
+* **Realtime** — WebSocket subscriptions to database changes
+* **Edge Functions** — serverless functions on Deno
+* **Studio** — web dashboard to manage everything
+
+Cloud Supabase is free for small projects but has limits. The self-hosted version removes all restrictions.
+
+---
+
+## Supabase vs Plain PostgreSQL vs Others
+
+Before deploying Supabase, it's worth understanding how it differs from bare PostgreSQL and other solutions.
+
+### Supabase vs PostgreSQL
+
+| | PostgreSQL | Supabase |
+|---|---|---|
+| **Database** | PostgreSQL | PostgreSQL (same engine) |
+| **API** | None — you need your own backend (Express, FastAPI, etc.) | REST and GraphQL out of the box via PostgREST |
+| **Authentication** | None — implement yourself or use Keycloak, Auth0 | Built-in Auth with OAuth, email, MFA |
+| **File Storage** | None — set up MinIO, S3, etc. separately | S3-compatible Storage with RLS policies |
+| **Realtime** | LISTEN/NOTIFY (low-level) | WebSocket subscriptions to tables out of the box |
+| **Admin Panel** | pgAdmin / DBeaver (separate) | Studio — all in one |
+| **Resource Usage** | ~100 MB RAM | ~2–4 GB RAM (13+ containers) |
+| **Setup Complexity** | Minimal | Medium (Docker Compose + secrets) |
+
+**When plain PostgreSQL is enough:**
+* You already have a backend on Express/FastAPI/Django
+* You don't need built-in authentication — you use your own or an external one
+* Minimal server load is important
+* You need maximum control over each component
+
+**When to choose Supabase:**
+* You want an API quickly without writing a backend
+* You need Auth, Storage, and Realtime out of the box
+* You're building a frontend-first app (Next.js, Nuxt, SvelteKit)
+* You don't want to glue 5 different tools together manually
+
+### Supabase vs Firebase
+
+| | Firebase | Supabase |
+|---|---|---|
+| **Database** | Firestore (NoSQL, documents) | PostgreSQL (relational) |
+| **Queries** | Limited — no JOINs, no SQL | Full SQL, JOINs, indexes, CTEs |
+| **Open Source** | No | Yes |
+| **Self-hosted** | No (Google Cloud only) | Yes |
+| **Vendor lock-in** | Strong — migration is painful | Minimal — it's just PostgreSQL |
+| **Pricing** | Pay-per-read/write (can surprise you) | Fixed price or free (self-hosted) |
+| **Realtime** | Built-in, mature | Built-in, actively developing |
+| **Edge Functions** | Cloud Functions (Node.js) | Edge Functions (Deno) |
+
+### Supabase vs Appwrite
+
+| | Appwrite | Supabase |
+|---|---|---|
+| **Database** | MariaDB (hidden behind SDK) | PostgreSQL (direct access) |
+| **SQL access** | No — SDK/REST only | Full SQL + SDK + REST |
+| **DB Extensions** | No | pgvector, PostGIS, pg_cron and hundreds more |
+| **Self-hosted** | Yes | Yes |
+| **Dashboard** | Custom (nice UI) | Studio |
+| **Maturity** | Younger, API may change | More stable, built on proven tools |
+
+### Comparison Summary
+
+* **Plain PostgreSQL** — if you already have a backend and just need a database
+* **Firebase** — if you're okay with NoSQL, vendor lock-in, and Google Cloud
+* **Appwrite** — if you don't need direct SQL and like their SDK approach
+* **Supabase** — if you want a full-featured PostgreSQL with batteries included
+
+### What About S3, Redis, and MongoDB?
+
+Supabase is often seen as a "replacement for everything", but that's not quite right.
+
+**S3 / File Storage** — yes, partially replaces it. Supabase Storage provides an S3-compatible API for storing files (avatars, documents, images). Under the hood you can use local storage, MinIO, or actual AWS S3 / Cloudflare R2 as a backend. But it's a file storage with RLS policies, not a full-scale object storage for terabytes of data — for that, use MinIO or S3 directly.
+
+**Redis** — no, it doesn't replace it. Redis is an in-memory store of a completely different class:
+
+| Task | Redis | Supabase / PostgreSQL |
+|------|-------|----------------------|
+| Caching | Microseconds, TTL out of the box | No built-in cache |
+| Job Queues | BullMQ, Celery, Sidekiq | No (need a separate worker) |
+| Pub/Sub | Microsecond latency | LISTEN/NOTIFY — works, but slower |
+| Rate Limiting | Atomic counters, Lua scripts | Possible, but not idiomatic |
+| Sessions | Standard approach | Possible, but Redis is faster |
+
+If you need caching, queues, or rate limiting — Redis is still needed separately.
+
+**MongoDB** — partially replaces it, depends on the use case:
+
+| Task | MongoDB | PostgreSQL (Supabase) |
+|------|---------|----------------------|
+| JSON Documents | Native format (BSON) | `jsonb` — covers 90% of cases with indexes |
+| Schema-less | Yes | `jsonb` columns — flexible, can mix with strict schema |
+| SQL and JOINs | No (aggregation pipeline) | Full SQL |
+| Horizontal Sharding | Built-in | Not out of the box (need Citus) |
+| Full-text Search | Atlas Search | `tsvector` / `pg_trgm` — works, but easier to use Meilisearch |
+| Extensions | No | pgvector, PostGIS, pg_cron and hundreds more |
+
+If you use MongoDB just for storing JSON — PostgreSQL with `jsonb` will cover it, with the bonus of transactions, JOINs, and strict typing where needed. But if you need horizontal sharding across dozens of servers — PostgreSQL can't do that without extensions.
+
+---
+
+## Why Self-Host?
+
+* **No limits** — no restrictions on rows, requests, or files
+* **Data control** — everything stays on your server
+* **Customization** — your own PostgreSQL extensions, Auth settings, custom SMTP
+* **Cost** — a VPS for $5–10/mo instead of paid Supabase plans
+
+---
+
+## Requirements
+
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| RAM      | 4 GB    | 8 GB+       |
+| CPU      | 2 cores | 4 cores+    |
+| Disk     | 50 GB SSD | 80 GB+ SSD |
+
+You'll also need:
+
+* **Linux VPS** (Ubuntu 22.04+ / Debian 12+)
+* **Docker** and **Docker Compose** v2
+* **Domain** with a DNS A record pointing to your server IP (for production)
+* **NGINX** or **Caddy** for HTTPS (recommended for OAuth)
+
+> If you don't need all services, you can disable Logflare, Realtime, Storage, imgproxy, or Edge Runtime to reduce resource consumption.
+
+---
+
+## Installing Docker
+
+If Docker isn't installed yet:
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+```
+
+Re-login to apply the group:
+
+```bash
+newgrp docker
+```
+
+---
+
+## Project Setup
+
+Clone the Supabase repository and copy the Docker environment to a separate directory:
+
+```bash
+git clone --depth 1 https://github.com/supabase/supabase
+
+# Copy only Docker files to your project
+mkdir supabase-project
+cp -rf supabase/docker/* supabase-project
+cp supabase/docker/.env.example supabase-project/.env
+cd supabase-project
+
+# Pull images
+docker compose pull
+```
+
+If you want to minimize download size, you can use sparse checkout:
+
+```bash
+git clone --filter=blob:none --no-checkout https://github.com/supabase/supabase
+cd supabase
+git sparse-checkout set --cone docker && git checkout master
+cd ..
+mkdir supabase-project
+cp -rf supabase/docker/* supabase-project
+cp supabase/docker/.env.example supabase-project/.env
+cd supabase-project
+docker compose pull
+```
+
+---
+
+## Generating Secrets
+
+> **Important:** Never start Supabase with default keys from `.env.example`. All secrets must be replaced before the first launch.
+
+The repository includes a ready-made script for key generation:
+
+```bash
+sh ./utils/generate-keys.sh
+```
+
+The script will generate `JWT_SECRET`, `ANON_KEY`, and `SERVICE_ROLE_KEY` and display them in the output. Review the result and make sure `.env` is updated.
+
+### What Gets Generated
+
+* **JWT_SECRET** — secret for signing and verifying JWT tokens. Used by Auth, PostgREST, and other services
+* **ANON_KEY** — public key with the `anon` role. Safe for client-side code (limited RLS permissions)
+* **SERVICE_ROLE_KEY** — server key with the `service_role` role. Full database access — never use in the frontend
+
+### Additional Secrets
+
+Besides JWT keys, you need to generate several more secrets:
+
+| Variable | Purpose | Generation |
+|----------|---------|------------|
+| `SECRET_KEY_BASE` | Realtime/Supavisor encryption (64+ chars) | `openssl rand -base64 48` |
+| `VAULT_ENC_KEY` | Supavisor config encryption (exactly 32 chars) | `openssl rand -hex 16` |
+| `PG_META_CRYPTO_KEY` | Connection string encryption (32+ chars) | `openssl rand -base64 24` |
+| `LOGFLARE_PUBLIC_ACCESS_TOKEN` | Log ingestion (32+ chars) | `openssl rand -base64 24` |
+| `LOGFLARE_PRIVATE_ACCESS_TOKEN` | Log management (32+ chars) | `openssl rand -base64 24` |
+| `S3_PROTOCOL_ACCESS_KEY_ID` | S3 username | `openssl rand -hex 16` |
+| `S3_PROTOCOL_ACCESS_KEY_SECRET` | S3 password | `openssl rand -hex 32` |
+| `MINIO_ROOT_PASSWORD` | MinIO password (8+ chars) | `openssl rand -hex 16` |
+
+---
+
+## Configuring .env
+
+Open `.env` and fill in the main parameters:
+
+```bash
+############
+# Secrets — replace all values!
+############
+POSTGRES_PASSWORD=your-super-secret-password   # Letters and numbers only (no special chars)
+JWT_SECRET=your-jwt-secret-here
+ANON_KEY=your-anon-key
+SERVICE_ROLE_KEY=your-service-role-key
+
+############
+# Dashboard
+############
+DASHBOARD_USERNAME=admin
+DASHBOARD_PASSWORD=your-dashboard-password     # Must contain at least one letter
+
+############
+# URLs
+############
+SUPABASE_PUBLIC_URL=https://supabase.your-domain.com  # Base URL for access
+API_EXTERNAL_URL=https://supabase.your-domain.com     # External Auth URL
+SITE_URL=https://your-domain.com                       # App URL (OAuth redirect)
+
+############
+# SMTP (optional, for sending emails)
+############
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_SENDER_NAME=Your App
+SMTP_ADMIN_EMAIL=your-email@gmail.com
+```
+
+> **About POSTGRES_PASSWORD:** use only letters and numbers — special characters can cause URL encoding issues in connection strings.
+
+---
+
+## Launch
+
+```bash
+docker compose up -d
+```
+
+Check that everything is up:
+
+```bash
+docker compose ps
+```
+
+All services should reach `Up (healthy)` status within a minute. If something didn't start — check the logs:
+
+```bash
+docker compose logs <service-name>
+```
+
+### Exposed Ports
+
+| Port | Service | Description |
+|------|---------|-------------|
+| 8000 | Kong Gateway | Dashboard + all APIs (REST, Auth, Storage, Realtime) |
+| 5432 | Supavisor | PostgreSQL (session mode) |
+| 6543 | Supavisor | PostgreSQL (transaction pooling) |
+
+Other services run inside the Docker network and don't have external ports.
+
+---
+
+## Accessing Studio
+
+Studio is available through the Kong API Gateway on port `8000`:
+
+* Locally: `http://localhost:8000`
+* On VPS: `http://<your-ip>:8000`
+* With domain: `https://supabase.your-domain.com` (via reverse proxy)
+
+Login and password are from `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD`.
+
+---
+
+## Setting Up NGINX Reverse Proxy
+
+For production, HTTPS is recommended — it's required for OAuth providers.
+
+```nginx
+# /etc/nginx/sites-available/supabase
+server {
+    listen 80;
+    server_name supabase.your-domain.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name supabase.your-domain.com;
+
+    ssl_certificate /etc/letsencrypt/live/supabase.your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/supabase.your-domain.com/privkey.pem;
+
+    # All APIs and Dashboard proxied through Kong
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Realtime (WebSocket)
+    location /realtime/ {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+}
+```
+
+Activate and get an SSL certificate:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/supabase /etc/nginx/sites-enabled/
+sudo certbot --nginx -d supabase.your-domain.com
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+---
+
+## Edge Functions
+
+Edge Functions are stored in `volumes/functions`. A `hello` function is available by default:
+
+```
+https://supabase.your-domain.com/functions/v1/hello
+```
+
+To add your own function, create a file `volumes/functions/<name>/index.ts` and restart the service:
+
+```bash
+docker compose restart functions --no-deps
+```
+
+---
+
+## Connecting from Your App
+
+Install the client:
+
+```bash
+npm install @supabase/supabase-js
+```
+
+Connect to the self-hosted instance:
+
+```typescript
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  "https://supabase.your-domain.com",
+  "your-anon-key"
+);
+
+// Example: fetch data from a table
+const { data, error } = await supabase
+  .from("posts")
+  .select("*");
+```
+
+Everything works exactly the same as with cloud Supabase — same SDKs, same methods.
+
+### Connecting to PostgreSQL Directly
+
+Via Supavisor (recommended):
+
+```bash
+# Session mode
+psql 'postgres://postgres.your-tenant-id:PASSWORD@supabase.your-domain.com:5432/postgres'
+
+# Transaction pooling
+psql 'postgres://postgres.your-tenant-id:PASSWORD@supabase.your-domain.com:6543/postgres'
+```
+
+---
+
+## Updating
+
+Stable releases come out roughly once a month. To update:
+
+1. Check the [changelog](https://github.com/supabase/supabase/blob/master/docker/CHANGELOG.md) and new versions on [Docker Hub](https://hub.docker.com/u/supabase)
+2. Update image tags in `docker-compose.yml` (format: `supabase/service:YYYY.MM.DD-sha-hash`)
+3. Apply:
+
+```bash
+docker compose pull
+docker compose down && docker compose up -d
+```
+
+> **Warning:** Updates cause application downtime. Always back up before updating.
+
+---
+
+## Backups
+
+### Manual Backup
+
+```bash
+docker exec supabase-db pg_dump -U postgres | gzip > backup_$(date +%Y%m%d).sql.gz
+```
+
+### Automatic Backup via Cron
+
+```bash
+crontab -e
+
+# Backup every day at 3:00 AM
+0 3 * * * docker exec supabase-db pg_dump -U postgres | gzip > /backups/supabase_$(date +\%Y\%m\%d).sql.gz
+```
+
+Don't forget to create the `/backups` directory and set up rotation for old files.
+
+---
+
+## Changing the PostgreSQL Password
+
+If you need to change the database password:
+
+```bash
+sh ./utils/db-passwd.sh
+```
+
+The script will generate a new password, update roles in the database and `.env`. Then restart the services:
+
+```bash
+docker compose up -d --force-recreate
+```
+
+---
+
+## Troubleshooting
+
+### Auth container keeps restarting
+
+```bash
+docker compose logs auth
+```
+
+Most common cause — incorrect `JWT_SECRET` or missing SMTP settings.
+
+### Studio won't open
+
+Make sure the Kong container is running and port `8000` is accessible:
+
+```bash
+docker compose ps kong
+docker compose logs kong
+```
+
+### CORS errors
+
+Add your domain to `SITE_URL` and `ADDITIONAL_REDIRECT_URLS` in `.env`.
+
+### Rootless Docker
+
+If using rootless Docker, specify the socket path in `.env`:
+
+```bash
+DOCKER_SOCKET_LOCATION=/run/user/1000/docker.sock
+```
+
+---
+
+## Security
+
+* Don't commit `.env` to the repository — add it to `.gitignore`
+* For production, use secret managers (Doppler, Infisical, HashiCorp Vault, AWS Secrets Manager)
+* Always set up HTTPS — OAuth providers won't work without it
+* Restrict PostgreSQL access via firewall if you expose ports externally
+* Enable MFA for OAuth providers where possible
+
+---
+
+## Uninstalling
+
+To completely remove Supabase:
+
+```bash
+# Stop and remove containers + volumes
+docker compose down -v
+
+# Delete data (irreversible!)
+rm -rf volumes/db/data
+rm -rf volumes/storage
+```
+
+---
+
+## Summary
+
+Self-hosted Supabase is a full-featured BaaS on your own server:
+
+* PostgreSQL with realtime subscriptions and connection pooling via Supavisor
+* Authentication with OAuth providers
+* S3-compatible file storage with RLS policies
+* Edge Functions on Deno
+* Studio web dashboard for management
+
+All of this for free, with no limits and full control over your data. For pet projects and medium-sized applications — an excellent alternative to the cloud.
+
+---
+
+If something doesn't work — leave a comment, we'll figure it out together.
