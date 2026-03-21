@@ -62,7 +62,7 @@ export default async function DocPage({ params }: DocPageProps) {
     notFound();
   }
 
-  const content = await compileMDX(doc.content);
+  const content = await compileMDX(doc.content, slug.join("/"), "docs");
   const locale = await getLocale();
   const dict = getDictionary(locale);
   const jsonLd = docJsonLd(doc);

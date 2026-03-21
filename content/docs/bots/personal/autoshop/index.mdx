@@ -1,0 +1,125 @@
+---
+title: "AutoShop"
+description: "Telegram бот-магазин цифровых товаров с Web App витриной"
+order: 9
+---
+
+## Описание
+Готовый Telegram бот-магазин для продажи цифровых товаров с полноценной Web App витриной внутри Telegram. 6 платёжных систем, 10-уровневая реферальная система, админ-панель и мгновенная выдача товаров.
+
+## Технологический стек
+![Python](https://img.shields.io/badge/Python-3.14+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![Aiogram](https://img.shields.io/badge/Aiogram-3.26-green?style=for-the-badge)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
+
+**Основные библиотеки:**
+- `aiogram 3.26` — Telegram Bot API
+- `FastAPI` + `uvicorn` — REST API для Web App
+- `SQLAlchemy 2` + `Alembic` — ORM и миграции
+- `Next.js 16` + `Tailwind CSS v4` + `shadcn/ui` — Web App витрина
+
+## Основные функции
+
+### Для клиентов
+- **Каталог товаров** — категории с фото, описаниями и наличием
+- **6 способов оплаты** — CryptoBot, ЮMoney, Telegram Stars, Heleket, CrystalPay, Boosty
+- **Мгновенная выдача** — текст в чат, файлы (фото/видео/документы) автоматически после покупки
+- **Скидки** — три уровня: на товар, категорию, глобальная
+- **Промокоды** — активация на пополнение баланса
+- **Реферальная программа** — 10 рангов, бонус к пополнению, автовыплаты
+- **Личный кабинет** — баланс, история покупок, повторная отправка товара
+
+### Для владельца
+- **Управление товарами** — категории, позиции, массовое добавление, файловые и текстовые товары
+- **Аналитика** — статистика за день/неделю/месяц/всё время
+- **Управление пользователями** — поиск, баланс, рассылки
+- **Промокоды** — создание, лимит использований, вкл/выкл
+- **Автобэкап БД** — скачивание базы и логов
+
+## Платёжные системы
+
+| Система | Валюты | Настройка |
+|---------|--------|-----------|
+| **CryptoBot** | BTC, TON, USDT, ETH | API токен |
+| **ЮMoney** | RUB (карты, СБП) | OAuth токен |
+| **Telegram Stars** | Stars → RUB | Из коробки |
+| **Heleket** | BTC, ETH, USDT, LTC | Merchant ID + API Key |
+| **CrystalPay** | Крипто + фиат | Login + Secret |
+| **Boosty** | RUB (донаты) | Access Token + Blog |
+
+## Web App витрина
+
+Полноценный магазин внутри Telegram на Next.js 16 + Tailwind CSS v4 + shadcn/ui.
+
+Включается одной строкой: `WEBAPP_ENABLED=True`.
+
+### Скриншоты витрины
+
+<table>
+<tbody>
+<tr>
+<td width="33%" align="center"><b>Каталог</b><br/><img src="./01-catalog.png" alt="Каталог" width="250"/></td>
+<td width="33%" align="center"><b>Категория</b><br/><img src="./02-category.png" alt="Категория" width="250"/></td>
+<td width="33%" align="center"><b>Товар</b><br/><img src="./03-product.png" alt="Товар" width="250"/></td>
+</tr>
+<tr>
+<td align="center"><b>Профиль</b><br/><img src="./04-profile.png" alt="Профиль" width="250"/></td>
+<td align="center"><b>Детали покупки</b><br/><img src="./05-purchase-detail.png" alt="Детали покупки" width="250"/></td>
+<td align="center"><b>Рефералы</b><br/><img src="./06-referrals.png" alt="Рефералы" width="250"/></td>
+</tr>
+</tbody>
+</table>
+
+### Скриншоты админ-панели
+
+<table>
+<tbody>
+<tr>
+<td width="33%" align="center"><b>Статистика</b><br/><img src="./07-admin-stats.png" alt="Статистика" width="250"/></td>
+<td width="33%" align="center"><b>Товары</b><br/><img src="./08-admin-products.png" alt="Товары" width="250"/></td>
+<td width="33%" align="center"><b>Юзеры</b><br/><img src="./09-admin-users.png" alt="Юзеры" width="250"/></td>
+</tr>
+<tr>
+<td align="center"><b>Промокоды</b><br/><img src="./10-admin-promo.png" alt="Промокоды" width="250"/></td>
+<td align="center"><b>Создание промокода</b><br/><img src="./11-admin-promo-create.png" alt="Создание промокода" width="250"/></td>
+<td align="center"><b>Редактирование</b><br/><img src="./12-admin-edit-position.png" alt="Редактирование" width="250"/></td>
+</tr>
+</tbody>
+</table>
+
+## Реферальная программа
+
+| Ранг | Рефералов | Бонус | Награда |
+|------|-----------|-------|---------|
+| Новичок | 0 | 3% | — |
+| Партнер | 5 | 5% | 50₽ |
+| Агент | 10 | 7% | 100₽ |
+| Менеджер | 20 | 10% | 200₽ |
+| Директор | 30 | 12% | 350₽ |
+| Эксперт | 50 | 15% | 500₽ |
+| Мастер | 75 | 17% | 750₽ |
+| Легенда | 100 | 19% | 1000₽ |
+| Титан | 150 | 22% | 1500₽ |
+| Магнат | 200 | 25% | 2500₽ |
+
+Все уровни, проценты и награды настраиваются.
+
+---
+
+## СТОИМОСТЬ
+
+| Пакет | Что входит | Цена |
+|-------|-----------|------|
+| **Стандарт** | Бот + 6 платёжек + рефералы + промокоды + скидки | **4 990₽** |
+| **Премиум** | Стандарт + Web App витрина + админка в вебе + Docker + Nginx | **8 990₽** |
+| **Под ключ** | Премиум + установка на ваш сервер + домен + SSL + 30 дней поддержки | **14 990₽** |
+
+> 💎 **Разовая оплата. Без подписок. Исходный код — ваш навсегда.**
+
+---
+
+## Контакты
+Связаться: [BazZziliuS](https://t.me/BazZziliuS)

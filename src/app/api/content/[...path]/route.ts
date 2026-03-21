@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const BLOG_DIR = path.join(process.cwd(), "content", "blog");
+const CONTENT_DIR = path.join(process.cwd(), "content");
+const ALLOWED_ROOTS = ["blog", "docs"] as const;
 
 const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",
@@ -22,11 +23,18 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> }
 ) {
   const { path: segments } = await params;
-  const filePath = path.join(BLOG_DIR, ...segments);
+
+  // First segment must be an allowed root (blog, docs)
+  const root = segments[0] as (typeof ALLOWED_ROOTS)[number];
+  if (!ALLOWED_ROOTS.includes(root)) {
+    return new NextResponse("Not Found", { status: 404 });
+  }
+
+  const filePath = path.join(CONTENT_DIR, ...segments);
 
   // Security: prevent directory traversal
   const resolved = path.resolve(filePath);
-  if (!resolved.startsWith(path.resolve(BLOG_DIR))) {
+  if (!resolved.startsWith(path.resolve(CONTENT_DIR))) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 

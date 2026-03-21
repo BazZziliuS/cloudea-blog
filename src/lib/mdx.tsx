@@ -12,12 +12,12 @@ import { GeoHide } from "@/components/geo-hide";
 
 /**
  * Rewrite relative image/link paths in MDX content to point to the content API.
- * E.g., `./screenshot.png` → `/api/content/2025/05-17-n8n/screenshot.png`
+ * E.g., `./screenshot.png` → `/api/content/blog/2025/05-17-n8n/screenshot.png`
  */
-function rewriteRelativePaths(source: string, slug?: string): string {
+function rewriteRelativePaths(source: string, slug?: string, contentType: "blog" | "docs" = "blog"): string {
   if (!slug) return source;
 
-  const assetBase = `/api/content/${slug}`;
+  const assetBase = `/api/content/${contentType}/${slug}`;
 
   return source
     // Markdown images: ![alt](./image.png) or ![alt](image.png)
@@ -42,9 +42,10 @@ function rewriteRelativePaths(source: string, slug?: string): string {
 
 export async function compileMDX(
   source: string,
-  slug?: string
+  slug?: string,
+  contentType: "blog" | "docs" = "blog"
 ): Promise<ReactElement> {
-  const processed = rewriteRelativePaths(source, slug);
+  const processed = rewriteRelativePaths(source, slug, contentType);
 
   const { content } = await compile({
     source: processed,
