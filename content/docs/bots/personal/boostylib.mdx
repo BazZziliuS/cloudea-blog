@@ -1,0 +1,159 @@
+---
+title: "boostylib"
+description: "Асинхронная Python-библиотека для работы с Boosty.to API"
+order: 10
+---
+
+## Описание
+Асинхронная Python-библиотека для Boosty.to API. Позволяет управлять подписками, постами, донатами и автоматизировать взаимодействие с платформой.
+
+## Ссылки
+- [GitHub](https://github.com/BazZziliuS/boostylib)
+- [PyPI](https://pypi.org/project/boostylib/)
+
+## Технологический стек
+![Python](https://img.shields.io/badge/Python-3.14+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063?style=for-the-badge&logo=pydantic&logoColor=white)
+![httpx](https://img.shields.io/badge/httpx-0.27+-blue?style=for-the-badge)
+![MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
+**Зависимости:**
+- `httpx` — асинхронный HTTP-клиент
+- `pydantic v2` — валидация данных
+- `pydantic-settings` — конфигурация через ENV
+
+## Установка
+
+```bash
+pip install boostylib
+```
+
+или через uv:
+
+```bash
+uv add boostylib
+```
+
+## Основные возможности
+- **Подписчики** — список, проверка статуса, email и платежи, асинхронная итерация
+- **Контент** — создание постов через fluent PostBuilder, контроль доступа по уровню подписки или донату
+- **Уровни подписок** — CRUD: создание, список, удаление
+- **Цели** — управление целями по сумме и количеству подписчиков
+- **Медиа** — загрузка изображений, файлов, видео, аудио
+- **События** — polling + декораторы для новых подписок, комментариев, отписок
+- **Кэширование** — in-memory с TTL, подключаемые бэкенды
+- **Синхронный клиент** — `SyncBoostyClient` для не-async кода
+
+## Примеры
+
+### Проверка подписки
+
+```python
+from boostylib import BoostyClient
+
+async with BoostyClient(access_token="token") as client:
+    status = await client.subscriptions.verify_subscription("blog", "user_id")
+    if status.is_subscribed:
+        print(f"Level: {status.level.name}, Paid: {status.is_paid}")
+```
+
+### Список подписчиков
+
+```python
+async with BoostyClient(access_token="...") as client:
+    async for sub in client.subscriptions.iter_subscribers("blog"):
+        if sub.is_paid:
+            print(f"{sub.name}: {sub.email} — {sub.payments} RUB")
+```
+
+### Создание поста
+
+```python
+from boostylib.builders import PostBuilder
+
+post = (PostBuilder()
+    .title("Premium Content")
+    .text("Exclusive material")
+    .access_level(level_id="premium_id")
+    .build())
+await client.posts.create_post("blog", post)
+```
+
+### Обработка событий
+
+```python
+from boostylib import EventType
+
+@client.on(EventType.NEW_SUBSCRIPTION)
+async def on_subscribe(event):
+    await client.comments.create_comment(
+        event.blog_username, event.welcome_post_id,
+        f"Welcome {event.user.name}!")
+
+@client.on(EventType.NEW_COMMENT)
+async def on_comment(event):
+    await client.comments.create_comment(
+        event.blog_username, event.post_id,
+        f"Thanks, {event.user.name}!",
+        reply_to=str(event.comment_id))
+
+async with client:
+    await client.start_polling()
+```
+
+### Загрузка файлов
+
+```python
+from pathlib import Path
+
+media = await client.media.upload_file(
+    Path("./source.zip"), filename="source.zip")
+post = (PostBuilder()
+    .title("Sources")
+    .file(media_id=media.id, filename=media.filename)
+    .access_level(level_id="premium")
+    .build())
+```
+
+### Синхронный клиент
+
+```python
+from boostylib.sync import SyncBoostyClient
+
+with SyncBoostyClient(access_token="...") as client:
+    user = client.users.get_current_user()
+    subscribers = client.subscriptions.get_subscribers("blog")
+```
+
+## Конфигурация
+
+Через переменные окружения:
+
+```
+BOOSTY_ACCESS_TOKEN=...
+BOOSTY_REFRESH_TOKEN=...
+BOOSTY_DEVICE_ID=...
+BOOSTY_TIMEOUT=30
+BOOSTY_MAX_RETRIES=3
+BOOSTY_POLL_INTERVAL=60
+```
+
+Или программно:
+
+```python
+from boostylib import BoostySettings
+
+settings = BoostySettings(timeout=10.0, max_retries=5, debug=True)
+client = BoostyClient(settings=settings, access_token="...")
+```
+
+## Техническое
+
+- PEP 561 typed — полная поддержка `mypy --strict`
+- Автообновление токенов с pluggable storage
+- Retry с exponential backoff и rate limiting
+- Middleware pipeline для кастомной обработки запросов
+- Browser-like HTTP fingerprint для write-операций
+
+## Контакты
+Связаться: [BazZziliuS](https://t.me/BazZziliuS)
