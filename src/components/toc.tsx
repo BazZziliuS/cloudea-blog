@@ -158,7 +158,7 @@ export function TableOfContents({ label }: { label?: string }) {
   };
 
   return (
-    <nav className="sticky top-20">
+    <nav className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
       <p className="mb-3 text-sm font-semibold text-foreground">
         {label ?? "On this page"}
       </p>
