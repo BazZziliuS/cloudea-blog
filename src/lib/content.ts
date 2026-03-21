@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { execSync } from "child_process";
 import matter from "gray-matter";
 import readingTime from "reading-time";
 import { z } from "zod";
@@ -193,6 +194,19 @@ function findIndexFile(dir: string, prefix = "index"): string | null {
     if (fs.existsSync(p)) return p;
   }
   return null;
+}
+
+/** Get last modified date from git history, falling back to fs mtime */
+function getLastModified(filePath: string): string {
+  try {
+    const result = execSync(`git log -1 --format=%cI -- "${filePath}"`, {
+      encoding: "utf-8",
+      cwd: process.cwd(),
+      stdio: ["pipe", "pipe", "ignore"],
+    }).trim();
+    if (result) return result;
+  } catch { /* ignore */ }
+  return fs.statSync(filePath).mtime.toISOString();
 }
 
 /** Check if a file has a supported content extension */
@@ -470,7 +484,6 @@ export function getDocBySlug(slug: string[]): Doc {
 
   const fileContents = fs.readFileSync(actualPath, "utf-8");
   const { data, content } = matter(fileContents);
-  const stats = fs.statSync(actualPath);
   const validated = validateDocFrontmatter(data, actualPath);
 
   // If this is a category index page (e.g. ["getting-started"] from index.mdx),
@@ -485,7 +498,7 @@ export function getDocBySlug(slug: string[]): Doc {
     content,
     category,
     order: validated.order,
-    lastModified: stats.mtime.toISOString(),
+    lastModified: getLastModified(actualPath),
   };
 }
 
@@ -525,7 +538,6 @@ export function getDocsIndex(): Doc | null {
 
   const fileContents = fs.readFileSync(indexPath, "utf-8");
   const { data, content } = matter(fileContents);
-  const stats = fs.statSync(indexPath);
   const validated = validateDocFrontmatter(data, indexPath);
 
   return {
@@ -535,7 +547,7 @@ export function getDocsIndex(): Doc | null {
     content,
     category: "__root__",
     order: validated.order,
-    lastModified: stats.mtime.toISOString(),
+    lastModified: getLastModified(indexPath),
   };
 }
 

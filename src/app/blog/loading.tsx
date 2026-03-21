@@ -38,19 +38,41 @@ export default function BlogLoading() {
 
         <aside className="hidden w-64 shrink-0 lg:block">
           <div className="sticky top-20 space-y-8 animate-pulse">
+            {/* Tags */}
             <div>
-              <div className="h-4 w-16 rounded bg-muted mb-3" />
+              <div className="flex items-center justify-between mb-3">
+                <div className="h-4 w-16 rounded bg-muted" />
+                <div className="h-3 w-12 rounded bg-muted" />
+              </div>
               <div className="flex flex-wrap gap-2">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="h-7 w-16 rounded-md bg-muted" />
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div key={i} className="h-7 rounded-md bg-muted" style={{ width: `${48 + (i % 3) * 16}px` }} />
                 ))}
               </div>
             </div>
+
+            {/* Recent posts */}
             <div>
               <div className="h-4 w-32 rounded bg-muted mb-3" />
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="h-8 w-full rounded-md bg-muted" />
+                ))}
+              </div>
+            </div>
+
+            {/* Archive */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="h-4 w-16 rounded bg-muted" />
+                <div className="h-3 w-12 rounded bg-muted" />
+              </div>
+              <div className="space-y-1">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-md px-2.5 py-1.5">
+                    <div className="h-4 w-12 rounded bg-muted" />
+                    <div className="h-3 w-6 rounded bg-muted" />
+                  </div>
                 ))}
               </div>
             </div>
