@@ -1,3 +1,15 @@
+# [1.13.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.12.0...v1.13.0) (2026-03-21)
+
+
+### Bug Fixes
+
+* **blog:** remove duplicate h1 headings and fix toc overflow ([3b1cd8a](https://github.com/BazZziliuS/cloudea-blog/commit/3b1cd8acfb37fa6e608311ca06908542e1ae9ce2))
+
+
+### Features
+
+* **docs:** add autoshop bot page and image support for docs ([3b13c64](https://github.com/BazZziliuS/cloudea-blog/commit/3b13c64fcea33d1c4ec0b40f6695b0c9b6fc46c4))
+
 # [1.12.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.11.3...v1.12.0) (2026-03-19)
 
 
