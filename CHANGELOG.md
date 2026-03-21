@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.11.3...v1.12.0) (2026-03-19)
+
+
+### Features
+
+* **blog:** add supabase self-hosted post and collapsible TOC sidebar ([ad6efba](https://github.com/BazZziliuS/cloudea-blog/commit/ad6efba1c3df93dfcee4d2f953140c5146dff8c0))
+
 ## [1.11.3](https://github.com/BazZziliuS/cloudea-blog/compare/v1.11.2...v1.11.3) (2026-03-15)
 
 
