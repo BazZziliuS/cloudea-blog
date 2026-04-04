@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/BazZziliuS/cloudea-blog/compare/v1.13.0...v1.13.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* **ui:** update loading skeletons and use git dates for docs ([90e7d2c](https://github.com/BazZziliuS/cloudea-blog/commit/90e7d2c4b8ff6eeb1e082aeff3192498f8bc2a1c))
+
 # [1.13.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.12.0...v1.13.0) (2026-03-21)
 
 
