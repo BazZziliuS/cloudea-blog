@@ -21,107 +21,117 @@ order: 2
 
 Ниже приведён GitHub Actions воркфлоу, который:
 1. Запускается при создании тега с префиксом `v*` (например, `v1.0.0`).
-2. Минифицирует клиентские и общие Lua-файлы в папке `addons`.
-3. Создаёт zip-архив с минифицированным кодом.
-4. Публикует архив как GitHub Release.
+2. Минифицирует **все** Lua-файлы в папке `addons`.
+3. Удаляет dev-артефакты (`.vscode`, `sftp-config.json`).
+4. Склеивает все аддоны в один `superaddon` для удобства деплоя.
+5. Создаёт zip-архив с минифицированным кодом и публикует его как GitHub Release.
 
 ```yaml
-name: GMod Build and Release
+name: Build & Release
 
 on:
   push:
     tags:
       - 'v*'
 
+# Структура репозитория (корень):
+#   addons/
+#   cfg/
+#   lua/
+#   scripts/
+#   sv.db
+#   .gitignore
+
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Lua
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y lua5.3
+      # ── Инструменты ─────────────────────────────────────────────
 
-      - name: Download minify.lua
-        run: |
-          curl -O https://raw.githubusercontent.com/xUnkNx/glua-minify/main/minify.lua
+      - name: Install Lua 5.3
+        run: sudo apt-get install -y lua5.3
 
-      - name: Prepare build directory
+      - name: Download glua-minify
         run: |
-          rm -rf build
-          mkdir build
-          rsync -av \
-            --exclude ".git/*" \
-            --exclude ".github/*" \
-            --exclude "scripts" \
-            --exclude "build" \
-            --exclude ".*" \
-            ./ build/
+          curl -fsSL \
+            https://raw.githubusercontent.com/xUnkNx/glua-minify/main/minify.lua \
+            -o minify.lua
 
-      - name: Minify client and shared Lua scripts
+      # ── Минификация ─────────────────────────────────────────────
+
+      - name: Minify Lua files in addons
         run: |
-          find ./build/addons -type f \( \
-            -name "cl_*.lua" -o \
-            -name "sh_*.lua" -o \
-            -path "*/client/*.lua" -o \
-            -path "*/shared/*.lua" -o \
-            -path "*/autorun/*.lua" \
-          \) | while read file; do
-            echo "Minifying Lua file: $file"
-            lua ./minify.lua minify "$file" > "$file.min" || cp -v "$file" "$file.min"
-            mv "$file.min" "$file"
+          find addons -name '*.lua' -print0 | while IFS= read -r -d '' file; do
+            if lua5.3 minify.lua minify "$file" > tmp_minified.lua 2>/dev/null; then
+              cp tmp_minified.lua "$file"
+            else
+              echo "⚠ Minify failed (keeping original): $file"
+            fi
           done
+          rm -f tmp_minified.lua
 
-      - name: Create release zip
+      # ── Удаление dev-мусора ─────────────────────────────────────
+
+      - name: Remove dev artifacts
         run: |
-          cd build
-          zip -r ../release.zip ./* -x "scripts/*" "build/*"
-          cd ..
+          find addons -name '.vscode'          -exec rm -rf {} + 2>/dev/null || true
+          find addons -name 'sftp-config.json' -exec rm  -f {} + 2>/dev/null || true
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gmod-release
-          path: release.zip
+      # ── Склейка аддонов в superaddon ────────────────────────────
 
-  release:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: gmod-release
-          path: .
+      - name: Merge addons into single superaddon
+        run: |
+          mkdir -p superaddon_tmp
+          for addon_dir in addons/*/; do
+            [ -d "$addon_dir" ] || continue
+            cp -r "$addon_dir/." superaddon_tmp/
+          done
+          rm -rf addons/*
+          mv superaddon_tmp addons/superaddon
 
-      - name: Publish GitHub Release
+      # ── Упаковка артефакта ──────────────────────────────────────
+      # Собираем только то, что нужно серверу.
+      # .github, scripts, sv.db — не включаются.
+
+      - name: Create release archive
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          zip -r "release-${TAG}.zip" addons/ cfg/ lua/ \
+            --exclude "*.git*"
+          echo "RELEASE_ZIP=release-${TAG}.zip" >> "$GITHUB_ENV"
+
+      # ── GitHub Release ──────────────────────────────────────────
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: "Release ${{ github.ref_name }}"
+          generate_release_notes: true
+          files: ${{ env.RELEASE_ZIP }}
 ```
 
 ## Как это работает
 
 1. **Триггер**: Воркфлоу запускается при создании тега (например, `git tag v1.0.0 && git push origin v1.0.0`).
 2. **Шаги**:
-   - Устанавливается Lua 5.3.
-   - Скачивается [minify.lua](https://raw.githubusercontent.com/xUnkNx/glua-minify/main/minify.lua) для минификации.
-   - Создаётся директория `build`, куда копируются файлы проекта, исключая `.git`, `.github`, `scripts`, `build` и скрытые файлы.
-   - Минифицируются Lua-файлы (`cl_*.lua`, `sh_*.lua`, файлы в `client`, `shared`, `autorun`) с помощью `minify.lua`. Если минификация не удалась, файл копируется без изменений.
-   - Создаётся zip-архив `release.zip` с минифицированным кодом.
-   - Архив публикуется как GitHub Release.
+   - Устанавливается Lua 5.3 и скачивается [minify.lua](https://raw.githubusercontent.com/xUnkNx/glua-minify/main/minify.lua).
+   - Минифицируются **все** `.lua` файлы в `addons/`. Если минификация файла не удалась, оригинал сохраняется.
+   - Удаляются dev-артефакты (`.vscode`, `sftp-config.json`), которые не нужны на продакшене.
+   - Все аддоны склеиваются в один `superaddon` — это упрощает деплой и уменьшает количество директорий.
+   - Создаётся zip-архив `release-vX.X.X.zip` с папками `addons/`, `cfg/` и `lua/` — только то, что нужно серверу.
+   - Архив публикуется как GitHub Release с автоматически сгенерированными release notes.
 
 ## Полезные заметки
 
 - **Минификатор**: Используется [xUnkNx/glua-minify](https://github.com/xUnkNx/glua-minify), который поддерживает синтаксис GMod (включая `!`, `!=`, `continue`), в отличие от стандартных Lua-минификаторов.
-- **Git-интеграция**: Пост [Дружим Garry's Mod сервер и Git правильно](https://blog.amd-nick.me/2024/12/30/gmod-git-setup) рекомендует настроить `.gitignore` для исключения мусорных файлов (логи, кэш) и хранения только нужных (например, `/cfg/server.cfg`, `/lua/bin`, `/gamemodes/darkrp`). Это упрощает синхронизацию между DEV и PROD серверами.
+- **Все файлы минифицируются**: В отличие от подхода с фильтрацией по `cl_*/sh_*`, воркфлоу минифицирует все `.lua` файлы в `addons/`. Это проще и надёжнее — не нужно беспокоиться о пропущенных файлах.
+- **Superaddon**: Склейка всех аддонов в один `superaddon` упрощает структуру на продакшен-сервере. Все файлы из отдельных аддонов объединяются в одну директорию.
+- **Git-интеграция**: Пост [Дружим Garry's Mod сервер и Git правильно](https://blog.amd-nick.me/2024/12/30/gmod-git-setup) рекомендует настроить `.gitignore` для исключения мусорных файлов (логи, кэш) и хранения только нужных. Это упрощает синхронизацию между DEV и PROD серверами.
 - **Отладка**: Минифицированный код сложнее отлаживать. Используйте [GLuaFixer](https://github.com/FPtje/GLuaFixer) или Pretty Print в Visual Studio Code для форматирования кода при необходимости.
-- **DEPLOY**: Для деплоя на сервер создайте скрипт `deploy.sh`, как описано в [посте о минификации](https://blog.amd-nick.me/gmod-minify), чтобы автоматизировать копирование архива на продакшен.
 
 <Callout type="warning">
 Минифицированный код может быть сложен для отладки, так как сжимается в одну строку. Храните немодифицированный код на DEV-сервере и используйте PROD только для релизов.
@@ -135,4 +145,4 @@ jobs:
 
 ## Благодарность amd-nick
 
-Этот пост и весь мой блог вдохновлены работами _AMD_ (amd-nick) с [blog.amd-nick.me](https://blog.amd-nick.me). Его практичные, чёткие и полные юмора гайды по Garry's Mod, включая минификацию и настройку Git, помогли мне организовать свои проекты и начать делиться знаниями. AMD — настоящий мастер, чьи советы спасают от головной боли и делают разработку проще. Press F легенде! 🙌
+Этот пост и весь мой блог вдохновлены работами _AMD_ (amd-nick) с [blog.amd-nick.me](https://blog.amd-nick.me). Его практичные, чёткие и полные юмора гайды по Garry's Mod, включая минификацию и настройку Git, помогли мне организовать свои проекты и начать делиться знаниями. AMD - настоящий мастер, чьи советы спасают от головной боли и делают разработку проще. Press F легенде! 🙌
