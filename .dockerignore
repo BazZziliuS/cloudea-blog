@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.github
+.claude
+*.md
+!README.md
+.env*
+.releaserc.json
+playwright-report
+test-results

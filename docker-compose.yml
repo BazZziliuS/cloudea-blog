@@ -1,0 +1,12 @@
+services:
+  blog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cloudea-blog
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PREVIEW_SECRET=${PREVIEW_SECRET:-}
+    restart: unless-stopped
