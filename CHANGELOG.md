@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.13.1...v1.14.0) (2026-04-08)
+
+
+### Features
+
+* **monetag:** add configurable monetag integration ([d8dde5f](https://github.com/BazZziliuS/cloudea-blog/commit/d8dde5f4052ff0d4a6314089e1eb6b6f1cfb431c))
+
 ## [1.13.1](https://github.com/BazZziliuS/cloudea-blog/compare/v1.13.0...v1.13.1) (2026-03-21)
 
 
