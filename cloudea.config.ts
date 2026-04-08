@@ -28,6 +28,16 @@ const config: CloudeaConfig = {
     yandexMetrika: "101940986",
   },
 
+  // Monetag — рекламная сеть (https://monetag.com)
+  // Все значения берутся из личного кабинета Monetag.
+  // Удалите секцию целиком, чтобы отключить интеграцию.
+  monetag: {
+    tagSrc: "https://quge5.com/88/tag.min.js",
+    tagZoneId: "227592",
+    swDomain: "3nbf4.com",
+    swZoneId: 10847807,
+  },
+
   i18n: {
     defaultLocale: "ru",
     locales: ["ru", "en", "zh"],

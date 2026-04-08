@@ -116,6 +116,22 @@ export interface CloudeaConfig {
     yandexMetrika?: string;
   };
 
+  /** Monetag ad network integration.
+   * When set, injects the Monetag tag script into <head> and exposes
+   * a Monetag service worker at /sw.js built from the provided values.
+   * Leave undefined to disable. All fields come from your Monetag dashboard.
+   */
+  monetag?: {
+    /** Tag script zone (data-zone attribute on the injected <script>) */
+    tagZoneId: string;
+    /** Tag script source URL (e.g. "https://quge5.com/88/tag.min.js") */
+    tagSrc: string;
+    /** Service worker: zone id for push subscriptions */
+    swZoneId?: number;
+    /** Service worker: Monetag push domain (e.g. "3nbf4.com") */
+    swDomain?: string;
+  };
+
   i18n: {
     defaultLocale: string;
     locales: string[];

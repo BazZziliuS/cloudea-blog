@@ -95,6 +95,14 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
+        {config.monetag?.tagSrc && config.monetag?.tagZoneId && (
+          <script
+            src={config.monetag.tagSrc}
+            data-zone={config.monetag.tagZoneId}
+            async
+            data-cfasync="false"
+          />
+        )}
         {feedLinks.map((link) => (
           <link key={link.type} rel={link.rel} type={link.type} title={link.title} href={link.href} />
         ))}
