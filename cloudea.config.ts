@@ -32,8 +32,8 @@ const config: CloudeaConfig = {
   // Все значения берутся из личного кабинета Monetag.
   // Удалите секцию целиком, чтобы отключить интеграцию.
   monetag: {
-    tagSrc: "https://quge5.com/88/tag.min.js",
-    tagZoneId: "227592",
+    tagSrc: "https://nap5k.com/tag.min.js",
+    tagZoneId: "10848690",
     swDomain: "3nbf4.com",
     swZoneId: 10847807,
   },

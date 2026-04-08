@@ -97,10 +97,13 @@ export default async function RootLayout({
       <head>
         {config.monetag?.tagSrc && config.monetag?.tagZoneId && (
           <script
-            src={config.monetag.tagSrc}
-            data-zone={config.monetag.tagZoneId}
-            async
-            data-cfasync="false"
+            dangerouslySetInnerHTML={{
+              __html: `(function(s){s.dataset.zone=${JSON.stringify(
+                config.monetag.tagZoneId
+              )},s.src=${JSON.stringify(
+                config.monetag.tagSrc
+              )}})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`,
+            }}
           />
         )}
         {feedLinks.map((link) => (
