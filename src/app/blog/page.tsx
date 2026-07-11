@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { BlogContent } from "@/components/blog-content";
 import { getLocale } from "@/lib/i18n-server";
 import { getDictionary } from "@/lib/i18n";
@@ -31,9 +32,16 @@ interface BlogPageProps {
 }
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
+  const config = getConfig();
+  const params = await searchParams;
+
+  // Блог уже рендерится на главной — не дублируем контент на /blog
+  if ((config.homepage ?? "landing") === "blog") {
+    redirect(params.page ? `/?page=${params.page}` : "/");
+  }
+
   const locale = await getLocale();
   const dict = getDictionary(locale);
-  const params = await searchParams;
   const currentPage = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
 
   return <BlogContent locale={locale} dict={dict} currentPage={currentPage} basePath="/blog" />;
