@@ -17,11 +17,18 @@ const config: CloudeaConfig = {
   // customCss: ["styles/custom.css"],
 
   // Кастомные скрипты
-  // customScripts: [
-  //   { src: "scripts/analytics.js" },
-  //   { src: "https://example.com/analytics.js", external: true, position: "head" },
-  //   { code: "console.log('Hello from Cloudea!')", strategy: "lazyOnload" },
-  // ],
+  customScripts: [
+    // Travelpayouts (https://travelpayouts.com) — рекламная сеть
+    {
+      code: `(function () {
+    var script = document.createElement("script");
+    script.async = 1;
+    script.src = 'https://emrldtp.cc/NTQ4OTky.js?t=548992';
+    document.head.appendChild(script);
+})();`,
+      position: "head",
+    },
+  ],
 
   // Аналитика
   analytics: {
@@ -30,13 +37,13 @@ const config: CloudeaConfig = {
 
   // Monetag — рекламная сеть (https://monetag.com)
   // Все значения берутся из личного кабинета Monetag.
-  // Удалите секцию целиком, чтобы отключить интеграцию.
-  monetag: {
-    tagSrc: "https://nap5k.com/tag.min.js",
-    tagZoneId: "10848690",
-    swDomain: "3nbf4.com",
-    swZoneId: 10847807,
-  },
+  // Раскомментируйте секцию, чтобы включить интеграцию.
+  // monetag: {
+  //   tagSrc: "https://nap5k.com/tag.min.js",
+  //   tagZoneId: "10848690",
+  //   swDomain: "3nbf4.com",
+  //   swZoneId: 10847807,
+  // },
 
   i18n: {
     defaultLocale: "ru",
