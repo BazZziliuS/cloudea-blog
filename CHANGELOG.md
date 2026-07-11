@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.15.0...v1.16.0) (2026-07-11)
+
+
+### Features
+
+* **ads:** add Travelpayouts hotel search widget ([44a328f](https://github.com/BazZziliuS/cloudea-blog/commit/44a328f680d01d50915d276f728937c7faf87e63))
+
 # [1.15.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.14.0...v1.15.0) (2026-07-11)
 
 
