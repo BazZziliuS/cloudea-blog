@@ -1,3 +1,16 @@
+# [1.15.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.14.0...v1.15.0) (2026-07-11)
+
+
+### Bug Fixes
+
+* **blog:** avoid duplicating blog listing on /blog when it's the homepage ([af3a654](https://github.com/BazZziliuS/cloudea-blog/commit/af3a6540d76cc48aa5863181021d4d4f6ae65a0b))
+
+
+### Features
+
+* **ads:** switch active ad network from Monetag to Travelpayouts ([e565f19](https://github.com/BazZziliuS/cloudea-blog/commit/e565f193e4ff3ca486ecadadfb519bdc02dd3044))
+* **blog:** add ya-pult and stealthchat posts ([44450db](https://github.com/BazZziliuS/cloudea-blog/commit/44450db2ba415c807d43e9d56d7b3faa10f112ca))
+
 # [1.14.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.13.1...v1.14.0) (2026-04-08)
 
 
