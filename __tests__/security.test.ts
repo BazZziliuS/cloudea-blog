@@ -52,9 +52,11 @@ describe("buildContentSecurityPolicy", () => {
     expect(directive(none, "frame-src")).toEqual(["'none'"]);
   });
 
-  it("matches the production config: Travelpayouts widgets are allowed", () => {
+  it("matches the production config: Travelpayouts and Metrika are allowed", () => {
     const csp = buildContentSecurityPolicy(baseConfig);
-    expect(directive(csp, "script-src")).toContain("https://tpwdg.com");
+    expect(directive(csp, "script-src")).toEqual(
+      expect.arrayContaining(["https://tpwdg.com", "https://mc.yandex.ru"]),
+    );
   });
 });
 
