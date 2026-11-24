@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Search, FileText, BookOpen, X } from "lucide-react";
+import { BookOpen, FileText, Rocket, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SearchItem } from "@/lib/content";
 import type { Dictionary } from "@/lib/i18n";
@@ -188,6 +188,8 @@ function SearchDialog({ dict, onClose }: { dict: BlogDict; onClose: () => void }
                       <div className="mt-0.5 shrink-0">
                         {item.type === "blog" ? (
                           <FileText className="h-4 w-4 text-muted-foreground" />
+                        ) : item.type === "projects" ? (
+                          <Rocket className="h-4 w-4 text-muted-foreground" />
                         ) : (
                           <BookOpen className="h-4 w-4 text-muted-foreground" />
                         )}
@@ -195,8 +197,8 @@ function SearchDialog({ dict, onClose }: { dict: BlogDict; onClose: () => void }
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium truncate">{item.title}</span>
-                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
-                            {item.type === "blog" ? dict.blogLabel : dict.docsLabel}
+                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                            {item.type === "blog" ? dict.blogLabel : item.type === "projects" ? dict.projectsLabel : dict.docsLabel}
                           </span>
                         </div>
                         {item.description && (

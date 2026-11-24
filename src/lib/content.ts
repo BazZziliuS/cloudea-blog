@@ -27,6 +27,8 @@ export interface Post {
   geoBlock?: GeoBlock;
   series?: string;
   seriesOrder?: number;
+  /** Slug of the project this post is about (see content/projects). */
+  project?: string;
   /** Source file path relative to the project root (POSIX separators). */
   sourcePath: string;
 }
@@ -72,8 +74,38 @@ export interface TagInfo {
   count: number;
 }
 
+export const PROJECT_KINDS = ["client", "product", "open-source", "mod"] as const;
+export type ProjectKind = (typeof PROJECT_KINDS)[number];
+
+export const PROJECT_STATUSES = ["active", "for-sale", "archived"] as const;
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+
+export interface ProjectLink {
+  label: string;
+  href: string;
+}
+
+export interface Project {
+  slug: string;
+  title: string;
+  description: string;
+  /** Launch date, when known. */
+  date?: string;
+  kind: ProjectKind;
+  status: ProjectStatus;
+  stack: string[];
+  /** Absolute URL or content-API path of the cover image. */
+  cover?: string;
+  /** Free-form price, e.g. "от 5 000 ₽". Shown only for products for sale. */
+  price?: string;
+  links: ProjectLink[];
+  order: number;
+  content: string;
+  sourcePath: string;
+}
+
 export interface SearchItem {
-  type: "blog" | "docs";
+  type: "blog" | "docs" | "projects";
   title: string;
   description: string;
   href: string;
@@ -108,6 +140,7 @@ const CONTENT_DIR = path.join(ROOT_DIR, "content");
 const BLOG_DIR = path.join(CONTENT_DIR, "blog");
 const DOCS_DIR = path.join(CONTENT_DIR, "docs");
 const PAGES_DIR = path.join(CONTENT_DIR, "pages");
+const PROJECTS_DIR = path.join(CONTENT_DIR, "projects");
 
 const CONTENT_EXTS = [".mdx", ".md"] as const;
 const LOCALE_VARIANT_RE = /\.[a-z]{2}\.(?:mdx|md)$/;
@@ -164,6 +197,7 @@ const postFrontmatterSchema = z
     series: z.string().optional(),
     seriesOrder: z.number().optional(),
     series_order: z.number().optional(),
+    project: z.string().optional(),
   })
   .transform(({ geo_block, series_order, ...rest }) => ({
     ...rest,
@@ -383,6 +417,7 @@ export const getPostBySlug = cached((slug: string, locale?: Locale): Post => {
     geoBlock: fm.geoBlock,
     series: fm.series,
     seriesOrder: fm.seriesOrder,
+    project: fm.project,
     sourcePath,
   };
 });
@@ -421,6 +456,14 @@ export function getRelatedPosts(slug: string, tags: string[], limit = 3, locale?
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map(({ post }) => post);
+}
+
+/** Chronological neighbours of a post: `newer` was published after it, `older` before. */
+export function getAdjacentPosts(slug: string, locale?: Locale): { newer: Post | null; older: Post | null } {
+  const posts = getAllPosts(false, locale);
+  const index = posts.findIndex((post) => post.slug === slug);
+  if (index === -1) return { newer: null, older: null };
+  return { newer: posts[index - 1] ?? null, older: posts[index + 1] ?? null };
 }
 
 /** Series navigation for a post, or null when the post isn't part of a series of 2+. */
@@ -622,6 +665,97 @@ export const getAllCustomPages = cached((): CustomPage[] =>
 );
 
 // ---------------------------------------------------------------------------
+// Projects (content/projects): portfolio and products
+// ---------------------------------------------------------------------------
+
+const DEFAULT_PROJECT_ORDER = 1000;
+
+const projectFrontmatterSchema = z.object({
+  title: z.string().min(1, "Project title is required"),
+  description: z.string().default(""),
+  date: z
+    .union([z.string(), z.date()])
+    .transform((value) => (value instanceof Date ? value.toISOString().slice(0, 10) : value))
+    .refine((value) => !Number.isNaN(Date.parse(value)), "Project date must be a valid date")
+    .optional(),
+  kind: z.enum(PROJECT_KINDS),
+  status: z.enum(PROJECT_STATUSES).default("active"),
+  stack: z.array(z.string()).default([]),
+  cover: z.string().optional(),
+  price: z.string().optional(),
+  links: z.array(z.object({ label: z.string(), href: z.string() })).default([]),
+  /** Lower comes first; projects without an explicit order follow, newest first. */
+  order: z.number().default(DEFAULT_PROJECT_ORDER),
+});
+
+function walkProjectsDir(): string[] {
+  if (!fs.existsSync(PROJECTS_DIR)) return [];
+  return fs.readdirSync(PROJECTS_DIR, { withFileTypes: true }).flatMap((entry) => {
+    if (entry.isDirectory()) return findIndexFile(path.join(PROJECTS_DIR, entry.name)) ? [entry.name] : [];
+    return isContentFile(entry.name) ? [stripContentExt(entry.name)] : [];
+  });
+}
+
+/** Resolve a relative cover path (`./cover.png`) to the content API. */
+function resolveCover(cover: string | undefined, slug: string): string | undefined {
+  if (!cover || /^(?:https?:)?\/\//.test(cover) || cover.startsWith("/")) return cover;
+  return `/api/content/projects/${slug}/${cover.replace(/^\.\//, "")}`;
+}
+
+export const getProjectBySlug = cached((slug: string): Project => {
+  const base = path.join(PROJECTS_DIR, slug);
+  const filePath = findIndexFile(base) ?? findContentFile(base);
+  if (!filePath) throw new ContentNotFoundError("Project", slug);
+
+  const { data, content } = readMatter(filePath);
+  const sourcePath = toSourcePath(filePath);
+  const fm = parseFrontmatter(projectFrontmatterSchema, data, sourcePath, (raw) => ({
+    title: asString(raw.title, slug),
+    description: asString(raw.description),
+    date: undefined,
+    kind: "product" as const,
+    status: "active" as const,
+    stack: [],
+    links: [],
+    order: DEFAULT_PROJECT_ORDER,
+  }));
+
+  return {
+    slug,
+    ...fm,
+    cover: resolveCover(fm.cover, slug),
+    content,
+    sourcePath,
+  };
+});
+
+/** Projects ordered by `order`, then newest first; projects without a date go last. */
+export const getAllProjects = cached((): Project[] =>
+  walkProjectsDir()
+    .map((slug) => getProjectBySlug(slug))
+    .sort(
+      (a, b) =>
+        a.order - b.order ||
+        (b.date ? Date.parse(b.date) : 0) - (a.date ? Date.parse(a.date) : 0) ||
+        a.title.localeCompare(b.title),
+    ),
+);
+
+export function findProject(slug: string | undefined): Project | null {
+  if (!slug) return null;
+  try {
+    return getProjectBySlug(slug);
+  } catch {
+    return null;
+  }
+}
+
+/** Blog posts that declare `project: <slug>` in their frontmatter. */
+export function getProjectPosts(slug: string, locale?: Locale): Post[] {
+  return getAllPosts(false, locale).filter((post) => post.project === slug);
+}
+
+// ---------------------------------------------------------------------------
 // Search
 // ---------------------------------------------------------------------------
 
@@ -633,6 +767,15 @@ export const getSearchIndex = cached((): SearchItem[] => [
       description: post.description,
       href: `/blog/${post.slug}`,
       tags: post.tags,
+    }),
+  ),
+  ...getAllProjects().map(
+    (project): SearchItem => ({
+      type: "projects",
+      title: project.title,
+      description: project.description,
+      href: `/projects/${project.slug}`,
+      tags: project.stack,
     }),
   ),
   ...getAllDocs().map(

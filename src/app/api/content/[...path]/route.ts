@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
-const ALLOWED_ROOTS = new Set(["blog", "docs"]);
+const ALLOWED_ROOTS = new Set(["blog", "docs", "projects"]);
 
 /** Allow-list of servable asset types; source files (.md/.mdx) are never exposed. */
 const MIME_TYPES: Record<string, string> = {

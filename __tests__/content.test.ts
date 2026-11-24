@@ -156,7 +156,7 @@ describe("content.ts", () => {
         expect(typeof item.title).toBe("string");
         expect(typeof item.description).toBe("string");
         expect(typeof item.href).toBe("string");
-        expect(["blog", "docs"]).toContain(item.type);
+        expect(["blog", "docs", "projects"]).toContain(item.type);
       }
     });
 
@@ -195,5 +195,36 @@ describe("content.ts", () => {
       const warnings = getContentWarnings();
       expect(Array.isArray(warnings)).toBe(true);
     });
+  });
+});
+
+describe("projects", () => {
+  it("loads projects with valid kinds and links", async () => {
+    const { getAllProjects, PROJECT_KINDS } = await import("@/lib/content");
+    const projects = getAllProjects();
+    expect(projects.length).toBeGreaterThan(0);
+    for (const project of projects) {
+      expect(PROJECT_KINDS).toContain(project.kind);
+      expect(project.title).toBeTruthy();
+      for (const link of project.links) expect(link.href).toMatch(/^(https?:\/\/|\/)/);
+    }
+  });
+
+  it("links posts to existing projects", async () => {
+    const { getAllPosts, findProject } = await import("@/lib/content");
+    for (const post of getAllPosts().filter((p) => p.project)) {
+      expect(findProject(post.project), `post ${post.slug} → ${post.project}`).not.toBeNull();
+    }
+  });
+});
+
+describe("getAdjacentPosts", () => {
+  it("returns chronological neighbours", async () => {
+    const { getAllPosts, getAdjacentPosts } = await import("@/lib/content");
+    const posts = getAllPosts();
+    if (posts.length < 3) return;
+    const { newer, older } = getAdjacentPosts(posts[1].slug);
+    expect(newer?.slug).toBe(posts[0].slug);
+    expect(older?.slug).toBe(posts[2].slug);
   });
 });

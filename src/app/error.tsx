@@ -17,12 +17,12 @@ export default function GlobalError({
 
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-6">
-      <h1 className="text-8xl font-extrabold tracking-tight text-muted-foreground/30">
+      <p className="font-mono text-6xl font-medium tabular-nums text-muted-foreground/40" aria-hidden="true">
         500
-      </h1>
-      <h2 className="mt-4 text-2xl font-bold tracking-tight">
+      </p>
+      <h1 className="mt-4 text-2xl font-bold tracking-tight">
         Что-то пошло не так
-      </h2>
+      </h1>
       <p className="mt-2 text-muted-foreground max-w-md">
         Произошла непредвиденная ошибка. Попробуйте обновить страницу.
       </p>

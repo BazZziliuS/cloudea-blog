@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { BlogComments } from "@/components/blog-comments";
 import { GeoGuard } from "@/components/geo-guard";
 import { JsonLd } from "@/components/json-ld";
+import { ProjectMention } from "@/components/projects/project-card";
+import { ReadingProgress } from "@/components/reading-progress";
 import { ShareButtons } from "@/components/share-buttons";
 import { TableOfContents } from "@/components/toc";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +18,8 @@ import {
   getPostLocales,
   getRelatedPosts,
   getSeriesInfo,
+  findProject,
+  getAdjacentPosts,
   type Post,
   type SeriesInfo,
 } from "@/lib/content";
@@ -81,7 +86,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   const dict = getDictionary(locale);
   const t = dict.blog;
-  const content = await compileMDX(post.content, { slug: post.slug });
+  const content = await compileMDX(post.content, { slug: post.slug, title: post.title });
+  const project = findProject(post.project);
+  const adjacent = getAdjacentPosts(post.slug, locale);
   const relatedPosts = getRelatedPosts(post.slug, post.tags, 3, locale);
   const seriesInfo = getSeriesInfo(post, locale);
   const editUrl = getEditUrl(post.sourcePath);
@@ -90,7 +97,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     <>
       <JsonLd data={blogPostJsonLd(post)} />
       <div className="mx-auto flex max-w-5xl gap-10 px-6">
-        <article className="min-w-0 flex-1 py-16">
+        <ReadingProgress targetId="post-article" />
+        <article id="post-article" className="min-w-0 flex-1 py-16">
           {post.draft && isPreview && (
             <div className="mb-6 rounded-lg border border-yellow-500/50 bg-yellow-50 p-4 dark:bg-yellow-900/20">
               <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
@@ -128,9 +136,22 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             )}
           </header>
 
+          {project && <ProjectMention project={project} t={dict.projects} />}
+
           {seriesInfo && <SeriesList series={seriesInfo} currentSlug={post.slug} t={t} />}
 
+          <div className="xl:hidden">
+            <TableOfContents label={t.toc} labels={dict.common} variant="collapsible" />
+          </div>
+
           <div className="prose prose-neutral max-w-none dark:prose-invert">{content}</div>
+
+          <p className="mt-10 text-sm text-muted-foreground">
+            {t.subscribe}{" "}
+            <a href="/rss.xml" className="font-medium text-primary underline underline-offset-4">
+              {t.subscribeRss}
+            </a>
+          </p>
 
           <AdSlot placement="post-bottom" />
 
@@ -142,12 +163,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 href={editUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
-                ✏️ {t.editOnGithub}
+                <Pencil className="h-4 w-4" aria-hidden="true" />
+                {t.editOnGithub}
               </a>
             </div>
           )}
+
+          <AdjacentPosts newer={adjacent.newer} older={adjacent.older} t={t} />
 
           {relatedPosts.length > 0 && <RelatedPosts posts={relatedPosts} locale={locale} t={t} />}
 
@@ -212,7 +236,10 @@ function SeriesNavigation({ series, currentSlug, t }: { series: SeriesInfo; curr
           rel="prev"
           className="flex flex-col text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          <span className="text-xs">{t.seriesPrev}</span>
+          <span className="inline-flex items-center gap-1 text-xs">
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            {t.seriesPrev}
+          </span>
           <span className="font-medium">{prev.title}</span>
         </Link>
       ) : (
@@ -224,7 +251,10 @@ function SeriesNavigation({ series, currentSlug, t }: { series: SeriesInfo; curr
           rel="next"
           className="flex flex-col items-end text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          <span className="text-xs">{t.seriesNext}</span>
+          <span className="inline-flex items-center gap-1 text-xs">
+            {t.seriesNext}
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </span>
           <span className="font-medium">{next.title}</span>
         </Link>
       ) : (
@@ -258,5 +288,46 @@ function RelatedPosts({ posts, locale, t }: { posts: Post[]; locale: Locale; t: 
         ))}
       </div>
     </section>
+  );
+}
+
+function AdjacentPosts({ newer, older, t }: { newer: Post | null; older: Post | null; t: BlogLabels }) {
+  if (!newer && !older) return null;
+
+  return (
+    <nav className="mt-10 grid gap-4 border-t border-border pt-8 sm:grid-cols-2" aria-label={`${t.older} / ${t.newer}`}>
+      {older ? (
+        <Link
+          href={`/blog/${older.slug}`}
+          rel="prev"
+          className="group rounded-lg border border-border p-4 transition-colors hover:border-primary/50 hover:bg-accent/50"
+        >
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            {t.older}
+          </span>
+          <span className="mt-1 block font-medium leading-snug transition-colors group-hover:text-primary">
+            {older.title}
+          </span>
+        </Link>
+      ) : (
+        <div className="hidden sm:block" />
+      )}
+      {newer && (
+        <Link
+          href={`/blog/${newer.slug}`}
+          rel="next"
+          className="group rounded-lg border border-border p-4 text-right transition-colors hover:border-primary/50 hover:bg-accent/50"
+        >
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            {t.newer}
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </span>
+          <span className="mt-1 block font-medium leading-snug transition-colors group-hover:text-primary">
+            {newer.title}
+          </span>
+        </Link>
+      )}
+    </nav>
   );
 }

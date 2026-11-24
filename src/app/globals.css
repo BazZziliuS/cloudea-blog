@@ -177,3 +177,24 @@ html {
     background: var(--muted-foreground);
   }
 }
+
+/* Heading anchors appended by rehype-autolink-headings: visible on hover/focus only. */
+.prose .heading-anchor {
+  margin-left: 0.5rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  font-weight: 400;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.prose :is(h1, h2, h3, h4):hover .heading-anchor,
+.prose .heading-anchor:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .prose .heading-anchor {
+    display: none;
+  }
+}

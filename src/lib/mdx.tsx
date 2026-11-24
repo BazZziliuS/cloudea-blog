@@ -12,17 +12,31 @@ import { rewriteRelativePaths, type ContentType } from "@/lib/content-assets";
 
 export type { ContentType };
 
+/**
+ * Drop a leading `# Heading` that repeats the page title: the page header already renders it.
+ * Comparison ignores case, emoji and punctuation.
+ */
+export function stripDuplicateTitle(source: string, title: string): string {
+  const normalize = (value: string) => value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+  const match = /^\s*#[ \t]+(.+?)[ \t]*#*[ \t]*(?:\r?\n|$)/.exec(source);
+  if (!match || normalize(match[1]) !== normalize(title)) return source;
+  return source.slice(match[0].length);
+}
+
 interface CompileOptions {
   /** Slug used to resolve co-located assets. When omitted, paths are left untouched. */
   slug?: string;
   contentType?: ContentType;
+  /** Page title: a leading H1 with the same text is removed. */
+  title?: string;
 }
 
 export async function compileMDX(
   source: string,
-  { slug, contentType = "blog" }: CompileOptions = {},
+  { slug, contentType = "blog", title }: CompileOptions = {},
 ): Promise<ReactElement> {
-  const processed = slug ? rewriteRelativePaths(source, slug, contentType) : source;
+  const deduplicated = title ? stripDuplicateTitle(source, title) : source;
+  const processed = slug ? rewriteRelativePaths(deduplicated, slug, contentType) : deduplicated;
 
   const { content } = await compile({
     source: processed,
@@ -32,7 +46,14 @@ export async function compileMDX(
         remarkPlugins: [remarkGfm],
         rehypePlugins: [
           rehypeSlug,
-          [rehypeAutolinkHeadings, { behavior: "wrap" }],
+          [
+            rehypeAutolinkHeadings,
+            {
+              behavior: "append",
+              properties: { className: ["heading-anchor"], ariaHidden: "true", tabIndex: -1 },
+              content: { type: "text", value: "#" },
+            },
+          ],
           [rehypePrettyCode, { theme: "github-dark" }],
         ],
       },

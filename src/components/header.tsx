@@ -95,7 +95,7 @@ export function Header({ title, navItems, donateLink, githubUrl, authEnabled, di
                       <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-hover/nav:rotate-180" />
                     </button>
                   )}
-                  <div className="invisible absolute left-0 top-full translate-y-1 pt-2 opacity-0 transition-all duration-200 ease-out group-focus-within/nav:visible group-focus-within/nav:translate-y-0 group-focus-within/nav:opacity-100 group-hover/nav:visible group-hover/nav:translate-y-0 group-hover/nav:opacity-100">
+                  <div className="invisible absolute left-0 top-full translate-y-1 pt-2 opacity-0 transition-[opacity,transform,visibility] duration-200 ease-out group-focus-within/nav:visible group-focus-within/nav:translate-y-0 group-focus-within/nav:opacity-100 group-hover/nav:visible group-hover/nav:translate-y-0 group-hover/nav:opacity-100">
                     <div className="min-w-[10rem] rounded-md border border-border bg-popover p-1 shadow-md">
                       {item.items.map((sub) => {
                         const Icon = getIcon(sub.icon);
@@ -203,7 +203,7 @@ export function Header({ title, navItems, donateLink, githubUrl, authEnabled, di
             {navItems.map((item) =>
               item.type === "dropdown" ? (
                 <div key={item.label} className="space-y-1">
-                  <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">
+                  <span className="block text-xs font-medium text-muted-foreground">
                     {item.label}
                   </span>
                   {item.items.map((sub) => (

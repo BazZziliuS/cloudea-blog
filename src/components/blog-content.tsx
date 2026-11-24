@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { PostGrid } from "@/components/post-grid";
+import { Button } from "@/components/ui/button";
 import { getAllPosts, getAllTags, getAllYears, getPaginatedPosts } from "@/lib/content";
 import type { Dictionary, Locale } from "@/lib/i18n";
 import { toPostCardData } from "@/lib/post-format";
@@ -53,13 +55,12 @@ export function BlogContent({ locale, dict, currentPage, basePath = "/blog" }: B
               {totalPages > 1 && (
                 <nav className="mt-10 flex items-center justify-center gap-2" aria-label="Pagination">
                   {currentPage > 1 && (
-                    <Link
-                      href={pageHref(basePath, currentPage - 1)}
-                      rel="prev"
-                      className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:bg-accent"
-                    >
-                      {t.prev}
-                    </Link>
+                    <Button variant="outline" asChild>
+                      <Link href={pageHref(basePath, currentPage - 1)} rel="prev">
+                        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                        {t.prev}
+                      </Link>
+                    </Button>
                   )}
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <Link
@@ -67,7 +68,7 @@ export function BlogContent({ locale, dict, currentPage, basePath = "/blog" }: B
                       href={pageHref(basePath, page)}
                       aria-current={page === currentPage ? "page" : undefined}
                       className={cn(
-                        "rounded-lg border px-3 py-2 text-sm transition-colors",
+                        "inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-3 text-sm tabular-nums transition-colors",
                         page === currentPage
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-border hover:bg-accent",
@@ -77,13 +78,12 @@ export function BlogContent({ locale, dict, currentPage, basePath = "/blog" }: B
                     </Link>
                   ))}
                   {currentPage < totalPages && (
-                    <Link
-                      href={pageHref(basePath, currentPage + 1)}
-                      rel="next"
-                      className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:bg-accent"
-                    >
-                      {t.next}
-                    </Link>
+                    <Button variant="outline" asChild>
+                      <Link href={pageHref(basePath, currentPage + 1)} rel="next">
+                        {t.next}
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      </Link>
+                    </Button>
                   )}
                 </nav>
               )}
@@ -128,7 +128,7 @@ export function BlogContent({ locale, dict, currentPage, basePath = "/blog" }: B
             )}
 
             {years.length > 0 && (
-              <SidebarSection title={t.archive} moreHref="/blog/archive" moreLabel={t.allTagsLink}>
+              <SidebarSection title={t.archive} moreHref="/blog/archive" moreLabel={t.fullArchive}>
                 <ul className="space-y-1">
                   {years.map(({ year, count }) => (
                     <li key={year}>
@@ -168,7 +168,7 @@ function SidebarSection({
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         {moreHref && (
           <Link href={moreHref} className="text-xs text-muted-foreground transition-colors hover:text-foreground">
-            {moreLabel} &rarr;
+            {moreLabel}
           </Link>
         )}
       </div>

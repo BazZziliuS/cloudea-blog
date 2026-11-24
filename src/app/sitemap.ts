@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { absoluteUrl, getConfig } from "@/lib/config";
-import { getAllCustomPages, getAllDocs, getAllPosts, getAllTags } from "@/lib/content";
+import { getAllCustomPages, getAllDocs, getAllPosts, getAllProjects, getAllTags } from "@/lib/content";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
@@ -38,6 +38,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
+  const projects = getAllProjects();
+  const projectPages: MetadataRoute.Sitemap = [
+    ...(projects.length > 0
+      ? [{ url: absoluteUrl("/projects"), changeFrequency: "weekly" as const, priority: 0.8 }]
+      : []),
+    ...projects.map((project) => ({
+      url: absoluteUrl(`/projects/${project.slug}`),
+      lastModified: project.date ? new Date(project.date) : undefined,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
+  ];
+
   const customPages: MetadataRoute.Sitemap = getAllCustomPages().map((page) => ({
     url: absoluteUrl(`/${page.slug.join("/")}`),
     changeFrequency: "monthly",
@@ -51,5 +64,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.4,
   }));
 
-  return [...staticPages, ...blogPages, ...docPages, ...customPages, ...tagPages];
+  return [...staticPages, ...blogPages, ...projectPages, ...docPages, ...customPages, ...tagPages];
 }

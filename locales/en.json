@@ -6,13 +6,15 @@
     "language": "Language",
     "scrollToTop": "Scroll to top",
     "copy": "Copy",
-    "copied": "Copied!",
+    "copied": "Copied",
     "copyCode": "Copy code",
     "home": "Home",
     "tryAgain": "Try again",
     "expand": "Expand",
     "collapse": "Collapse",
-    "advertisement": "Advertisement"
+    "advertisement": "Advertisement",
+    "zoomImage": "Open full-size image",
+    "closeImage": "Close"
   },
   "nav": {
     "blog": "Blog",
@@ -42,7 +44,7 @@
     "allTags": "All blog tags",
     "archive": "Archive",
     "archiveSubtitle": "All blog posts by year",
-    "allTagsLink": "All",
+    "allTagsLink": "All tags",
     "noTags": "No tags yet.",
     "backToTags": "All tags",
     "searchPlaceholder": "Search blog and docs...",
@@ -63,17 +65,24 @@
       "other": "{count} posts"
     },
     "minRead": "{count} min read",
-    "prev": "← Prev",
-    "next": "Next →",
+    "prev": "Previous",
+    "next": "Next",
     "shownOf": "{shown} of {total}",
     "series": "Series",
-    "seriesPrev": "← Previous",
-    "seriesNext": "Next →",
+    "seriesPrev": "Previous",
+    "seriesNext": "Next",
     "related": "Related posts",
     "editOnGithub": "Edit this page on GitHub",
     "draftNotice": "This is a draft. It is only visible in preview mode.",
     "exitPreview": "Exit preview",
-    "taggedWith": "Posts tagged \"{tag}\""
+    "taggedWith": "Posts tagged \"{tag}\"",
+    "newer": "Newer",
+    "older": "Older",
+    "toc": "Contents",
+    "subscribe": "Follow new posts via RSS.",
+    "subscribeRss": "Subscribe via RSS",
+    "projectsLabel": "Project",
+    "fullArchive": "Full archive"
   },
   "docs": {
     "title": "Documentation",
@@ -83,6 +92,36 @@
     "docCount": {
       "one": "{count} doc",
       "other": "{count} docs"
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Bots, mods, apps and libraries: client work and my own products.",
+    "all": "All",
+    "empty": "No projects yet.",
+    "stack": "Stack",
+    "posts": "Posts about this project",
+    "aboutProject": "This post is about",
+    "allProjects": "All projects",
+    "price": "Price",
+    "order": "Order something similar",
+    "contact": "Contact",
+    "kinds": {
+      "client": "Client work",
+      "product": "Product",
+      "open-source": "Open source",
+      "mod": "Mod"
+    },
+    "kindsPlural": {
+      "client": "Client work",
+      "product": "Products",
+      "open-source": "Open source",
+      "mod": "Mods"
+    },
+    "statuses": {
+      "active": "Maintained",
+      "for-sale": "For sale",
+      "archived": "Archived"
     }
   },
   "geo": {
@@ -97,7 +136,7 @@
     "replyPlaceholder": "Write a reply...",
     "send": "Send",
     "signInToComment": "Sign in to comment",
-    "noComments": "No comments yet. Be the first!",
+    "noComments": "No comments yet",
     "reply": "Reply",
     "delete": "Delete",
     "cancel": "Cancel"
@@ -109,7 +148,8 @@
   },
   "errors": {
     "notFoundTitle": "Page not found",
-    "notFoundText": "The page you are looking for doesn't exist, was removed or moved elsewhere."
+    "notFoundText": "The page you are looking for doesn't exist, was removed or moved elsewhere.",
+    "tryLatest": "Latest posts"
   },
   "footer": {
     "rights": "All rights reserved.",

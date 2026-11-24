@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { JsonLd } from "@/components/json-ld";
@@ -49,7 +50,7 @@ export default async function DocPage({ params }: DocPageProps) {
 
   const locale = await getLocale();
   const dict = getDictionary(locale);
-  const content = await compileMDX(doc.content, { slug: slug.join("/"), contentType: "docs" });
+  const content = await compileMDX(doc.content, { slug: slug.join("/"), contentType: "docs", title: doc.title });
   const editUrl = getEditUrl(doc.sourcePath);
 
   // Link intermediate breadcrumb segments only when a page exists for them.
@@ -75,6 +76,10 @@ export default async function DocPage({ params }: DocPageProps) {
             {doc.description && <p className="mt-2 text-lg text-muted-foreground">{doc.description}</p>}
           </header>
 
+          <div className="xl:hidden">
+            <TableOfContents label={dict.blog.toc} labels={dict.common} variant="collapsible" />
+          </div>
+
           <div className="prose prose-neutral max-w-none dark:prose-invert">{content}</div>
 
           <AdSlot placement="doc-bottom" />
@@ -88,9 +93,10 @@ export default async function DocPage({ params }: DocPageProps) {
                 href={editUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="transition-colors hover:text-foreground"
+                className="inline-flex items-center gap-2 transition-colors hover:text-foreground"
               >
-                ✏️ {dict.docs.editOnGithub}
+                <Pencil className="h-4 w-4" aria-hidden="true" />
+                {dict.docs.editOnGithub}
               </a>
             )}
           </div>

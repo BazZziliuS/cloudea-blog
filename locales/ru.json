@@ -6,13 +6,15 @@
     "language": "Язык",
     "scrollToTop": "Наверх",
     "copy": "Копировать",
-    "copied": "Скопировано!",
+    "copied": "Скопировано",
     "copyCode": "Скопировать код",
     "home": "На главную",
     "tryAgain": "Попробовать снова",
     "expand": "Развернуть",
     "collapse": "Свернуть",
-    "advertisement": "Реклама"
+    "advertisement": "Реклама",
+    "zoomImage": "Открыть изображение целиком",
+    "closeImage": "Закрыть"
   },
   "nav": {
     "blog": "Блог",
@@ -42,7 +44,7 @@
     "allTags": "Все теги блога",
     "archive": "Архив",
     "archiveSubtitle": "Все посты блога по годам",
-    "allTagsLink": "Все",
+    "allTagsLink": "Все теги",
     "noTags": "Тегов пока нет.",
     "backToTags": "Все теги",
     "searchPlaceholder": "Поиск по блогу и документации...",
@@ -65,17 +67,24 @@
       "other": "{count} поста"
     },
     "minRead": "{count} мин чтения",
-    "prev": "← Назад",
-    "next": "Далее →",
+    "prev": "Назад",
+    "next": "Далее",
     "shownOf": "{shown} из {total}",
     "series": "Серия",
-    "seriesPrev": "← Предыдущая",
-    "seriesNext": "Следующая →",
+    "seriesPrev": "Предыдущая",
+    "seriesNext": "Следующая",
     "related": "Похожие статьи",
     "editOnGithub": "Редактировать эту страницу на GitHub",
     "draftNotice": "Это черновик. Он виден только в режиме предпросмотра.",
     "exitPreview": "Выйти из превью",
-    "taggedWith": "Посты с тегом «{tag}»"
+    "taggedWith": "Посты с тегом «{tag}»",
+    "newer": "Новее",
+    "older": "Раньше",
+    "toc": "Содержание",
+    "subscribe": "Новые статьи можно получать через RSS.",
+    "subscribeRss": "Подписаться через RSS",
+    "projectsLabel": "Проект",
+    "fullArchive": "Весь архив"
   },
   "docs": {
     "title": "Документация",
@@ -87,6 +96,36 @@
       "few": "{count} документа",
       "many": "{count} документов",
       "other": "{count} документа"
+    }
+  },
+  "projects": {
+    "title": "Проекты",
+    "subtitle": "Боты, моды, приложения и библиотеки: заказы для клиентов и собственные продукты.",
+    "all": "Все",
+    "empty": "Проектов пока нет.",
+    "stack": "Стек",
+    "posts": "Статьи о проекте",
+    "aboutProject": "Пост о проекте",
+    "allProjects": "Все проекты",
+    "price": "Цена",
+    "order": "Заказать похожий",
+    "contact": "Связаться",
+    "kinds": {
+      "client": "Заказ",
+      "product": "Продукт",
+      "open-source": "Open source",
+      "mod": "Мод"
+    },
+    "kindsPlural": {
+      "client": "Заказы",
+      "product": "Продукты",
+      "open-source": "Open source",
+      "mod": "Моды"
+    },
+    "statuses": {
+      "active": "Поддерживается",
+      "for-sale": "Продаётся",
+      "archived": "Архив"
     }
   },
   "geo": {
@@ -101,7 +140,7 @@
     "replyPlaceholder": "Написать ответ...",
     "send": "Отправить",
     "signInToComment": "Войдите, чтобы комментировать",
-    "noComments": "Пока нет комментариев. Будьте первым!",
+    "noComments": "Комментариев пока нет",
     "reply": "Ответить",
     "delete": "Удалить",
     "cancel": "Отмена"
@@ -113,7 +152,8 @@
   },
   "errors": {
     "notFoundTitle": "Страница не найдена",
-    "notFoundText": "Запрашиваемая страница не существует, была удалена или перемещена по другому адресу."
+    "notFoundText": "Запрашиваемая страница не существует, была удалена или перемещена по другому адресу.",
+    "tryLatest": "Свежие статьи"
   },
   "footer": {
     "rights": "Все права защищены.",

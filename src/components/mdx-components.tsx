@@ -3,6 +3,7 @@
 import React, { type ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ZoomableImage } from "@/components/zoomable-image";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 
 function CopyButton({ text }: { text: string }) {
@@ -13,20 +14,26 @@ function CopyButton({ text }: { text: string }) {
       type="button"
       onClick={() => copy(text)}
       className="absolute right-2 top-2 rounded-md bg-muted/80 px-2 py-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted"
-      aria-label="Copy code"
+      aria-label="Скопировать код"
     >
-      {copied ? "Copied!" : "Copy"}
+      {copied ? "Скопировано" : "Копировать"}
     </button>
   );
 }
 
 function Pre({ children, ...props }: ComponentPropsWithoutRef<"pre">) {
   const textContent = extractText(children);
+  const language = (props as Record<string, unknown>)["data-language"];
 
   return (
     <div className="group relative">
+      {typeof language === "string" && language !== "plaintext" && (
+        <span className="pointer-events-none absolute left-3 top-2 select-none font-mono text-xs text-neutral-400">
+          {language}
+        </span>
+      )}
       <pre
-        className="overflow-x-auto rounded-lg border border-border bg-[#24292e] p-4 text-sm leading-relaxed"
+        className={`overflow-x-auto rounded-lg border border-border bg-[#24292e] p-4 text-sm leading-relaxed ${typeof language === "string" && language !== "plaintext" ? "pt-7" : ""}`}
         {...props}
       >
         {children}
@@ -78,6 +85,10 @@ export const mdxComponents: Record<string, React.ComponentType<Record<string, un
   ),
   a: (props) => {
     const href = (props.href as string) ?? "#";
+    // In-page anchors (including heading links) must not open a new tab.
+    if (href.startsWith("#")) {
+      return <a className="font-medium text-primary underline underline-offset-4" {...props} />;
+    }
     if (href.startsWith("/")) {
       return (
         <Link
@@ -131,7 +142,8 @@ export const mdxComponents: Record<string, React.ComponentType<Record<string, un
     // Co-located content assets are optimized by next/image.
     if (src.startsWith("/api/content/")) {
       return (
-        <Image
+        <ZoomableImage src={src} alt={alt}>
+          <Image
           src={src}
           alt={alt}
           width={800}
@@ -139,16 +151,17 @@ export const mdxComponents: Record<string, React.ComponentType<Record<string, un
           className="rounded-lg"
           sizes="(max-width: 768px) 100vw, 800px"
         />
+        </ZoomableImage>
       );
     }
 
     // Badges (shields.io) render inline; other external images are loaded as-is
     // so arbitrary hosts don't need to be allow-listed in next.config.ts.
-    const isBadge = src.includes("shields.io");
-    return (
+    if (src.includes("shields.io")) {
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={alt} loading="lazy" decoding="async" className={isBadge ? undefined : "rounded-lg"} />
-    );
+      return <img src={src} alt={alt} loading="lazy" decoding="async" />;
+    }
+    return <ZoomableImage src={src} alt={alt} />;
   },
   hr: (props) => <hr className="my-8 border-border" {...props} />,
   pre: Pre as React.ComponentType<Record<string, unknown>>,

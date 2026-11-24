@@ -1,6 +1,6 @@
 import { absoluteUrl } from "@/lib/config";
 
-export type OgImageType = "blog" | "doc" | "page";
+export type OgImageType = "blog" | "doc" | "page" | "project";
 
 export const OG_IMAGE_SIZE = { width: 1200, height: 630 } as const;
 

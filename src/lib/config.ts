@@ -129,6 +129,12 @@ export interface CloudeaConfig {
     yandexMetrika?: string;
   };
 
+  /** Portfolio and products section (content/projects). */
+  projects?: {
+    /** Where to order a similar project or ask about one, e.g. a Telegram or Discord profile. */
+    contact?: { href: string; label?: string | LocalizedString };
+  };
+
   /** Ad blocks rendered inside the page layout.
    *
    * Each placement takes a widget script URL (e.g. a Travelpayouts widget from
@@ -258,6 +264,13 @@ export function getSupabaseConfig(): { url: string; anonKey: string } {
     throw new Error("Supabase is not configured. Add a `supabase` section to cloudea.config.ts.");
   }
   return userConfig.supabase;
+}
+
+/** Contact link for project orders, or null when not configured. */
+export function getProjectContact(locale: string, defaultLabel: string): { href: string; label: string } | null {
+  const contact = userConfig.projects?.contact;
+  if (!contact) return null;
+  return { href: contact.href, label: contact.label ? resolveLocalizedString(contact.label, locale) : defaultLabel };
 }
 
 export interface ResolvedAdSlot {

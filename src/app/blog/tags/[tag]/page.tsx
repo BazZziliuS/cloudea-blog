@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 import { PostGrid } from "@/components/post-grid";
+import { Button } from "@/components/ui/button";
 import { seo } from "@/lib/config";
 import { getAllTags, getPostsByTag } from "@/lib/content";
 import { getDictionary, interpolate, plural } from "@/lib/i18n";
@@ -48,9 +50,12 @@ export default async function TagPage({ params }: TagPageProps) {
   return (
     <div className="mx-auto max-w-4xl px-6 py-16">
       <div className="mb-10">
-        <Link href="/blog/tags" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-          &larr; {t.backToTags}
-        </Link>
+        <Button variant="ghost" size="sm" className="-ml-3 gap-1 text-muted-foreground" asChild>
+          <Link href="/blog/tags">
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            {t.backToTags}
+          </Link>
+        </Button>
         <h1 className="mt-4 text-4xl font-bold tracking-tight">#{tag}</h1>
         <p className="mt-2 text-lg text-muted-foreground">{plural(locale, posts.length, t.postCount)}</p>
       </div>

@@ -1,4 +1,4 @@
-export type ContentType = "blog" | "docs";
+export type ContentType = "blog" | "docs" | "projects";
 
 /** Paths that must not be rewritten: absolute URLs, root-relative paths, anchors, data/mailto URIs. */
 const ABSOLUTE_REF = String.raw`(?!https?:\/\/|\/|#|data:|mailto:)`;

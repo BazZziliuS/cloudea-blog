@@ -16,12 +16,21 @@ interface TocSection {
   children: TocHeading[];
 }
 
+/** Heading text without the "#" anchor appended by rehype-autolink-headings. */
+function headingText(heading: Element): string {
+  const copy = heading.cloneNode(true) as Element;
+  copy.querySelectorAll(".heading-anchor").forEach((anchor) => anchor.remove());
+  return copy.textContent?.trim() ?? "";
+}
+
 interface TableOfContentsProps {
   label: string;
   labels: { expand: string; collapse: string };
+  /** `sidebar`: sticky column with a heading; `collapsible`: a closed-by-default block for small screens. */
+  variant?: "sidebar" | "collapsible";
 }
 
-export function TableOfContents({ label, labels }: TableOfContentsProps) {
+export function TableOfContents({ label, labels, variant = "sidebar" }: TableOfContentsProps) {
   const [headings, setHeadings] = useState<TocHeading[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -39,7 +48,7 @@ export function TableOfContents({ label, labels }: TableOfContentsProps) {
       if (el.id) {
         items.push({
           id: el.id,
-          text: el.textContent ?? "",
+          text: headingText(el),
           level: Number(el.tagName[1]),
         });
       }
@@ -164,11 +173,12 @@ export function TableOfContents({ label, labels }: TableOfContentsProps) {
     });
   };
 
-  return (
-    <nav className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto" aria-label={label}>
-      <p className="mb-3 text-sm font-semibold text-foreground">
-        {label}
-      </p>
+  const nav = (
+    <nav
+      className={variant === "sidebar" ? "sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto" : "mt-3"}
+      aria-label={label}
+    >
+      {variant === "sidebar" && <p className="mb-3 text-sm font-semibold text-foreground">{label}</p>}
       <ul className="space-y-0.5 border-l border-border">
         {sections.map((section) => {
           const isExpanded = expanded.has(section.heading.id);
@@ -218,7 +228,7 @@ export function TableOfContents({ label, labels }: TableOfContentsProps) {
               {hasChildren && (
                 <ul
                   className={cn(
-                    "ml-8 overflow-hidden transition-all duration-200",
+                    "ml-8 overflow-hidden transition-opacity duration-200",
                     isExpanded
                       ? "max-h-[1000px] opacity-100"
                       : "max-h-0 opacity-0"
@@ -254,4 +264,15 @@ export function TableOfContents({ label, labels }: TableOfContentsProps) {
       </ul>
     </nav>
   );
+
+  if (variant === "collapsible") {
+    return (
+      <details className="mb-8 rounded-lg border border-border px-4 py-3">
+        <summary className="cursor-pointer text-sm font-semibold text-foreground">{label}</summary>
+        {nav}
+      </details>
+    );
+  }
+
+  return nav;
 }

@@ -55,7 +55,7 @@ describe("buildContentSecurityPolicy", () => {
   it("matches the production config: Travelpayouts and Metrika are allowed", () => {
     const csp = buildContentSecurityPolicy(baseConfig);
     expect(directive(csp, "script-src")).toEqual(
-      expect.arrayContaining(["https://emrldtp.cc", "https://tpwdg.com", "https://mc.yandex.ru"]),
+      expect.arrayContaining(["https://tpwdg.com", "https://mc.yandex.ru"]),
     );
   });
 });

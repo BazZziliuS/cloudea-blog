@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { GeoBlock } from "@/lib/content";
 
@@ -27,7 +28,10 @@ export function PostCard({ post, blockedMessage }: PostCardProps) {
     <div className="relative flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-accent/50">
       {isBlocked && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-          <p className="text-sm text-muted-foreground">⛔ {blockedMessage}</p>
+          <p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <Lock className="h-4 w-4" aria-hidden="true" />
+            {blockedMessage}
+          </p>
         </div>
       )}
       <article className={`flex flex-1 flex-col ${isBlocked ? "select-none blur-sm" : ""}`} aria-hidden={isBlocked}>

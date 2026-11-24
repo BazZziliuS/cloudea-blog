@@ -21,18 +21,19 @@ const config: CloudeaConfig = {
   // customCss: ["styles/custom.css"],
 
   // Кастомные скрипты
-  customScripts: [
-    // Travelpayouts (https://travelpayouts.com): загрузчик монетизации партнёрских ссылок
-    {
-      code: `(function () {
-    var script = document.createElement("script");
-    script.async = 1;
-    script.src = 'https://emrldtp.cc/NTQ4OTky.js?t=548992';
-    document.head.appendChild(script);
-})();`,
-      position: "head",
+  // Travelpayouts-загрузчик монетизации ссылок (https://emrldtp.cc/NTQ4OTky.js?t=548992)
+  // отключён: после снятия блокировки CSP он подвешивал вкладку браузера при загрузке
+  // страницы. Рекламные блоки из секции ads работают без него.
+  customScripts: [],
+
+  // Раздел «Проекты»: портфолио и продукты из content/projects.
+  projects: {
+    // Куда писать насчёт заказа: кнопка на странице каждого проекта.
+    contact: {
+      href: "https://discord.com/users/347880706724069376",
+      label: { ru: "Заказать похожий", en: "Order something similar" },
     },
-  ],
+  },
 
   // Рекламные блоки внутри страниц.
   // src — URL скрипта виджета из Travelpayouts (Инструменты → Виджеты).
@@ -56,9 +57,8 @@ const config: CloudeaConfig = {
   // Домены аналитики, giscus, Supabase и внешних скриптов из customScripts
   // добавляются автоматически — здесь только то, что скрипты подгружают сами.
   csp: {
-    // Travelpayouts: загрузчик (inline-скрипт выше) тянет код с emrldtp.cc,
-    // виджеты из ads грузятся с tpwdg.com и ходят в API и CDN на множестве доменов.
-    scriptSrc: ["https://emrldtp.cc", "https://*.emrldtp.cc", "https://tpwdg.com", "https://*.tpwdg.com"],
+    // Travelpayouts: виджеты из ads грузятся с tpwdg.com и ходят в API и CDN на множестве доменов.
+    scriptSrc: ["https://tpwdg.com", "https://*.tpwdg.com"],
     connectSrc: ["https:"],
     frameSrc: ["https:"],
   },
@@ -144,13 +144,20 @@ const config: CloudeaConfig = {
           ],
         },
         {
+          label: { ru: "Проекты", en: "Projects", zh: "项目" },
+          href: "/projects",
+          items: [
+            { href: "/projects?kind=client", label: { ru: "Заказы", en: "Client work" }, icon: "bot" },
+            { href: "/projects?kind=product", label: { ru: "Продукты", en: "Products" }, icon: "package" },
+            { href: "/projects?kind=open-source", label: "Open source", icon: "code" },
+            { href: "/projects?kind=mod", label: { ru: "Моды Minecraft", en: "Minecraft mods" }, icon: "blocks" },
+          ],
+        },
+        {
           label: { ru: "Вики", en: "Wiki" },
           href: "/docs",
           items: [
-            { href: "/docs/bots", label: { ru: "Боты", en: "Bots" }, icon: "bot" },
-            { href: "/docs/minecraft", label: "Minecraft", icon: "blocks" },
             { href: "/docs/garrysmod", label: "Garry's Mod", icon: "gamepad-2" },
-            { href: "/docs/javascript", label: "JavaScript", icon: "code" },
             { href: "/docs/windows", label: "Windows", icon: "monitor" },
           ],
         },
@@ -169,19 +176,24 @@ const config: CloudeaConfig = {
           ],
         },
         {
-          title: { ru: "Вики", en: "Wiki" },
+          title: { ru: "Проекты", en: "Projects" },
           items: [
-            { label: { ru: "Боты", en: "Bots" }, href: "/docs/bots", icon: "bot" },
-            { label: "Minecraft", href: "/docs/minecraft", icon: "blocks" },
-            { label: "Garry's Mod", href: "/docs/garrysmod", icon: "gamepad-2" },
-            { label: "JavaScript", href: "/docs/javascript", icon: "code" },
-            { label: "Windows", href: "/docs/windows", icon: "monitor" },
+            { label: { ru: "Заказы", en: "Client work" }, href: "/projects?kind=client", icon: "bot" },
+            { label: { ru: "Продукты", en: "Products" }, href: "/projects?kind=product", icon: "package" },
+            { label: { ru: "Моды Minecraft", en: "Minecraft mods" }, href: "/projects?kind=mod", icon: "blocks" },
           ],
         },
         {
-          title: { ru: "Проект", en: "Project" },
+          title: { ru: "Вики", en: "Wiki" },
           items: [
-            { label: { ru: "Документация", en: "Docs" }, href: "/docs/project", icon: "book-open" },
+            { label: "Garry's Mod", href: "/docs/garrysmod", icon: "gamepad-2" },
+            { label: "Windows", href: "/docs/windows", icon: "monitor" },
+            { label: { ru: "О платформе", en: "Platform docs" }, href: "/docs/project", icon: "book-open" },
+          ],
+        },
+        {
+          title: { ru: "Автор", en: "Author" },
+          items: [
             { label: { ru: "Обо мне", en: "About" }, href: "/about", icon: "user" },
             { label: "GitHub", href: "https://github.com/BazZziliuS/cloudea-blog", icon: "github", external: true },
           ],

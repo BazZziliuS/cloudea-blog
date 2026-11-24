@@ -17,12 +17,7 @@ export default function BlogError({
 
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center px-6">
-      <h1 className="text-6xl font-extrabold tracking-tight text-muted-foreground/30">
-        Ошибка
-      </h1>
-      <h2 className="mt-4 text-xl font-bold tracking-tight">
-        Не удалось загрузить страницу
-      </h2>
+      <h1 className="text-2xl font-bold tracking-tight">Не удалось загрузить страницу</h1>
       <p className="mt-2 text-muted-foreground max-w-md">
         При загрузке контента произошла ошибка. Попробуйте обновить страницу.
       </p>

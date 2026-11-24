@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Lock } from "lucide-react";
 import type { GeoBlock } from "@/lib/content";
 import type { Dictionary } from "@/lib/i18n";
 import { isGeoBlocked, useGeoCountry } from "@/hooks/use-geo-country";
@@ -28,9 +29,7 @@ export function GeoGuard({ geoBlock, labels, children }: GeoGuardProps) {
     return (
       <div className="flex items-center justify-center px-6 py-32 text-center">
         <div>
-          <p className="mb-4 text-4xl" aria-hidden="true">
-            ⛔
-          </p>
+          <Lock className="mx-auto mb-4 h-8 w-8 text-muted-foreground" aria-hidden="true" />
           <p className="text-xl text-muted-foreground">{message}</p>
         </div>
       </div>

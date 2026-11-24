@@ -59,7 +59,7 @@ export function ScriptWidget({ src, label, minHeight }: ScriptWidgetProps) {
 
   return (
     <aside ref={rootRef} aria-label={label} className="not-prose my-10">
-      <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mb-2 text-xs text-muted-foreground">{label}</p>
       <div
         ref={mountRef}
         className="overflow-hidden rounded-lg border border-border bg-card"

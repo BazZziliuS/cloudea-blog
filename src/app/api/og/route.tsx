@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { getConfig } from "@/lib/config";
-import { getCustomPage, getDocBySlug, getPostBySlug } from "@/lib/content";
+import { getCustomPage, getDocBySlug, getPostBySlug, getProjectBySlug } from "@/lib/content";
 import { OG_IMAGE_SIZE } from "@/lib/og";
 import { humanizeSlug } from "@/lib/utils";
 
@@ -24,6 +24,11 @@ export async function GET(request: NextRequest) {
         title = doc.title;
         description = doc.description;
         category = doc.category;
+      } else if (type === "project") {
+        const project = getProjectBySlug(slug);
+        title = project.title;
+        description = project.description;
+        tags = project.stack.slice(0, 5);
       } else if (type === "page") {
         try {
           const page = getCustomPage(slug.split("/"));
@@ -66,8 +71,6 @@ export async function GET(request: NextRequest) {
               style={{
                 fontSize: 18,
                 color: "#4fd0ff",
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
                 marginBottom: 12,
               }}
             >

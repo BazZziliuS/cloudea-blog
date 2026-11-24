@@ -6,16 +6,17 @@
  * Prints warnings and exits with code 1 if critical errors found.
  */
 
-import { getAllPosts, getAllDocs, getContentWarnings } from "../src/lib/content";
+import { getAllDocs, getAllPosts, getAllProjects, getContentWarnings } from "../src/lib/content";
 
 console.log("Validating content...\n");
 
 // Trigger validation by loading all content
 const posts = getAllPosts(true);
 const docs = getAllDocs();
+const projects = getAllProjects();
 const warnings = getContentWarnings();
 
-console.log(`Found ${posts.length} posts and ${docs.length} docs.\n`);
+console.log(`Found ${posts.length} posts, ${docs.length} docs and ${projects.length} projects.\n`);
 
 if (warnings.length > 0) {
   console.log(`⚠ ${warnings.length} warning(s):\n`);
