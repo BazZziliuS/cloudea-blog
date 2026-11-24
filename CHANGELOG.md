@@ -1,3 +1,9 @@
+# [1.19.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.18.0...v1.19.0) (2026-11-24)
+
+### Features
+
+* projects section, wiki portfolio migration, UI cleanup, fix page freeze ([a2d88f6](https://github.com/BazZziliuS/cloudea-blog/commit/a2d88f636fe3a9ddb3b74f13aaee363342263b7b))
+
 # [1.18.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.17.0...v1.18.0) (2026-11-24)
 
 ### Bug Fixes
