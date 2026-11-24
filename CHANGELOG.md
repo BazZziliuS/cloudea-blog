@@ -1,3 +1,9 @@
+## [1.19.2](https://github.com/BazZziliuS/cloudea-blog/compare/v1.19.1...v1.19.2) (2026-11-24)
+
+### Reverts
+
+* re-enable Yandex Metrika ([6e9005e](https://github.com/BazZziliuS/cloudea-blog/commit/6e9005ebcd8731c956ad309ed2dcdd859b98e97a))
+
 ## [1.19.1](https://github.com/BazZziliuS/cloudea-blog/compare/v1.19.0...v1.19.1) (2026-11-24)
 
 ### Bug Fixes
