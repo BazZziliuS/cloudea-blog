@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.16.0...v1.17.0) (2026-11-24)
+
+
+### Features
+
+* **blog:** add KillSwitch post ([f736518](https://github.com/BazZziliuS/cloudea-blog/commit/f7365182886de640d8917523903f941e24ab127b))
+
 # [1.16.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.15.0...v1.16.0) (2026-07-11)
 
 
