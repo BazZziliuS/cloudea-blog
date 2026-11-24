@@ -1,3 +1,9 @@
+## [1.19.1](https://github.com/BazZziliuS/cloudea-blog/compare/v1.19.0...v1.19.1) (2026-11-24)
+
+### Bug Fixes
+
+* disable Yandex Metrika, it froze the page in production ([34fa88d](https://github.com/BazZziliuS/cloudea-blog/commit/34fa88d02e6e070ee0cfe0b28f457570885a4502))
+
 # [1.19.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.18.0...v1.19.0) (2026-11-24)
 
 ### Features
