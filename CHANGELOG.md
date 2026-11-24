@@ -1,3 +1,14 @@
+# [1.18.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.17.0...v1.18.0) (2026-11-24)
+
+### Bug Fixes
+
+* **ci:** generate Next.js route types before type-checking ([e78d9b3](https://github.com/BazZziliuS/cloudea-blog/commit/e78d9b38afcb718bb778b6283bffa1c008d1d4e2))
+* **ci:** pin Node 26 for semantic-release ([87abbf2](https://github.com/BazZziliuS/cloudea-blog/commit/87abbf221c6b15d204a47022194d1e5980ef1ad4))
+
+### Features
+
+* refactor platform, harden security, update dependencies ([8dc5c21](https://github.com/BazZziliuS/cloudea-blog/commit/8dc5c21fc3b2627abc08078aa4132144a1cf06c8))
+
 # [1.17.0](https://github.com/BazZziliuS/cloudea-blog/compare/v1.16.0...v1.17.0) (2026-11-24)
 
 
