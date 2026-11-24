@@ -203,12 +203,19 @@ Blocked content is shown with a blur overlay and a message.
 
 ## Scripts
 
+Requires **Node.js 24+** (Docker and CI use Node 26).
+
 | Command | Description |
 |---|---|
 | `npm run dev` | Start dev server (Turbopack) |
-| `npm run build` | Production build |
+| `npm run build` | Production build (standalone output) |
 | `npm run start` | Start production server |
-| `npm run lint` | Linting |
+| `npm run lint` | ESLint (`lint:fix` to autofix) |
+| `npm run typecheck` | Type-check with TypeScript 7 (`tsc`) |
+| `npm test` | Unit tests (Vitest) |
+| `npm run test:e2e` | E2E tests (Playwright) |
+| `npm run validate:content` | Validate frontmatter of all posts and docs |
+| `npm run check` | `lint` + `typecheck` + `test` + `validate:content` — run before pushing |
 | `npm run release` | Run semantic-release |
 
 ## License

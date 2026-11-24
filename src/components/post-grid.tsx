@@ -1,69 +1,54 @@
 "use client";
 
 import { useState } from "react";
-import { PostCard, useUserCountry } from "@/components/post-card";
-import type { GeoBlock } from "@/lib/content";
-
-interface PostData {
-  slug: string;
-  title: string;
-  description: string;
-  date: string;
-  readingTime: string;
-  tags: string[];
-  geoBlock?: GeoBlock;
-}
+import { PostCard, type PostCardData } from "@/components/post-card";
+import { isGeoBlocked, useGeoCountry } from "@/hooks/use-geo-country";
+import { interpolate, type Dictionary } from "@/lib/i18n";
 
 interface PostGridProps {
-  posts: PostData[];
-  locale?: string;
+  posts: PostCardData[];
+  labels: Pick<Dictionary["blog"], "showMore" | "shownOf"> & Pick<Dictionary["geo"], "unavailableShort">;
   perPage?: number;
 }
 
-export function PostGrid({ posts, locale = "en", perPage = 12 }: PostGridProps) {
-  const hasGeoBlocked = posts.some((p) => p.geoBlock);
-  const { country, loaded } = useUserCountry();
-  const [page, setPage] = useState(1);
+export function PostGrid({ posts, labels, perPage = 12 }: PostGridProps) {
+  const [visibleCount, setVisibleCount] = useState(perPage);
+  // Only ask for the visitor's country when something on the page is geo-restricted.
+  const geo = useGeoCountry(posts.some((post) => post.geoBlock));
 
-  const resolvedCountry = hasGeoBlocked ? (loaded ? country : null) : null;
-
-  const totalPages = Math.ceil(posts.length / perPage);
-  const paginated = posts.slice(0, page * perPage);
-  const hasMore = page < totalPages;
+  const visible = posts.slice(0, visibleCount);
 
   return (
     <div>
       <div className="grid gap-6 sm:grid-cols-2">
-        {paginated.map((post) => (
+        {visible.map((post) => (
           <PostCard
             key={post.slug}
-            slug={post.slug}
-            title={post.title}
-            description={post.description}
-            date={post.date}
-            readingTime={post.readingTime}
-            tags={post.tags}
-            locale={locale}
-            geoBlock={post.geoBlock}
-            userCountry={resolvedCountry}
+            post={post}
+            blockedMessage={
+              post.geoBlock && isGeoBlocked(geo, post.geoBlock.countries)
+                ? (post.geoBlock.message ?? labels.unavailableShort)
+                : undefined
+            }
           />
         ))}
       </div>
 
-      {hasMore && (
+      {visibleCount < posts.length && (
         <div className="mt-8 flex justify-center">
           <button
-            onClick={() => setPage((p) => p + 1)}
-            className="rounded-lg border border-border px-6 py-2.5 text-sm font-medium transition-colors hover:bg-accent hover:border-primary/50"
+            type="button"
+            onClick={() => setVisibleCount((count) => count + perPage)}
+            className="rounded-lg border border-border px-6 py-2.5 text-sm font-medium transition-colors hover:border-primary/50 hover:bg-accent"
           >
-            {locale === "ru" ? "Показать ещё" : locale === "zh" ? "显示更多" : "Show more"}
+            {labels.showMore}
           </button>
         </div>
       )}
 
       {posts.length > perPage && (
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          {paginated.length} из {posts.length}
+          {interpolate(labels.shownOf, { shown: visible.length, total: posts.length })}
         </p>
       )}
     </div>

@@ -1,48 +1,34 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { BlogContent } from "@/components/blog-content";
-import { getLocale } from "@/lib/i18n-server";
+import { getConfig, seo } from "@/lib/config";
 import { getDictionary } from "@/lib/i18n";
-import { seo, getConfig } from "@/lib/config";
+import { getLocale } from "@/lib/i18n-server";
+import { ogImageMetadata, ogImageUrl } from "@/lib/og";
+import { parsePageParam } from "@/lib/utils";
 
 export const revalidate = 3600;
 
-export async function generateMetadata() {
-  const config = getConfig();
-  const ogUrl = `${config.url}/api/og?type=page&slug=blog`;
+export async function generateMetadata(): Promise<Metadata> {
+  const { blog } = getDictionary(await getLocale());
   return {
-    ...seo({
-      title: "Blog",
-      description: "Articles, tutorials, and announcements",
-      path: "/blog",
-    }),
-    openGraph: {
-      title: "Blog",
-      description: "Articles, tutorials, and announcements",
-      images: [{ url: ogUrl, width: 1200, height: 630 }],
-    },
-    twitter: {
-      card: "summary_large_image" as const,
-      images: [ogUrl],
-    },
+    ...seo({ title: blog.title, description: blog.subtitle, path: "/blog" }),
+    ...ogImageMetadata(blog.title, blog.subtitle, ogImageUrl({ slug: "blog", type: "page" })),
   };
 }
 
 interface BlogPageProps {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string | string[] }>;
 }
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
-  const config = getConfig();
-  const params = await searchParams;
+  const currentPage = parsePageParam((await searchParams).page);
 
-  // Блог уже рендерится на главной — не дублируем контент на /blog
-  if ((config.homepage ?? "landing") === "blog") {
-    redirect(params.page ? `/?page=${params.page}` : "/");
+  // The blog is already rendered on the homepage — avoid duplicate content.
+  if (getConfig().homepage === "blog") {
+    redirect(currentPage > 1 ? `/?page=${currentPage}` : "/");
   }
 
   const locale = await getLocale();
-  const dict = getDictionary(locale);
-  const currentPage = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
-
-  return <BlogContent locale={locale} dict={dict} currentPage={currentPage} basePath="/blog" />;
+  return <BlogContent locale={locale} dict={getDictionary(locale)} currentPage={currentPage} basePath="/blog" />;
 }

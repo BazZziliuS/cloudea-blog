@@ -1,67 +1,33 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getAllCustomPages, getCustomPage, customPageExists } from "@/lib/content";
-import { compileMDX } from "@/lib/mdx";
-import { seo, getConfig } from "@/lib/config";
+import { CustomPageArticle } from "@/components/custom-page-article";
+import { seo } from "@/lib/config";
+import { customPageExists, getAllCustomPages, getCustomPage } from "@/lib/content";
+import { ogImageMetadata, ogImageUrl } from "@/lib/og";
 
 interface CustomPageProps {
   params: Promise<{ page: string[] }>;
 }
 
-export async function generateStaticParams() {
-  const pages = getAllCustomPages();
-  return pages.map((p) => ({ page: p.slug }));
+export function generateStaticParams() {
+  return getAllCustomPages().map((page) => ({ page: page.slug }));
 }
 
-export async function generateMetadata({ params }: CustomPageProps) {
+export async function generateMetadata({ params }: CustomPageProps): Promise<Metadata> {
   const { page } = await params;
   if (!customPageExists(page)) return seo({ title: "Not Found", noIndex: true });
 
-  const config = getConfig();
   const data = getCustomPage(page);
-  const ogUrl = `${config.url}/api/og?type=page&slug=${encodeURIComponent(page.join("/"))}`;
+  const slug = page.join("/");
   return {
-    ...seo({
-      title: data.title,
-      description: data.description,
-      path: `/${page.join("/")}`,
-    }),
-    openGraph: {
-      title: data.title,
-      description: data.description,
-      images: [{ url: ogUrl, width: 1200, height: 630 }],
-    },
-    twitter: {
-      card: "summary_large_image" as const,
-      title: data.title,
-      description: data.description,
-      images: [ogUrl],
-    },
+    ...seo({ title: data.title, description: data.description, path: `/${slug}` }),
+    ...ogImageMetadata(data.title, data.description, ogImageUrl({ slug, type: "page" })),
   };
 }
 
 export default async function CustomPage({ params }: CustomPageProps) {
   const { page } = await params;
+  if (!customPageExists(page)) notFound();
 
-  if (!customPageExists(page)) {
-    notFound();
-  }
-
-  const data = getCustomPage(page);
-  const content = await compileMDX(data.content);
-
-  return (
-    <article className="mx-auto max-w-3xl px-6 py-16">
-      {data.title && (
-        <header className="mb-10">
-          <h1 className="text-4xl font-bold tracking-tight">{data.title}</h1>
-          {data.description && (
-            <p className="mt-3 text-lg text-muted-foreground">{data.description}</p>
-          )}
-        </header>
-      )}
-      <div className="prose prose-neutral dark:prose-invert max-w-none">
-        {content}
-      </div>
-    </article>
-  );
+  return <CustomPageArticle page={getCustomPage(page)} />;
 }

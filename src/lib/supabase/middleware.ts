@@ -1,38 +1,27 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { getConfig } from "@/lib/config";
+import { getSupabaseConfig } from "@/lib/config";
 
+/** Refresh the Supabase auth session and propagate updated cookies. */
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
+  let response = NextResponse.next({ request });
+  const { url, anonKey } = getSupabaseConfig();
+
+  const supabase = createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
+        response = NextResponse.next({ request });
+        for (const { name, value, options } of cookiesToSet) response.cookies.set(name, value, options);
+      },
+    },
   });
 
-  const config = getConfig();
-
-  const supabase = createServerClient(
-    config.supabase!.url,
-    config.supabase!.anonKey,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
+  // Must be called right after creating the client: it revalidates the auth token.
   await supabase.auth.getUser();
 
-  return supabaseResponse;
+  return response;
 }

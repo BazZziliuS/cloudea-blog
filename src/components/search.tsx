@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Search, FileText, BookOpen, X } from "lucide-react";
@@ -74,26 +74,32 @@ function SearchDialog({ dict, onClose }: { dict: BlogDict; onClose: () => void }
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  const search = useCallback(async (q: string) => {
-    if (q.trim().length < 2) {
-      setResults([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      setResults(data);
-      setActiveIndex(0);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // Debounced search; in-flight requests are aborted so stale responses can't overwrite newer ones.
   useEffect(() => {
-    const timer = setTimeout(() => search(query), 200);
-    return () => clearTimeout(timer);
-  }, [query, search]);
+    const q = query.trim();
+    if (q.length < 2) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+        setResults(res.ok ? ((await res.json()) as SearchItem[]) : []);
+        setActiveIndex(0);
+      } catch {
+        if (!controller.signal.aborted) setResults([]);
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }, 200);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
+
+  const visibleResults = query.trim().length < 2 ? [] : results;
 
   const navigate = (href: string) => {
     onClose();
@@ -103,12 +109,12 @@ function SearchDialog({ dict, onClose }: { dict: BlogDict; onClose: () => void }
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, results.length - 1));
+      setActiveIndex((i) => Math.min(i + 1, visibleResults.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActiveIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === "Enter" && results[activeIndex]) {
-      navigate(results[activeIndex].href);
+    } else if (e.key === "Enter" && visibleResults[activeIndex]) {
+      navigate(visibleResults[activeIndex].href);
     }
   };
 
@@ -135,12 +141,18 @@ function SearchDialog({ dict, onClose }: { dict: BlogDict; onClose: () => void }
               placeholder={dict.searchPlaceholder}
               aria-label={dict.searchPlaceholder}
               role="combobox"
-              aria-expanded={results.length > 0}
+              aria-expanded={visibleResults.length > 0}
+              aria-controls="search-results"
               aria-autocomplete="list"
               className="flex-1 bg-transparent px-3 py-3 text-sm outline-none placeholder:text-muted-foreground"
             />
             {query && (
-              <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground">
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label={dict.close}
+                className="text-muted-foreground hover:text-foreground"
+              >
                 <X className="h-4 w-4" />
               </button>
             )}
@@ -153,15 +165,15 @@ function SearchDialog({ dict, onClose }: { dict: BlogDict; onClose: () => void }
               </div>
             )}
 
-            {!loading && query.length >= 2 && results.length === 0 && (
+            {!loading && query.trim().length >= 2 && visibleResults.length === 0 && (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                 {dict.noResults}
               </div>
             )}
 
-            {!loading && results.length > 0 && (
-              <ul className="p-2" role="listbox">
-                {results.map((item, i) => (
+            {!loading && visibleResults.length > 0 && (
+              <ul id="search-results" className="p-2" role="listbox">
+                {visibleResults.map((item, i) => (
                   <li key={item.href}>
                     <button
                       onClick={() => navigate(item.href)}
@@ -199,7 +211,7 @@ function SearchDialog({ dict, onClose }: { dict: BlogDict; onClose: () => void }
               </ul>
             )}
 
-            {!loading && query.length < 2 && (
+            {!loading && query.trim().length < 2 && (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                 {dict.minChars}
               </div>

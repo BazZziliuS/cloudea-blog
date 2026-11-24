@@ -203,12 +203,19 @@ order: 1
 
 ## Скрипты
 
+Требуется **Node.js 24+** (Docker и CI используют Node 26).
+
 | Команда | Описание |
 |---|---|
-| `npm run dev` | Запуск dev-сервера (Turbopack) |
-| `npm run build` | Production-сборка |
+| `npm run dev` | Dev-сервер (Turbopack) |
+| `npm run build` | Production-сборка (standalone) |
 | `npm run start` | Запуск production-сервера |
-| `npm run lint` | Линтинг |
+| `npm run lint` | ESLint (`lint:fix` — автоисправление) |
+| `npm run typecheck` | Проверка типов TypeScript 7 (`tsc`) |
+| `npm test` | Unit-тесты (Vitest) |
+| `npm run test:e2e` | E2E-тесты (Playwright) |
+| `npm run validate:content` | Проверка frontmatter всех постов и документов |
+| `npm run check` | `lint` + `typecheck` + `test` + `validate:content` — запускать перед push |
 | `npm run release` | Запуск semantic-release |
 
 ## Лицензия

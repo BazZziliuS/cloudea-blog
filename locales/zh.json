@@ -1,4 +1,19 @@
 {
+  "common": {
+    "skipToContent": "跳到主要内容",
+    "toggleTheme": "切换主题",
+    "toggleMenu": "菜单",
+    "language": "语言",
+    "scrollToTop": "返回顶部",
+    "copy": "复制",
+    "copied": "已复制！",
+    "copyCode": "复制代码",
+    "home": "首页",
+    "tryAgain": "重试",
+    "expand": "展开",
+    "collapse": "收起",
+    "advertisement": "广告"
+  },
   "nav": {
     "blog": "博客",
     "docs": "文档",
@@ -28,9 +43,6 @@
     "archive": "归档",
     "archiveSubtitle": "按年份查看所有博客文章",
     "allTagsLink": "全部",
-    "post": "篇文章",
-    "posts2_4": "篇文章",
-    "posts5": "篇文章",
     "noTags": "暂无标签。",
     "backToTags": "所有标签",
     "searchPlaceholder": "搜索博客和文档...",
@@ -45,13 +57,57 @@
     "docsLabel": "文档",
     "docs": "文档",
     "showMore": "显示更多",
-    "ofTotal": "共",
-    "recentPosts": "最新文章"
+    "recentPosts": "最新文章",
+    "postCount": {
+      "other": "{count} 篇文章"
+    },
+    "minRead": "{count} 分钟阅读",
+    "prev": "← 上一页",
+    "next": "下一页 →",
+    "shownOf": "{shown} / {total}",
+    "series": "系列",
+    "seriesPrev": "← 上一篇",
+    "seriesNext": "下一篇 →",
+    "related": "相关文章",
+    "editOnGithub": "在 GitHub 上编辑此页",
+    "draftNotice": "这是草稿，仅在预览模式下可见。",
+    "exitPreview": "退出预览",
+    "taggedWith": "标签为「{tag}」的文章"
+  },
+  "docs": {
+    "title": "文档",
+    "subtitle": "指南、维基和笔记。",
+    "updated": "更新于 {date}",
+    "editOnGithub": "在 GitHub 上编辑",
+    "docCount": {
+      "other": "{count} 篇文档"
+    }
+  },
+  "geo": {
+    "unavailable": "此内容在您所在的地区不可用。",
+    "unavailableShort": "您所在的地区不可用",
+    "hidden": "此内容在您所在的地区已隐藏。",
+    "detectFailed": "无法确定您所在的地区。请关闭广告拦截器并刷新页面。"
+  },
+  "comments": {
+    "title": "评论",
+    "placeholder": "发表评论...",
+    "replyPlaceholder": "写回复...",
+    "send": "发送",
+    "signInToComment": "登录后发表评论",
+    "noComments": "暂无评论，快来抢沙发！",
+    "reply": "回复",
+    "delete": "删除",
+    "cancel": "取消"
   },
   "auth": {
     "title": "登录",
     "subtitle": "使用 GitHub 登录以访问平台",
     "signInGithub": "使用 GitHub 登录"
+  },
+  "errors": {
+    "notFoundTitle": "页面未找到",
+    "notFoundText": "您访问的页面不存在、已被删除或已移至其他地址。"
   },
   "footer": {
     "rights": "保留所有权利。",

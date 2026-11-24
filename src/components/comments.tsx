@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { ru, enUS } from "date-fns/locale";
-import { MessageSquare, Send, Trash2, Reply, LogIn } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
-import type { Locale } from "@/lib/i18n";
-import type { Locale as DateLocale } from "date-fns";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { formatDistanceToNow, type Locale as DateFnsLocale } from "date-fns";
+import type { User } from "@supabase/supabase-js";
+import { LogIn, MessageSquare, Reply, Send, Trash2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { getDateFnsLocale } from "@/lib/date";
+import type { Dictionary, Locale } from "@/lib/i18n";
+import { createClient } from "@/lib/supabase/client";
+
+type CommentLabels = Dictionary["comments"];
 
 interface Comment {
   id: string;
@@ -25,61 +26,58 @@ interface Comment {
 interface CommentsProps {
   slug: string;
   locale: Locale;
+  labels: CommentLabels;
 }
 
-const t = {
-  ru: {
-    title: "Комментарии",
-    placeholder: "Написать комментарий...",
-    replyPlaceholder: "Написать ответ...",
-    send: "Отправить",
-    signInToComment: "Войдите, чтобы комментировать",
-    noComments: "Пока нет комментариев. Будьте первым!",
-    reply: "Ответить",
-    delete: "Удалить",
-    cancel: "Отмена",
-  },
-  en: {
-    title: "Comments",
-    placeholder: "Write a comment...",
-    replyPlaceholder: "Write a reply...",
-    send: "Send",
-    signInToComment: "Sign in to comment",
-    noComments: "No comments yet. Be the first!",
-    reply: "Reply",
-    delete: "Delete",
-    cancel: "Cancel",
-  },
-};
+const MAX_COMMENT_LENGTH = 5000;
 
-export function SupabaseComments({ slug, locale }: CommentsProps) {
+const textareaClassName =
+  "w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring";
+
+function userInitial(user: User): string {
+  return String(user.user_metadata?.user_name || "U").charAt(0).toUpperCase();
+}
+
+export function SupabaseComments({ slug, locale, labels }: CommentsProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const labels = t[locale as keyof typeof t] ?? t.ru;
-  const dateLocale: DateLocale = locale === "ru" ? ru : enUS;
+  const dateLocale = getDateFnsLocale(locale);
 
   const fetchComments = useCallback(async () => {
     const res = await fetch(`/api/comments?slug=${encodeURIComponent(slug)}`);
-    if (res.ok) {
-      const data = await res.json();
-      setComments(data);
-    }
+    if (res.ok) setComments((await res.json()) as Comment[]);
   }, [slug]);
 
   useEffect(() => {
-    fetchComments();
+    let active = true;
+    fetch(`/api/comments?slug=${encodeURIComponent(slug)}`)
+      .then((res) => (res.ok ? (res.json() as Promise<Comment[]>) : null))
+      .then((data) => {
+        if (active && data) setComments(data);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, [fetchComments]);
+    void supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    return () => subscription.unsubscribe();
+  }, []);
 
   const submitComment = async (content: string, parentId: string | null) => {
     if (!content.trim()) return;
-    setLoading(true);
+    setSubmitting(true);
     try {
       const res = await fetch("/api/comments", {
         method: "POST",
@@ -93,204 +91,191 @@ export function SupabaseComments({ slug, locale }: CommentsProps) {
         await fetchComments();
       }
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   const deleteComment = async (id: string) => {
-    const res = await fetch(`/api/comments?id=${id}`, { method: "DELETE" });
-    if (res.ok) {
-      await fetchComments();
-    }
+    const res = await fetch(`/api/comments?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (res.ok) await fetchComments();
+  };
+
+  const cancelReply = () => {
+    setReplyTo(null);
+    setReplyContent("");
   };
 
   const topLevel = comments.filter((c) => !c.parent_id);
-  const replies = (parentId: string) =>
-    comments.filter((c) => c.parent_id === parentId);
+  const repliesByParent = new Map<string, Comment[]>();
+  for (const c of comments) {
+    if (c.parent_id) repliesByParent.set(c.parent_id, [...(repliesByParent.get(c.parent_id) ?? []), c]);
+  }
 
   return (
-    <div className="mt-16 border-t border-border pt-10">
-      <h2 className="flex items-center gap-2 text-xl font-semibold mb-6">
-        <MessageSquare className="h-5 w-5" />
+    <section className="mt-16 border-t border-border pt-10">
+      <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold">
+        <MessageSquare className="h-5 w-5" aria-hidden="true" />
         {labels.title}
         {comments.length > 0 && (
-          <span className="text-sm font-normal text-muted-foreground">
-            ({comments.length})
-          </span>
+          <span className="text-sm font-normal text-muted-foreground">({comments.length})</span>
         )}
       </h2>
 
-      {/* New comment form */}
       {user ? (
-        <div className="flex gap-3 mb-8">
-          <Avatar className="h-8 w-8 shrink-0 mt-1">
+        <div className="mb-8 flex gap-3">
+          <Avatar className="mt-1 h-8 w-8 shrink-0">
             <AvatarImage src={user.user_metadata?.avatar_url} />
-            <AvatarFallback>
-              {(user.user_metadata?.user_name || "U").charAt(0).toUpperCase()}
-            </AvatarFallback>
+            <AvatarFallback>{userInitial(user)}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder={labels.placeholder}
+              aria-label={labels.placeholder}
+              maxLength={MAX_COMMENT_LENGTH}
               rows={3}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+              className={textareaClassName}
             />
-            <div className="flex justify-end mt-2">
+            <div className="mt-2 flex justify-end">
               <Button
                 size="sm"
                 onClick={() => submitComment(newComment, null)}
-                disabled={loading || !newComment.trim()}
+                disabled={submitting || !newComment.trim()}
                 className="gap-1.5"
               >
-                <Send className="h-3.5 w-3.5" />
+                <Send className="h-3.5 w-3.5" aria-hidden="true" />
                 {labels.send}
               </Button>
             </div>
           </div>
         </div>
       ) : (
-        <Link href="/auth/login">
-          <Button variant="outline" className="mb-8 gap-2">
-            <LogIn className="h-4 w-4" />
+        <Button variant="outline" className="mb-8 gap-2" asChild>
+          <Link href="/auth/login">
+            <LogIn className="h-4 w-4" aria-hidden="true" />
             {labels.signInToComment}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       )}
 
-      {/* Comments list */}
       {topLevel.length === 0 ? (
         <p className="text-sm text-muted-foreground">{labels.noComments}</p>
       ) : (
         <div className="space-y-6">
-          {topLevel.map((comment) => (
-            <div key={comment.id}>
-              <CommentItem
-                comment={comment}
-                user={user}
-                labels={labels}
-                dateLocale={dateLocale}
-                onDelete={deleteComment}
-                onReply={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
-              />
+          {topLevel.map((comment) => {
+            const replies = repliesByParent.get(comment.id) ?? [];
+            return (
+              <div key={comment.id}>
+                <CommentItem
+                  comment={comment}
+                  user={user}
+                  labels={labels}
+                  dateLocale={dateLocale}
+                  onDelete={deleteComment}
+                  onReply={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
+                />
 
-              {/* Replies */}
-              {replies(comment.id).length > 0 && (
-                <div className="ml-10 mt-3 space-y-3 border-l-2 border-border pl-4">
-                  {replies(comment.id).map((reply) => (
-                    <CommentItem
-                      key={reply.id}
-                      comment={reply}
-                      user={user}
-                      labels={labels}
-                      dateLocale={dateLocale}
-                      onDelete={deleteComment}
-                    />
-                  ))}
-                </div>
-              )}
+                {replies.length > 0 && (
+                  <div className="ml-10 mt-3 space-y-3 border-l-2 border-border pl-4">
+                    {replies.map((reply) => (
+                      <CommentItem
+                        key={reply.id}
+                        comment={reply}
+                        user={user}
+                        labels={labels}
+                        dateLocale={dateLocale}
+                        onDelete={deleteComment}
+                      />
+                    ))}
+                  </div>
+                )}
 
-              {/* Reply form */}
-              {replyTo === comment.id && user && (
-                <div className="ml-10 mt-3 flex gap-3">
-                  <Avatar className="h-6 w-6 shrink-0 mt-1">
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
-                    <AvatarFallback className="text-xs">
-                      {(user.user_metadata?.user_name || "U").charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <textarea
-                      value={replyContent}
-                      onChange={(e) => setReplyContent(e.target.value)}
-                      placeholder={labels.replyPlaceholder}
-                      rows={2}
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-                      autoFocus
-                    />
-                    <div className="flex justify-end gap-2 mt-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setReplyTo(null);
-                          setReplyContent("");
-                        }}
-                      >
-                        {labels.cancel}
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => submitComment(replyContent, comment.id)}
-                        disabled={loading || !replyContent.trim()}
-                        className="gap-1.5"
-                      >
-                        <Send className="h-3.5 w-3.5" />
-                        {labels.send}
-                      </Button>
+                {replyTo === comment.id && user && (
+                  <div className="ml-10 mt-3 flex gap-3">
+                    <Avatar className="mt-1 h-6 w-6 shrink-0">
+                      <AvatarImage src={user.user_metadata?.avatar_url} />
+                      <AvatarFallback className="text-xs">{userInitial(user)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <textarea
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        placeholder={labels.replyPlaceholder}
+                        aria-label={labels.replyPlaceholder}
+                        maxLength={MAX_COMMENT_LENGTH}
+                        rows={2}
+                        className={textareaClassName}
+                        autoFocus
+                      />
+                      <div className="mt-2 flex justify-end gap-2">
+                        <Button size="sm" variant="ghost" onClick={cancelReply}>
+                          {labels.cancel}
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => submitComment(replyContent, comment.id)}
+                          disabled={submitting || !replyContent.trim()}
+                          className="gap-1.5"
+                        >
+                          <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                          {labels.send}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
-function CommentItem({
-  comment,
-  user,
-  labels,
-  dateLocale,
-  onDelete,
-  onReply,
-}: {
+interface CommentItemProps {
   comment: Comment;
   user: User | null;
-  labels: (typeof t)["ru"];
-  dateLocale: DateLocale;
+  labels: CommentLabels;
+  dateLocale: DateFnsLocale;
   onDelete: (id: string) => void;
   onReply?: () => void;
-}) {
+}
+
+function CommentItem({ comment, user, labels, dateLocale, onDelete, onReply }: CommentItemProps) {
   return (
     <div className="flex gap-3">
       <Avatar className="h-8 w-8 shrink-0">
         <AvatarImage src={comment.user_avatar} />
-        <AvatarFallback>
-          {comment.user_name.charAt(0).toUpperCase()}
-        </AvatarFallback>
+        <AvatarFallback>{comment.user_name.charAt(0).toUpperCase()}</AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{comment.user_name}</span>
-          <span className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(comment.created_at), {
-              addSuffix: true,
-              locale: dateLocale,
-            })}
-          </span>
+          <time dateTime={comment.created_at} className="text-xs text-muted-foreground">
+            {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: dateLocale })}
+          </time>
         </div>
-        <p className="mt-1 text-sm whitespace-pre-wrap">{comment.content}</p>
+        <p className="mt-1 whitespace-pre-wrap text-sm">{comment.content}</p>
         <div className="mt-1.5 flex items-center gap-3">
           {onReply && user && (
             <button
+              type="button"
               onClick={onReply}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              <Reply className="h-3 w-3" />
+              <Reply className="h-3 w-3" aria-hidden="true" />
               {labels.reply}
             </button>
           )}
           {user?.id === comment.user_id && (
             <button
+              type="button"
               onClick={() => onDelete(comment.id)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive"
             >
-              <Trash2 className="h-3 w-3" />
+              <Trash2 className="h-3 w-3" aria-hidden="true" />
               {labels.delete}
             </button>
           )}

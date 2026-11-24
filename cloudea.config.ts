@@ -1,5 +1,9 @@
 import type { CloudeaConfig } from "./src/lib/config";
 
+/** Travelpayouts: форма поиска авиабилетов и отелей Aviasales. */
+const TRAVELPAYOUTS_SEARCH_FORM =
+  "https://tpwdg.com/content?currency=rub&trs=548992&shmarker=749500&show_hotels=true&powered_by=true&locale=ru&searchUrl=www.aviasales.ru%2Fsearch&primary_override=%2332a8dd&color_button=%2332a8dd&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=0&plain=false&promo_id=7879&campaign_id=100";
+
 const config: CloudeaConfig = {
   title: "Cloudea Blog",
   tagline: "Платформа для блогов и документации",
@@ -18,7 +22,7 @@ const config: CloudeaConfig = {
 
   // Кастомные скрипты
   customScripts: [
-    // Travelpayouts (https://travelpayouts.com) — рекламная сеть
+    // Travelpayouts (https://travelpayouts.com): загрузчик монетизации партнёрских ссылок
     {
       code: `(function () {
     var script = document.createElement("script");
@@ -28,16 +32,36 @@ const config: CloudeaConfig = {
 })();`,
       position: "head",
     },
-    // Travelpayouts — floating-виджет поиска отелей.
-    // Скрипт сам монтирует себя в document.body (Shadow DOM, position: fixed),
-    // поэтому position/DOM-расположение тега на размер и позицию не влияют.
-    {
-      src: "https://tpwdg.com/content?currency=rub&trs=548992&shmarker=749500&show_hotels=true&powered_by=true&locale=ru&searchUrl=www.aviasales.ru%2Fsearch&primary_override=%2332a8dd&color_button=%2332a8dd&color_icons=%2332a8dd&dark=%23262626&light=%23FFFFFF&secondary=%23FFFFFF&special=%23C4C4C4&color_focused=%2332a8dd&border_radius=0&plain=false&promo_id=7879&campaign_id=100",
-      external: true,
-      strategy: "lazyOnload",
-      position: "body",
-    },
   ],
+
+  // Рекламные блоки внутри страниц.
+  // src — URL скрипта виджета из Travelpayouts (Инструменты → Виджеты).
+  // Виджет рисуется в контейнере с подписью «Реклама» и грузится, только когда
+  // читатель доскроллил до него. Убрать блок — удалить его строку из slots.
+  ads: {
+    label: { ru: "Реклама", en: "Advertisement", zh: "广告" },
+    slots: {
+      // Под текстом статьи
+      "post-bottom": { src: TRAVELPAYOUTS_SEARCH_FORM, locales: ["ru", "en"], minHeight: 120 },
+      // Под текстом страницы вики
+      "doc-bottom": { src: TRAVELPAYOUTS_SEARCH_FORM, locales: ["ru", "en"], minHeight: 120 },
+      // Под списком статей в блоге:
+      // "blog-list": { src: TRAVELPAYOUTS_SEARCH_FORM, locales: ["ru", "en"], minHeight: 120 },
+      // Внутри MDX: <Ad />
+      // inline: { src: "...", minHeight: 120 },
+    },
+  },
+
+  // Дополнительные источники для Content-Security-Policy.
+  // Домены аналитики, giscus, Supabase и внешних скриптов из customScripts
+  // добавляются автоматически — здесь только то, что скрипты подгружают сами.
+  csp: {
+    // Travelpayouts: загрузчик (inline-скрипт выше) тянет код с emrldtp.cc,
+    // виджеты из ads грузятся с tpwdg.com и ходят в API и CDN на множестве доменов.
+    scriptSrc: ["https://emrldtp.cc", "https://*.emrldtp.cc", "https://tpwdg.com", "https://*.tpwdg.com"],
+    connectSrc: ["https:"],
+    frameSrc: ["https:"],
+  },
 
   // Аналитика
   analytics: {

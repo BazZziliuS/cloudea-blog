@@ -1,11 +1,7 @@
-import { generateJsonFeed } from "@/lib/feed";
+import { FEED_CACHE_CONTROL, generateJsonFeed } from "@/lib/feed";
 
 export function GET() {
-  const feed = generateJsonFeed();
-  return new Response(JSON.stringify(feed, null, 2), {
-    headers: {
-      "Content-Type": "application/feed+json; charset=utf-8",
-      "Cache-Control": "s-maxage=3600, stale-while-revalidate",
-    },
+  return Response.json(generateJsonFeed(), {
+    headers: { "Content-Type": "application/feed+json; charset=utf-8", "Cache-Control": FEED_CACHE_CONTROL },
   });
 }

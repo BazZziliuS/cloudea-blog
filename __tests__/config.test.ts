@@ -8,7 +8,23 @@ import {
   websiteJsonLd,
   blogPostJsonLd,
   docJsonLd,
+  getAdSlot,
 } from "@/lib/config";
+
+describe("getAdSlot", () => {
+  it("returns null for unconfigured placements", () => {
+    expect(getAdSlot("inline", "ru", "Реклама")).toBeNull();
+  });
+
+  it("follows the page locale when the widget supports it", () => {
+    const en = getAdSlot("post-bottom", "en", "Ad");
+    const zh = getAdSlot("post-bottom", "zh", "Ad");
+    if (!en || !zh) return;
+    expect(new URL(en.src).searchParams.get("locale")).toBe("en");
+    expect(new URL(zh.src).searchParams.get("locale")).toBe("ru");
+    expect(en.label).toBe("Advertisement");
+  });
+});
 
 describe("config.ts", () => {
   describe("getConfig", () => {

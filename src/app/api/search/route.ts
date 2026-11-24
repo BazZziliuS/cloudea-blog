@@ -1,30 +1,16 @@
 import { NextResponse } from "next/server";
-import { getSearchIndex } from "@/lib/content";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { searchContent } from "@/lib/content";
+import { enforceRateLimit } from "@/lib/rate-limit";
+
+const MIN_QUERY_LENGTH = 2;
+const MAX_QUERY_LENGTH = 200;
 
 export async function GET(request: Request) {
-  const ip = getClientIp(request);
-  const { success } = rateLimit(`search:${ip}`, { windowMs: 60_000, max: 60 });
-  if (!success) {
-    return NextResponse.json(
-      { error: "Too many requests" },
-      { status: 429, headers: { "Retry-After": "60" } }
-    );
-  }
+  const limited = enforceRateLimit(request, "search", { windowMs: 60_000, max: 60 });
+  if (limited) return limited;
 
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q")?.toLowerCase().trim();
+  const query = new URL(request.url).searchParams.get("q")?.trim().slice(0, MAX_QUERY_LENGTH) ?? "";
+  if (query.length < MIN_QUERY_LENGTH) return NextResponse.json([]);
 
-  if (!query || query.length < 2) {
-    return NextResponse.json([]);
-  }
-
-  const index = getSearchIndex();
-
-  const results = index.filter((item) => {
-    const searchable = `${item.title} ${item.description} ${item.tags?.join(" ") ?? ""} ${item.category ?? ""}`.toLowerCase();
-    return query.split(/\s+/).every((word) => searchable.includes(word));
-  });
-
-  return NextResponse.json(results.slice(0, 20));
+  return NextResponse.json(searchContent(query));
 }

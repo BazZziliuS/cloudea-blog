@@ -1,21 +1,17 @@
 "use client";
 
-import React, { useState, type ComponentPropsWithoutRef } from "react";
+import React, { type ComponentPropsWithoutRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 
 function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const { copied, copy } = useCopyToClipboard();
 
   return (
     <button
-      onClick={handleCopy}
+      type="button"
+      onClick={() => copy(text)}
       className="absolute right-2 top-2 rounded-md bg-muted/80 px-2 py-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted"
       aria-label="Copy code"
     >
@@ -129,15 +125,11 @@ export const mdxComponents: Record<string, React.ComponentType<Record<string, un
     <tr className="even:bg-muted/50" {...props} />
   ),
   img: (props) => {
-    const src = (props.src as string) ?? "";
-    const alt = (props.alt as string) ?? "";
-    // Shields.io badges — render as plain inline img
-    if (src.includes("shields.io")) {
-      // eslint-disable-next-line @next/next/no-img-element
-      return <img src={src} alt={alt} />;
-    }
-    // Use next/image for content API images and external URLs
-    if (src.startsWith("/api/content/") || src.startsWith("http")) {
+    const src = typeof props.src === "string" ? props.src : "";
+    const alt = typeof props.alt === "string" ? props.alt : "";
+
+    // Co-located content assets are optimized by next/image.
+    if (src.startsWith("/api/content/")) {
       return (
         <Image
           src={src}
@@ -146,13 +138,17 @@ export const mdxComponents: Record<string, React.ComponentType<Record<string, un
           height={450}
           className="rounded-lg"
           sizes="(max-width: 768px) 100vw, 800px"
-          loading="lazy"
         />
       );
     }
-    // Fallback for other images
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img className="rounded-lg" {...props} alt={alt} />;
+
+    // Badges (shields.io) render inline; other external images are loaded as-is
+    // so arbitrary hosts don't need to be allow-listed in next.config.ts.
+    const isBadge = src.includes("shields.io");
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt={alt} loading="lazy" decoding="async" className={isBadge ? undefined : "rounded-lg"} />
+    );
   },
   hr: (props) => <hr className="my-8 border-border" {...props} />,
   pre: Pre as React.ComponentType<Record<string, unknown>>,

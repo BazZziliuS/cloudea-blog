@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
-import { locales, type Locale } from "@/lib/i18n";
+import { isLocale, LOCALE_COOKIE } from "@/lib/i18n";
 
 export async function POST(request: Request) {
-  const { locale } = await request.json();
+  const body: unknown = await request.json().catch(() => null);
+  const locale = (body as { locale?: unknown } | null)?.locale;
 
-  if (!locales.includes(locale as Locale)) {
+  if (!isLocale(locale)) {
     return NextResponse.json({ error: "Invalid locale" }, { status: 400 });
   }
 
   const response = NextResponse.json({ locale });
-  response.cookies.set("locale", locale, {
+  response.cookies.set(LOCALE_COOKIE, locale, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   });
-
   return response;
 }

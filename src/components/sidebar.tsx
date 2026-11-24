@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { SidebarCategory, SidebarSubcategory } from "@/lib/content";
-import { cn } from "@/lib/utils";
+import { cn, humanizeSlug } from "@/lib/utils";
 
 interface SidebarProps {
   categories: SidebarCategory[];
@@ -40,13 +40,10 @@ export function Sidebar({ categories, indexTitle }: SidebarProps) {
   );
 }
 
-function formatName(name: string): string {
-  return name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, " ");
-}
-
 function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
+      aria-hidden="true"
       className={cn("h-4 w-4 transition-transform duration-200", open && "rotate-90")}
       fill="none"
       viewBox="0 0 24 24"
@@ -127,12 +124,15 @@ function SidebarSubcategorySection({
   const isSubPath = pathname.startsWith(`/docs/${parentName}/${sub.name}`);
   const [isOpen, setIsOpen] = useState(isSubPath);
 
-  useEffect(() => {
+  // Auto-expand when navigating into this section (state adjusted during render, not in an effect).
+  const [wasActive, setWasActive] = useState(isSubPath);
+  if (isSubPath !== wasActive) {
+    setWasActive(isSubPath);
     if (isSubPath) setIsOpen(true);
-  }, [isSubPath]);
+  }
 
   const indexHref = sub.indexSlug ? `/docs/${sub.indexSlug.join("/")}` : null;
-  const displayName = sub.title ?? formatName(sub.name);
+  const displayName = sub.title ?? humanizeSlug(sub.name);
 
   return (
     <li>
@@ -149,11 +149,17 @@ function SidebarSubcategorySection({
             {displayName}
           </Link>
         ) : (
-          <button onClick={() => setIsOpen(!isOpen)} className="flex-1 text-left">
+          <button type="button" onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen} className="flex-1 text-left">
             {displayName}
           </button>
         )}
-        <button onClick={() => setIsOpen(!isOpen)} className="rounded-md p-0.5 transition-colors hover:text-primary">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
+          aria-label={displayName}
+          className="rounded-md p-0.5 transition-colors hover:text-primary"
+        >
           <ChevronIcon open={isOpen} />
         </button>
       </div>
@@ -178,13 +184,17 @@ function SidebarSection({
   const isCategoryPath = pathname.startsWith(`/docs/${category.name}`);
   const [isOpen, setIsOpen] = useState(isCategoryPath);
 
-  useEffect(() => {
+  // Auto-expand when navigating into this section (state adjusted during render, not in an effect).
+  const [wasActive, setWasActive] = useState(isCategoryPath);
+  if (isCategoryPath !== wasActive) {
+    setWasActive(isCategoryPath);
     if (isCategoryPath) setIsOpen(true);
-  }, [isCategoryPath]);
+  }
 
   const indexHref = category.indexSlug
     ? `/docs/${category.indexSlug.join("/")}`
     : null;
+  const displayName = category.title ?? humanizeSlug(category.name);
 
   return (
     <div>
@@ -198,14 +208,20 @@ function SidebarSection({
       >
         {indexHref ? (
           <Link href={indexHref} className="flex-1 transition-colors hover:text-primary">
-            {category.title ?? formatName(category.name)}
+            {displayName}
           </Link>
         ) : (
-          <button onClick={() => setIsOpen(!isOpen)} className="flex-1 text-left">
-            {category.title ?? formatName(category.name)}
+          <button type="button" onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen} className="flex-1 text-left">
+            {displayName}
           </button>
         )}
-        <button onClick={() => setIsOpen(!isOpen)} className="rounded-md p-0.5 transition-colors hover:text-primary">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
+          aria-label={displayName}
+          className="rounded-md p-0.5 transition-colors hover:text-primary"
+        >
           <ChevronIcon open={isOpen} />
         </button>
       </div>

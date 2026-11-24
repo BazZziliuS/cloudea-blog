@@ -1,25 +1,25 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const dict = getDictionary(await getLocale());
+
   return (
-    <div className="flex flex-col items-center justify-center py-32 text-center px-6">
-      <h1 className="text-8xl font-extrabold tracking-tight text-muted-foreground/30">
+    <div className="flex flex-col items-center justify-center px-6 py-32 text-center">
+      <p className="text-8xl font-extrabold tracking-tight text-muted-foreground/30" aria-hidden="true">
         404
-      </h1>
-      <h2 className="mt-4 text-2xl font-bold tracking-tight">
-        Страница не найдена
-      </h2>
-      <p className="mt-2 text-muted-foreground max-w-md">
-        Запрашиваемая страница не существует, была удалена или перемещена по другому адресу.
       </p>
+      <h1 className="mt-4 text-2xl font-bold tracking-tight">{dict.errors.notFoundTitle}</h1>
+      <p className="mt-2 max-w-md text-muted-foreground">{dict.errors.notFoundText}</p>
       <div className="mt-8 flex gap-4">
-        <Link href="/">
-          <Button>На главную</Button>
-        </Link>
-        <Link href="/blog">
-          <Button variant="outline">Блог</Button>
-        </Link>
+        <Button asChild>
+          <Link href="/">{dict.common.home}</Link>
+        </Button>
+        <Button variant="outline" asChild>
+          <Link href="/blog">{dict.blog.title}</Link>
+        </Button>
       </div>
     </div>
   );

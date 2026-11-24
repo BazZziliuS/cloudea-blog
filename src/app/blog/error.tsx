@@ -28,9 +28,9 @@ export default function BlogError({
       </p>
       <div className="mt-8 flex gap-4">
         <Button onClick={reset}>Попробовать снова</Button>
-        <Link href="/blog">
-          <Button variant="outline">К блогу</Button>
-        </Link>
+        <Button variant="outline" asChild>
+          <Link href="/blog">К блогу</Link>
+        </Button>
       </div>
     </div>
   );

@@ -1,34 +1,37 @@
-import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { getConfig } from "@/lib/config";
 
-const ROOT = process.cwd();
+const ROOT_DIR = process.cwd();
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
+/**
+ * Only local scripts explicitly listed in `cloudea.config.ts → customScripts`
+ * may be served. Anything else would expose arbitrary project files.
+ */
+const ALLOWED_SCRIPTS = new Set(
+  (getConfig().customScripts ?? [])
+    .filter((script) => script.src && !script.external)
+    .map((script) => path.posix.normalize(script.src!.replace(/^\.?\//, ""))),
+);
+
+export async function GET(_request: Request, { params }: RouteContext<"/api/custom-script/[...path]">) {
   const { path: segments } = await params;
-  const filePath = path.join(ROOT, ...segments);
+  const requested = path.posix.normalize(segments.join("/"));
 
-  const resolved = path.resolve(filePath);
-  if (!resolved.startsWith(path.resolve(ROOT))) {
-    return new NextResponse("Forbidden", { status: 403 });
+  if (!ALLOWED_SCRIPTS.has(requested)) {
+    return new Response("Not Found", { status: 404 });
   }
 
-  if (!resolved.endsWith(".js") && !resolved.endsWith(".ts")) {
-    return new NextResponse("Not Found", { status: 404 });
+  try {
+    const content = await fs.readFile(path.join(/* turbopackIgnore: true */ ROOT_DIR, requested), "utf-8");
+    return new Response(content, {
+      headers: {
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Cache-Control": "public, max-age=3600, must-revalidate",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  } catch {
+    return new Response("Not Found", { status: 404 });
   }
-
-  if (!fs.existsSync(resolved)) {
-    return new NextResponse("Not Found", { status: 404 });
-  }
-
-  const content = fs.readFileSync(resolved, "utf-8");
-  return new NextResponse(content, {
-    headers: {
-      "Content-Type": "application/javascript; charset=utf-8",
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
-  });
 }

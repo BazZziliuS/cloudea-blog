@@ -19,7 +19,7 @@ export default function DocsLayout({
       </aside>
 
       {/* Main content area */}
-      <main className="min-w-0 flex-1 pl-0 md:pl-8">{children}</main>
+      <div className="min-w-0 flex-1 pl-0 md:pl-8">{children}</div>
     </div>
   );
 }

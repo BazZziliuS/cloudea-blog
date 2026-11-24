@@ -1,16 +1,17 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { format } from "date-fns";
-import { ru, enUS, zhCN } from "date-fns/locale";
-
-const dateLocales: Record<string, import("date-fns").Locale> = { ru, en: enUS, zh: zhCN };
-import { getDocBySlug, getAllDocs } from "@/lib/content";
-import { compileMDX } from "@/lib/mdx";
-import { TableOfContents } from "@/components/toc";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { JsonLd } from "@/components/json-ld";
+import { TableOfContents } from "@/components/toc";
+import { docJsonLd, getEditUrl, seo } from "@/lib/config";
+import { getAllDocs, getDocBySlug, type Doc } from "@/lib/content";
+import { formatDate } from "@/lib/date";
+import { getDictionary, interpolate } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
-import { getDictionary } from "@/lib/i18n";
-import { seo, docJsonLd, getConfig } from "@/lib/config";
+import { compileMDX } from "@/lib/mdx";
+import { ogImageMetadata, ogImageUrl } from "@/lib/og";
+import { humanizeSlug } from "@/lib/utils";
 
 export const revalidate = 3600;
 
@@ -18,119 +19,85 @@ interface DocPageProps {
   params: Promise<{ slug: string[] }>;
 }
 
-export async function generateStaticParams() {
-  const docs = getAllDocs();
-  return docs.map((doc) => ({ slug: doc.slug }));
+function findDoc(slug: string[]): Doc | null {
+  try {
+    return getDocBySlug(slug);
+  } catch {
+    return null;
+  }
 }
 
-export async function generateMetadata({ params }: DocPageProps) {
-  const { slug } = await params;
-  const config = getConfig();
-  try {
-    const doc = getDocBySlug(slug);
-    const ogUrl = `${config.url}/api/og?type=doc&slug=${encodeURIComponent(doc.slug.join("/"))}`;
-    return {
-      ...seo({
-        title: doc.title,
-        description: doc.description,
-        path: `/docs/${doc.slug.join("/")}`,
-      }),
-      openGraph: {
-        title: doc.title,
-        description: doc.description,
-        images: [{ url: ogUrl, width: 1200, height: 630 }],
-      },
-      twitter: {
-        card: "summary_large_image" as const,
-        title: doc.title,
-        description: doc.description,
-        images: [ogUrl],
-      },
-    };
-  } catch {
-    return seo({ title: "Doc Not Found", noIndex: true });
-  }
+export function generateStaticParams() {
+  return getAllDocs().map((doc) => ({ slug: doc.slug }));
+}
+
+export async function generateMetadata({ params }: DocPageProps): Promise<Metadata> {
+  const doc = findDoc((await params).slug);
+  if (!doc) return seo({ title: "Doc Not Found", noIndex: true });
+
+  const slug = doc.slug.join("/");
+  return {
+    ...seo({ title: doc.title, description: doc.description, path: `/docs/${slug}` }),
+    ...ogImageMetadata(doc.title, doc.description, ogImageUrl({ slug, type: "doc" })),
+  };
 }
 
 export default async function DocPage({ params }: DocPageProps) {
   const { slug } = await params;
+  const doc = findDoc(slug);
+  if (!doc) notFound();
 
-  let doc;
-  try {
-    doc = getDocBySlug(slug);
-  } catch {
-    notFound();
-  }
-
-  const content = await compileMDX(doc.content, slug.join("/"), "docs");
   const locale = await getLocale();
   const dict = getDictionary(locale);
-  const jsonLd = docJsonLd(doc);
-  const config = getConfig();
+  const content = await compileMDX(doc.content, { slug: slug.join("/"), contentType: "docs" });
+  const editUrl = getEditUrl(doc.sourcePath);
 
-  const githubRepo = config.themeConfig.socials?.github;
-  const editUrl = githubRepo
-    ? `${githubRepo}/edit/main/content/docs/${slug.join("/")}.mdx`
-    : null;
-
-  const allDocs = getAllDocs();
-  const docSlugsSet = new Set(allDocs.map((d) => d.slug.join("/")));
-
-  const breadcrumbItems = [
-    { label: dict.blog.docs ?? "Docs", href: "/docs" },
-    ...slug.slice(0, -1).map((segment, i) => {
-      const path = slug.slice(0, i + 1).join("/");
-      return {
-        label: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " "),
-        href: docSlugsSet.has(path) ? `/docs/${path}` : undefined,
-      };
+  // Link intermediate breadcrumb segments only when a page exists for them.
+  const existingDocs = new Set(getAllDocs().map((d) => d.slug.join("/")));
+  const breadcrumbs = [
+    { label: dict.blog.docs, href: "/docs" },
+    ...slug.slice(0, -1).map((segment, index) => {
+      const path = slug.slice(0, index + 1).join("/");
+      return { label: humanizeSlug(segment), href: existingDocs.has(path) ? `/docs/${path}` : undefined };
     }),
     { label: doc.title },
   ];
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={docJsonLd(doc)} />
       <div className="flex gap-10">
         <div className="min-w-0 flex-1 py-10">
-          <Breadcrumbs items={breadcrumbItems} />
+          <Breadcrumbs items={breadcrumbs} />
 
-          <header className="mt-4 mb-8">
+          <header className="mb-8 mt-4">
             <h1 className="text-3xl font-bold tracking-tight">{doc.title}</h1>
-            {doc.description && (
-              <p className="mt-2 text-lg text-muted-foreground">
-                {doc.description}
-              </p>
-            )}
+            {doc.description && <p className="mt-2 text-lg text-muted-foreground">{doc.description}</p>}
           </header>
 
-          <div className="prose prose-neutral dark:prose-invert max-w-none">
-            {content}
-          </div>
+          <div className="prose prose-neutral max-w-none dark:prose-invert">{content}</div>
 
-          <div className="mt-10 border-t border-border pt-4 flex items-center justify-between text-sm text-muted-foreground">
-            <span>
-              {locale === "ru" ? "Обновлено" : "Updated"}{" "}
-              {format(new Date(doc.lastModified), "d MMM yyyy", { locale: dateLocales[locale] ?? enUS })}
-            </span>
+          <AdSlot placement="doc-bottom" />
+
+          <div className="mt-10 flex items-center justify-between border-t border-border pt-4 text-sm text-muted-foreground">
+            <time dateTime={doc.lastModified}>
+              {interpolate(dict.docs.updated, { date: formatDate(doc.lastModified, locale) })}
+            </time>
             {editUrl && (
-              <Link
+              <a
                 href={editUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-foreground transition-colors"
+                className="transition-colors hover:text-foreground"
               >
-                ✏️ {locale === "ru" ? "Редактировать на GitHub" : "Edit on GitHub"}
-              </Link>
+                ✏️ {dict.docs.editOnGithub}
+              </a>
             )}
           </div>
         </div>
 
-        <div className="hidden xl:block w-56 shrink-0 py-10">
-          <TableOfContents label={dict.blog.onThisPage} />
+        <div className="hidden w-56 shrink-0 py-10 xl:block">
+          <TableOfContents label={dict.blog.onThisPage} labels={dict.common} />
         </div>
       </div>
     </>

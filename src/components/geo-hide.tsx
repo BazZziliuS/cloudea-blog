@@ -1,36 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import { isGeoBlocked, useGeoCountry } from "@/hooks/use-geo-country";
 
 interface GeoHideProps {
   countries: string[];
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
+/**
+ * MDX component: blur a fragment of content for visitors in restricted countries.
+ * Labels use the site default language: MDX components don't receive the page locale.
+ */
 export function GeoHide({ countries, children }: GeoHideProps) {
-  const [status, setStatus] = useState<"loading" | "allowed" | "blocked" | "error">("loading");
+  const geo = useGeoCountry();
 
-  useEffect(() => {
-    fetch("https://ipinfo.io/json?token=58e6c8d230085c")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        if (!data.country) {
-          setStatus("error");
-          return;
-        }
-        setStatus(countries.includes(data.country) ? "blocked" : "allowed");
-      })
-      .catch(() => {
-        setStatus("error");
-      });
-  }, [countries]);
-
-  if (status === "loading") return null;
-
-  if (status === "allowed") return <>{children}</>;
+  if (geo.status === "loading") return null;
+  if (geo.status === "resolved" && !isGeoBlocked(geo, countries)) return <>{children}</>;
 
   return (
     <div className="relative my-6">
@@ -40,7 +26,7 @@ export function GeoHide({ countries, children }: GeoHideProps) {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="rounded-lg border border-border bg-card/90 px-6 py-4 text-center shadow-lg backdrop-blur-sm">
           <p className="text-lg font-medium text-foreground">
-            {status === "error"
+            {geo.status === "error"
               ? "Не удалось определить регион. Отключите AdBlock и перезагрузите страницу."
               : "Контент скрыт в вашем регионе."}
           </p>

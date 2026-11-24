@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function GlobalError({
@@ -32,8 +33,8 @@ export default function GlobalError({
       )}
       <div className="mt-8 flex gap-4">
         <Button onClick={reset}>Попробовать снова</Button>
-        <Button variant="outline" onClick={() => (window.location.href = "/")}>
-          На главную
+        <Button variant="outline" asChild>
+          <Link href="/">На главную</Link>
         </Button>
       </div>
     </div>

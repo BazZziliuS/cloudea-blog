@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import userConfig from "../../cloudea.config";
 
 export interface LocalizedString {
   ru: string;
@@ -33,6 +34,18 @@ export interface FooterLinkGroup {
     icon?: string;
     external?: boolean;
   }>;
+}
+
+/** Where an ad block can appear. `inline` is used from MDX via `<Ad />`. */
+export type AdPlacement = "post-bottom" | "doc-bottom" | "blog-list" | "inline";
+
+export interface AdSlotConfig {
+  /** Widget script URL. */
+  src: string;
+  /** Locales the widget supports: its `locale=` parameter follows the page locale when listed. */
+  locales?: string[];
+  /** Reserved height in px to avoid layout shift while the widget loads. */
+  minHeight?: number;
 }
 
 export interface SeoConfig {
@@ -116,6 +129,18 @@ export interface CloudeaConfig {
     yandexMetrika?: string;
   };
 
+  /** Ad blocks rendered inside the page layout.
+   *
+   * Each placement takes a widget script URL (e.g. a Travelpayouts widget from
+   * "Tools → Widgets"). Widgets that render where their `<script>` tag is placed
+   * are mounted into a labelled container, lazily when scrolled into view.
+   */
+  ads?: {
+    /** Label shown above every block. Russian law requires ads to be marked. */
+    label?: string | LocalizedString;
+    slots: Partial<Record<AdPlacement, AdSlotConfig>>;
+  };
+
   /** Monetag ad network integration.
    * When set, injects the Monetag tag script into <head> and exposes
    * a Monetag service worker at /sw.js built from the provided values.
@@ -130,6 +155,18 @@ export interface CloudeaConfig {
     swZoneId?: number;
     /** Service worker: Monetag push domain (e.g. "3nbf4.com") */
     swDomain?: string;
+  };
+
+  /** Extra Content-Security-Policy sources, merged with the ones derived from this config
+   * (analytics, external custom scripts, Supabase, giscus).
+   * Use it for third-party scripts that load further resources from other hosts.
+   */
+  csp?: {
+    scriptSrc?: string[];
+    connectSrc?: string[];
+    frameSrc?: string[];
+    imgSrc?: string[];
+    styleSrc?: string[];
   };
 
   i18n: {
@@ -187,7 +224,7 @@ export interface CloudeaConfig {
   };
 }
 
-function resolveLocalizedString(
+export function resolveLocalizedString(
   value: string | LocalizedString,
   locale: string
 ): string {
@@ -195,18 +232,85 @@ function resolveLocalizedString(
   return value[locale] ?? value["en"] ?? Object.values(value)[0] ?? "";
 }
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const userConfig: CloudeaConfig = require("../../cloudea.config").default;
-
 export function getConfig(): CloudeaConfig {
   return userConfig;
 }
 
-export function getNavLinks(locale: string) {
-  return userConfig.themeConfig.navbar.links.map((item) => {
+/** Site URL without a trailing slash. */
+export function getBaseUrl(): string {
+  return userConfig.url.replace(/\/+$/, "");
+}
+
+/** Absolute URL for a site path. */
+export function absoluteUrl(path = ""): string {
+  return `${getBaseUrl()}${path}`;
+}
+
+/** "Edit on GitHub" link for a repository-relative source file, or null when no repo is configured. */
+export function getEditUrl(sourcePath: string): string | null {
+  const repo = userConfig.themeConfig.socials?.github?.replace(/\/+$/, "");
+  return repo ? `${repo}/edit/main/${sourcePath}` : null;
+}
+
+/** Supabase credentials. Throws when Supabase features are used without configuration. */
+export function getSupabaseConfig(): { url: string; anonKey: string } {
+  if (!userConfig.supabase) {
+    throw new Error("Supabase is not configured. Add a `supabase` section to cloudea.config.ts.");
+  }
+  return userConfig.supabase;
+}
+
+export interface ResolvedAdSlot {
+  src: string;
+  label: string;
+  minHeight: number;
+}
+
+/** Ad slot for a placement with locale applied, or null when the placement is not configured. */
+export function getAdSlot(placement: AdPlacement, locale: string, defaultLabel: string): ResolvedAdSlot | null {
+  const ads = userConfig.ads;
+  const slot = ads?.slots[placement];
+  if (!slot) return null;
+
+  const url = new URL(slot.src);
+  if (url.searchParams.has("locale") && slot.locales?.includes(locale)) {
+    url.searchParams.set("locale", locale);
+  }
+
+  return {
+    src: url.toString(),
+    label: ads.label ? resolveLocalizedString(ads.label, locale) : defaultLabel,
+    minHeight: slot.minHeight ?? 0,
+  };
+}
+
+export function isSupabaseAuthEnabled(): boolean {
+  return userConfig.comments.provider === "supabase" && Boolean(userConfig.supabase);
+}
+
+export interface ResolvedNavLink {
+  type: "link";
+  href: string;
+  label: string;
+  icon?: string;
+  external?: boolean;
+}
+
+export interface ResolvedNavDropdown {
+  type: "dropdown";
+  label: string;
+  href?: string;
+  items: Omit<ResolvedNavLink, "type">[];
+}
+
+export type ResolvedNavItem = ResolvedNavLink | ResolvedNavDropdown;
+
+/** Navbar items with labels resolved for a locale. */
+export function getNavLinks(locale: string): ResolvedNavItem[] {
+  return userConfig.themeConfig.navbar.links.map((item): ResolvedNavItem => {
     if (isNavDropdown(item)) {
       return {
-        type: "dropdown" as const,
+        type: "dropdown",
         label: resolveLocalizedString(item.label, locale),
         href: item.href,
         items: item.items.map((link) => ({
@@ -218,9 +322,10 @@ export function getNavLinks(locale: string) {
       };
     }
     return {
-      type: "link" as const,
+      type: "link",
       href: item.href,
       label: resolveLocalizedString(item.label, locale),
+      icon: item.icon,
       external: item.external,
     };
   });
@@ -283,12 +388,12 @@ export function seo(options: SeoOptions = {}): Metadata {
     noIndex = false,
   } = options;
 
-  const baseUrl = config.url.replace(/\/+$/, "");
-  const url = `${baseUrl}${path}`;
+  const url = absoluteUrl(path);
   const seoConfig = config.seo;
 
   const metadata: Metadata = {
-    title: title ?? config.title,
+    // Page titles go through the root layout template; the site title alone must not be templated.
+    title: title ?? { absolute: config.title },
     description,
     keywords: seoConfig.keywords,
     metadataBase: new URL(config.url),
@@ -391,7 +496,7 @@ export function blogPostJsonLd(post: {
     headline: post.title,
     description: post.description,
     datePublished: post.date,
-    url: `${config.url}/blog/${post.slug}`,
+    url: absoluteUrl(`/blog/${post.slug}`),
     keywords: post.tags?.join(", "),
     ...(config.seo.structuredData?.organization
       ? {
@@ -419,7 +524,7 @@ export function docJsonLd(doc: {
     "@type": "TechArticle",
     headline: doc.title,
     description: doc.description,
-    url: `${config.url}/docs/${doc.slug.join("/")}`,
+    url: absoluteUrl(`/docs/${doc.slug.join("/")}`),
     ...(config.seo.structuredData?.organization
       ? {
           author: {
@@ -430,5 +535,3 @@ export function docJsonLd(doc: {
       : {}),
   };
 }
-
-export { resolveLocalizedString };

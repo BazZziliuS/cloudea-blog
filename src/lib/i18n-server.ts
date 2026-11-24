@@ -1,11 +1,9 @@
+import "server-only";
 import { cookies } from "next/headers";
-import { locales, defaultLocale, type Locale } from "./i18n";
+import { defaultLocale, isLocale, LOCALE_COOKIE, type Locale } from "@/lib/i18n";
 
+/** Locale of the current request, from the cookie set by the proxy or the language switcher. */
 export async function getLocale(): Promise<Locale> {
-  const cookieStore = await cookies();
-  const value = cookieStore.get("locale")?.value;
-  if (value && locales.includes(value as Locale)) {
-    return value as Locale;
-  }
-  return defaultLocale;
+  const value = (await cookies()).get(LOCALE_COOKIE)?.value;
+  return isLocale(value) ? value : defaultLocale;
 }

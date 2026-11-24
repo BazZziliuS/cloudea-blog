@@ -1,16 +1,18 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
-import path from "path";
 
 export default defineConfig({
   test: {
-    globals: true,
     environment: "node",
     include: ["__tests__/**/*.test.ts"],
-    setupFiles: ["__tests__/setup.ts"],
+    // Content tests read the whole content/ tree and git history.
+    testTimeout: 20_000,
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"),
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // `server-only` throws outside a React Server environment.
+      "server-only": fileURLToPath(new URL("./__tests__/stubs/empty.ts", import.meta.url)),
     },
   },
 });

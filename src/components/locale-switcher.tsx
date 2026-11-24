@@ -1,7 +1,8 @@
 "use client";
 
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Languages } from "lucide-react";
+import { Check, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,44 +10,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { locales, type Locale } from "@/lib/i18n";
+import { localeNames, locales, type Locale } from "@/lib/i18n";
 
-const nativeNames: Record<string, string> = {
-  ru: "Русский",
-  en: "English",
-  zh: "中文",
-  ja: "日本語",
-  ko: "한국어",
-  de: "Deutsch",
-  fr: "Français",
-  es: "Español",
-  pt: "Português",
-  it: "Italiano",
-  ar: "العربية",
-  hi: "हिन्दी",
-  tr: "Türkçe",
-  pl: "Polski",
-  uk: "Українська",
-};
-
-export function LocaleSwitcher({ current }: { current: Locale }) {
+export function LocaleSwitcher({ current, label }: { current: Locale; label: string }) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const switchLocale = async (locale: string) => {
-    await fetch("/api/locale", {
+  if (locales.length <= 1) return null;
+
+  const switchLocale = async (locale: Locale) => {
+    if (locale === current) return;
+    const res = await fetch("/api/locale", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ locale }),
     });
-    router.refresh();
+    if (res.ok) startTransition(() => router.refresh());
   };
-
-  if (locales.length <= 1) return null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Language">
+        <Button variant="ghost" size="icon" aria-label={label} disabled={isPending}>
           <Languages className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
@@ -54,10 +39,12 @@ export function LocaleSwitcher({ current }: { current: Locale }) {
         {locales.map((code) => (
           <DropdownMenuItem
             key={code}
-            onClick={() => switchLocale(code)}
-            className={current === code ? "font-semibold" : ""}
+            onSelect={() => void switchLocale(code)}
+            className="justify-between gap-4"
+            lang={code}
           >
-            {nativeNames[code] ?? code.toUpperCase()}
+            {localeNames[code] ?? code.toUpperCase()}
+            {current === code && <Check className="h-4 w-4" aria-hidden="true" />}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

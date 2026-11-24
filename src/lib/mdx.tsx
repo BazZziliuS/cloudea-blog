@@ -1,82 +1,47 @@
+import type { ReactElement } from "react";
 import { compileMDX as compile } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypePrettyCode from "rehype-pretty-code";
 import { mdxComponents } from "@/components/mdx-components";
-import React from "react";
-import type { ReactElement } from "react";
 import { Callout } from "@/components/callout";
-import { CodeBlockWrapper } from "@/components/copy-button";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { GeoHide } from "@/components/geo-hide";
+import { rewriteRelativePaths, type ContentType } from "@/lib/content-assets";
 
-/**
- * Rewrite relative image/link paths in MDX content to point to the content API.
- * E.g., `./screenshot.png` → `/api/content/blog/2025/05-17-n8n/screenshot.png`
- */
-function rewriteRelativePaths(source: string, slug?: string, contentType: "blog" | "docs" = "blog"): string {
-  if (!slug) return source;
+export type { ContentType };
 
-  const assetBase = `/api/content/${contentType}/${slug}`;
-
-  return source
-    // Markdown images: ![alt](./image.png) or ![alt](image.png)
-    .replace(
-      /!\[([^\]]*)\]\(\.\/([^)]+)\)/g,
-      `![$1](${assetBase}/$2)`
-    )
-    .replace(
-      /!\[([^\]]*)\]\((?!https?:\/\/|\/|#)([^)]+)\)/g,
-      `![$1](${assetBase}/$2)`
-    )
-    // HTML img src: src="./image.png" or src="image.png"
-    .replace(
-      /src="\.\/([^"]+)"/g,
-      `src="${assetBase}/$1"`
-    )
-    .replace(
-      /src="(?!https?:\/\/|\/|#)([^"]+)"/g,
-      `src="${assetBase}/$1"`
-    );
+interface CompileOptions {
+  /** Slug used to resolve co-located assets. When omitted, paths are left untouched. */
+  slug?: string;
+  contentType?: ContentType;
 }
 
 export async function compileMDX(
   source: string,
-  slug?: string,
-  contentType: "blog" | "docs" = "blog"
+  { slug, contentType = "blog" }: CompileOptions = {},
 ): Promise<ReactElement> {
-  const processed = rewriteRelativePaths(source, slug, contentType);
+  const processed = slug ? rewriteRelativePaths(source, slug, contentType) : source;
 
   const { content } = await compile({
     source: processed,
     options: {
+      parseFrontmatter: false,
       mdxOptions: {
         remarkPlugins: [remarkGfm],
         rehypePlugins: [
           rehypeSlug,
-          [
-            rehypeAutolinkHeadings,
-            { behavior: "wrap" },
-          ],
-          [
-            rehypePrettyCode,
-            { theme: "github-dark" },
-          ],
+          [rehypeAutolinkHeadings, { behavior: "wrap" }],
+          [rehypePrettyCode, { theme: "github-dark" }],
         ],
       },
-      parseFrontmatter: false,
     },
     components: {
       ...mdxComponents,
       Callout,
       GeoHide,
-      figure: (props: React.ComponentPropsWithoutRef<"figure">) => {
-        // rehype-pretty-code wraps code blocks in <figure data-rehype-pretty-code-figure>
-        if ((props as Record<string, unknown>)["data-rehype-pretty-code-figure"] !== undefined) {
-          return <CodeBlockWrapper {...props} />;
-        }
-        return <figure {...props} />;
-      },
+      Ad: AdSlot,
     },
   });
 

@@ -4,6 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 export async function POST(request: Request) {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  const { origin } = new URL(request.url);
-  return NextResponse.redirect(origin, { status: 302 });
+  // 303 turns the POST into a GET on the redirect target.
+  return NextResponse.redirect(new URL("/", request.url), { status: 303 });
 }

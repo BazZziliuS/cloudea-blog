@@ -3,9 +3,15 @@ node_modules
 .git
 .github
 .claude
+.idea
+.vscode
 *.md
 !README.md
+!content/**/*.md
 .env*
 .releaserc.json
 playwright-report
 test-results
+coverage
+e2e
+__tests__

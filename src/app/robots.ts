@@ -1,15 +1,18 @@
 import type { MetadataRoute } from "next";
-import { getConfig } from "@/lib/config";
+import { absoluteUrl, getConfig } from "@/lib/config";
 
 export default function robots(): MetadataRoute.Robots {
-  const config = getConfig();
+  const indexable = getConfig().seo.robots?.index ?? true;
 
   return {
-    rules: {
-      userAgent: "*",
-      allow: config.seo.robots?.index ? "/" : undefined,
-      disallow: config.seo.robots?.index ? ["/api/", "/auth/"] : "/",
-    },
-    sitemap: `${config.url.replace(/\/+$/, "")}/sitemap.xml`,
+    rules: indexable
+      ? {
+          userAgent: "*",
+          // Content images and OG images live under /api and should stay crawlable.
+          allow: ["/", "/api/content/", "/api/og"],
+          disallow: ["/api/", "/auth/"],
+        }
+      : { userAgent: "*", disallow: "/" },
+    sitemap: absoluteUrl("/sitemap.xml"),
   };
 }

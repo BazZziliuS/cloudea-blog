@@ -1,18 +1,31 @@
 import Link from "next/link";
-import { getAllPosts, getAllTags, getAllYears, getPaginatedPosts } from "@/lib/content";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { PostGrid } from "@/components/post-grid";
+import { getAllPosts, getAllTags, getAllYears, getPaginatedPosts } from "@/lib/content";
+import type { Dictionary, Locale } from "@/lib/i18n";
+import { toPostCardData } from "@/lib/post-format";
+import { cn } from "@/lib/utils";
+
+const POSTS_PER_PAGE = 12;
+const SIDEBAR_TAG_LIMIT = 15;
+const SIDEBAR_RECENT_LIMIT = 5;
 
 interface BlogContentProps {
-  locale: string;
-  dict: Record<string, any>;
+  locale: Locale;
+  dict: Dictionary;
   currentPage: number;
   basePath?: string;
 }
 
+function pageHref(basePath: string, page: number): string {
+  if (page <= 1) return basePath;
+  return `${basePath}?page=${page}`;
+}
+
 export function BlogContent({ locale, dict, currentPage, basePath = "/blog" }: BlogContentProps) {
   const t = dict.blog;
-  const perPage = 12;
-  const { posts, total, totalPages } = getPaginatedPosts(currentPage, perPage, false, locale);
+  const { posts, totalPages } = getPaginatedPosts(currentPage, POSTS_PER_PAGE, locale);
+  const recentPosts = getAllPosts(false, locale).slice(0, SIDEBAR_RECENT_LIMIT);
   const tags = getAllTags();
   const years = getAllYears();
 
@@ -30,57 +43,49 @@ export function BlogContent({ locale, dict, currentPage, basePath = "/blog" }: B
           ) : (
             <>
               <PostGrid
-                locale={locale}
-                posts={posts.map((post) => ({
-                  slug: post.slug,
-                  title: post.title,
-                  description: post.description,
-                  date: post.date,
-                  readingTime: post.readingTime,
-                  tags: post.tags,
-                  geoBlock: post.geoBlock,
-                }))}
+                posts={posts.map((post) => toPostCardData(post, locale))}
+                labels={{ showMore: t.showMore, shownOf: t.shownOf, unavailableShort: dict.geo.unavailableShort }}
+                perPage={POSTS_PER_PAGE}
               />
+
+              <AdSlot placement="blog-list" />
 
               {totalPages > 1 && (
                 <nav className="mt-10 flex items-center justify-center gap-2" aria-label="Pagination">
                   {currentPage > 1 && (
                     <Link
-                      href={currentPage === 2 ? basePath : `${basePath}?page=${currentPage - 1}`}
+                      href={pageHref(basePath, currentPage - 1)}
+                      rel="prev"
                       className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:bg-accent"
                     >
-                      {locale === "ru" ? "← Назад" : "← Prev"}
+                      {t.prev}
                     </Link>
                   )}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <Link
-                      key={p}
-                      href={p === 1 ? basePath : `${basePath}?page=${p}`}
-                      className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
-                        p === currentPage
+                      key={page}
+                      href={pageHref(basePath, page)}
+                      aria-current={page === currentPage ? "page" : undefined}
+                      className={cn(
+                        "rounded-lg border px-3 py-2 text-sm transition-colors",
+                        page === currentPage
                           ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border hover:bg-accent"
-                      }`}
-                      aria-current={p === currentPage ? "page" : undefined}
+                          : "border-border hover:bg-accent",
+                      )}
                     >
-                      {p}
+                      {page}
                     </Link>
                   ))}
                   {currentPage < totalPages && (
                     <Link
-                      href={`${basePath}?page=${currentPage + 1}`}
+                      href={pageHref(basePath, currentPage + 1)}
+                      rel="next"
                       className="rounded-lg border border-border px-4 py-2 text-sm transition-colors hover:bg-accent"
                     >
-                      {locale === "ru" ? "Далее →" : "Next →"}
+                      {t.next}
                     </Link>
                   )}
                 </nav>
-              )}
-
-              {total > perPage && (
-                <p className="mt-4 text-center text-xs text-muted-foreground">
-                  {posts.length} {t.ofTotal} {total}
-                </p>
               )}
             </>
           )}
@@ -89,21 +94,12 @@ export function BlogContent({ locale, dict, currentPage, basePath = "/blog" }: B
         <aside className="hidden w-64 shrink-0 lg:block">
           <div className="sticky top-20 space-y-8">
             {tags.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground">{t.tags}</h3>
-                  <Link
-                    href="/blog/tags"
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {t.allTagsLink} &rarr;
-                  </Link>
-                </div>
+              <SidebarSection title={t.tags} moreHref="/blog/tags" moreLabel={t.allTagsLink}>
                 <div className="flex flex-wrap gap-2">
-                  {tags.slice(0, 15).map((tag) => (
+                  {tags.slice(0, SIDEBAR_TAG_LIMIT).map((tag) => (
                     <Link
                       key={tag.name}
-                      href={`/blog/tags/${tag.name}`}
+                      href={`/blog/tags/${encodeURIComponent(tag.name)}`}
                       className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs transition-colors hover:border-primary/50 hover:bg-accent"
                     >
                       <span>{tag.name}</span>
@@ -111,38 +107,28 @@ export function BlogContent({ locale, dict, currentPage, basePath = "/blog" }: B
                     </Link>
                   ))}
                 </div>
-              </div>
+              </SidebarSection>
             )}
 
-            {total > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">{t.recentPosts}</h3>
+            {recentPosts.length > 0 && (
+              <SidebarSection title={t.recentPosts}>
                 <ul className="space-y-1">
-                  {getAllPosts(false, locale).slice(0, 5).map((post) => (
+                  {recentPosts.map((post) => (
                     <li key={post.slug}>
                       <Link
                         href={`/blog/${post.slug}`}
-                        className="block rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-accent line-clamp-1"
+                        className="line-clamp-1 block rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-accent"
                       >
                         {post.title}
                       </Link>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </SidebarSection>
             )}
 
             {years.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground">{t.archive}</h3>
-                  <Link
-                    href="/blog/archive"
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {t.allTagsLink} &rarr;
-                  </Link>
-                </div>
+              <SidebarSection title={t.archive} moreHref="/blog/archive" moreLabel={t.allTagsLink}>
                 <ul className="space-y-1">
                   {years.map(({ year, count }) => (
                     <li key={year}>
@@ -156,11 +142,37 @@ export function BlogContent({ locale, dict, currentPage, basePath = "/blog" }: B
                     </li>
                   ))}
                 </ul>
-              </div>
+              </SidebarSection>
             )}
           </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+function SidebarSection({
+  title,
+  moreHref,
+  moreLabel,
+  children,
+}: {
+  title: string;
+  moreHref?: string;
+  moreLabel?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {moreHref && (
+          <Link href={moreHref} className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+            {moreLabel} &rarr;
+          </Link>
+        )}
+      </div>
+      {children}
     </div>
   );
 }

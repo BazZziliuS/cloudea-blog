@@ -1,4 +1,19 @@
 {
+  "common": {
+    "skipToContent": "Skip to content",
+    "toggleTheme": "Toggle theme",
+    "toggleMenu": "Menu",
+    "language": "Language",
+    "scrollToTop": "Scroll to top",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "copyCode": "Copy code",
+    "home": "Home",
+    "tryAgain": "Try again",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "advertisement": "Advertisement"
+  },
   "nav": {
     "blog": "Blog",
     "docs": "Docs",
@@ -28,9 +43,6 @@
     "archive": "Archive",
     "archiveSubtitle": "All blog posts by year",
     "allTagsLink": "All",
-    "post": "post",
-    "posts2_4": "posts",
-    "posts5": "posts",
     "noTags": "No tags yet.",
     "backToTags": "All tags",
     "searchPlaceholder": "Search blog and docs...",
@@ -45,13 +57,59 @@
     "docsLabel": "Docs",
     "docs": "Docs",
     "showMore": "Show more",
-    "ofTotal": "of",
-    "recentPosts": "Recent"
+    "recentPosts": "Recent",
+    "postCount": {
+      "one": "{count} post",
+      "other": "{count} posts"
+    },
+    "minRead": "{count} min read",
+    "prev": "← Prev",
+    "next": "Next →",
+    "shownOf": "{shown} of {total}",
+    "series": "Series",
+    "seriesPrev": "← Previous",
+    "seriesNext": "Next →",
+    "related": "Related posts",
+    "editOnGithub": "Edit this page on GitHub",
+    "draftNotice": "This is a draft. It is only visible in preview mode.",
+    "exitPreview": "Exit preview",
+    "taggedWith": "Posts tagged \"{tag}\""
+  },
+  "docs": {
+    "title": "Documentation",
+    "subtitle": "Guides, wiki and notes.",
+    "updated": "Updated {date}",
+    "editOnGithub": "Edit on GitHub",
+    "docCount": {
+      "one": "{count} doc",
+      "other": "{count} docs"
+    }
+  },
+  "geo": {
+    "unavailable": "This content is not available in your region.",
+    "unavailableShort": "Not available in your region",
+    "hidden": "This content is hidden in your region.",
+    "detectFailed": "Could not detect your region. Disable your ad blocker and reload the page."
+  },
+  "comments": {
+    "title": "Comments",
+    "placeholder": "Write a comment...",
+    "replyPlaceholder": "Write a reply...",
+    "send": "Send",
+    "signInToComment": "Sign in to comment",
+    "noComments": "No comments yet. Be the first!",
+    "reply": "Reply",
+    "delete": "Delete",
+    "cancel": "Cancel"
   },
   "auth": {
     "title": "Sign in",
     "subtitle": "Sign in with GitHub to access the platform",
     "signInGithub": "Sign in with GitHub"
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundText": "The page you are looking for doesn't exist, was removed or moved elsewhere."
   },
   "footer": {
     "rights": "All rights reserved.",

@@ -16,7 +16,12 @@ interface TocSection {
   children: TocHeading[];
 }
 
-export function TableOfContents({ label }: { label?: string }) {
+interface TableOfContentsProps {
+  label: string;
+  labels: { expand: string; collapse: string };
+}
+
+export function TableOfContents({ label, labels }: TableOfContentsProps) {
   const [headings, setHeadings] = useState<TocHeading[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -35,7 +40,7 @@ export function TableOfContents({ label }: { label?: string }) {
         items.push({
           id: el.id,
           text: el.textContent ?? "",
-          level: parseInt(el.tagName[1]),
+          level: Number(el.tagName[1]),
         });
       }
     });
@@ -61,6 +66,8 @@ export function TableOfContents({ label }: { label?: string }) {
 
   // Re-collect headings on pathname change and on DOM mutations inside .prose
   useEffect(() => {
+    // Headings live in server-rendered MDX, so they can only be read from the DOM after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     collectHeadings();
 
     const article = document.querySelector(".prose");
@@ -158,9 +165,9 @@ export function TableOfContents({ label }: { label?: string }) {
   };
 
   return (
-    <nav className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+    <nav className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto" aria-label={label}>
       <p className="mb-3 text-sm font-semibold text-foreground">
-        {label ?? "On this page"}
+        {label}
       </p>
       <ul className="space-y-0.5 border-l border-border">
         {sections.map((section) => {
@@ -176,9 +183,11 @@ export function TableOfContents({ label }: { label?: string }) {
               <div className="flex items-center -ml-px">
                 {hasChildren && (
                   <button
+                    type="button"
                     onClick={() => toggleSection(section.heading.id)}
-                    className="shrink-0 p-0.5 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label={isExpanded ? "Collapse" : "Expand"}
+                    className="shrink-0 p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label={isExpanded ? labels.collapse : labels.expand}
+                    aria-expanded={isExpanded}
                   >
                     <ChevronRight
                       className={cn(

@@ -10,6 +10,8 @@ import {
   getContentWarnings,
   customPageExists,
   getAllCustomPages,
+  getDocBySlug,
+  searchContent,
 } from "@/lib/content";
 
 describe("content.ts", () => {
@@ -41,7 +43,8 @@ describe("content.ts", () => {
         expect(post.slug).toBeTruthy();
         expect(typeof post.title).toBe("string");
         expect(typeof post.content).toBe("string");
-        expect(typeof post.readingTime).toBe("string");
+        expect(post.readingMinutes).toBeGreaterThanOrEqual(1);
+        expect(post.sourcePath).toMatch(/^content\/blog\/.+\.mdx?$/);
         expect(Array.isArray(post.tags)).toBe(true);
       }
     });
@@ -76,7 +79,19 @@ describe("content.ts", () => {
         expect(typeof doc.content).toBe("string");
         expect(typeof doc.category).toBe("string");
         expect(typeof doc.order).toBe("number");
+        expect(Number.isNaN(Date.parse(doc.lastModified))).toBe(false);
+        expect(doc.sourcePath).toMatch(/^content\/docs\/.+\.mdx?$/);
       }
+    });
+
+    it("resolves category index pages to their index file", () => {
+      const doc = getDocBySlug(["getting-started"]);
+      expect(doc.category).toBe("getting-started");
+      expect(doc.sourcePath).toMatch(/getting-started\/index\.mdx?$/);
+    });
+
+    it("throws for unknown docs", () => {
+      expect(() => getDocBySlug(["does-not-exist"])).toThrow(/not found/);
     });
   });
 
@@ -143,6 +158,16 @@ describe("content.ts", () => {
         expect(typeof item.href).toBe("string");
         expect(["blog", "docs"]).toContain(item.type);
       }
+    });
+
+    it("searchContent matches all words case-insensitively", () => {
+      const [first] = getSearchIndex();
+      if (!first) return;
+      const word = first.title.split(/\s+/)[0];
+      const results = searchContent(word.toUpperCase());
+      expect(results.some((r) => r.href === first.href)).toBe(true);
+      expect(searchContent("zzz-no-such-word-zzz")).toEqual([]);
+      expect(searchContent("   ")).toEqual([]);
     });
 
     it("returns cached results on second call", () => {

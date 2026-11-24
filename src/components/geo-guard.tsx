@@ -1,53 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import type { GeoBlock } from "@/lib/content";
+import type { Dictionary } from "@/lib/i18n";
+import { isGeoBlocked, useGeoCountry } from "@/hooks/use-geo-country";
 
 interface GeoGuardProps {
   geoBlock: GeoBlock;
-  children: React.ReactNode;
+  labels: Dictionary["geo"];
+  children: ReactNode;
 }
 
-export function GeoGuard({ geoBlock, children }: GeoGuardProps) {
-  const [status, setStatus] = useState<"loading" | "allowed" | "blocked">("loading");
-  const [message, setMessage] = useState("");
+/** Hide a whole page from visitors in restricted countries (fails closed). */
+export function GeoGuard({ geoBlock, labels, children }: GeoGuardProps) {
+  const geo = useGeoCountry();
 
-  useEffect(() => {
-    fetch("https://ipinfo.io/json?token=58e6c8d230085c")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        if (!data.country) {
-          setStatus("blocked");
-          setMessage("Не удалось определить регион. Отключите AdBlock и перезагрузите страницу.");
-        } else if (geoBlock.countries.includes(data.country)) {
-          setStatus("blocked");
-          setMessage(geoBlock.message ?? "Этот контент недоступен в вашем регионе.");
-        } else {
-          setStatus("allowed");
-        }
-      })
-      .catch(() => {
-        setStatus("blocked");
-        setMessage("Не удалось определить регион. Отключите AdBlock и перезагрузите страницу.");
-      });
-  }, [geoBlock]);
-
-  if (status === "loading") {
+  if (geo.status === "loading") {
     return (
-      <div className="flex items-center justify-center py-32">
+      <div className="flex items-center justify-center py-32" role="status" aria-live="polite">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
       </div>
     );
   }
 
-  if (status === "blocked") {
+  if (geo.status === "error" || isGeoBlocked(geo, geoBlock.countries)) {
+    const message = geo.status === "error" ? labels.detectFailed : (geoBlock.message ?? labels.unavailable);
     return (
-      <div className="flex items-center justify-center py-32 text-center">
+      <div className="flex items-center justify-center px-6 py-32 text-center">
         <div>
-          <p className="text-4xl mb-4">⛔</p>
+          <p className="mb-4 text-4xl" aria-hidden="true">
+            ⛔
+          </p>
           <p className="text-xl text-muted-foreground">{message}</p>
         </div>
       </div>

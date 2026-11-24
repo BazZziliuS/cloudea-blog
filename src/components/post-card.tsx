@@ -1,80 +1,46 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
-import { ru, enUS, zhCN } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import type { GeoBlock } from "@/lib/content";
 
-const dateLocales: Record<string, import("date-fns").Locale> = {
-  ru,
-  en: enUS,
-  zh: zhCN,
-};
-
-const readingTimeLabels: Record<string, string> = {
-  ru: "мин чтения",
-  en: "min read",
-  zh: "分钟阅读",
-};
-
-function localizeReadingTime(readingTime: string, locale: string): string {
-  const match = readingTime.match(/(\d+)/);
-  if (!match) return readingTime;
-  const minutes = match[1];
-  return `${minutes} ${readingTimeLabels[locale] ?? readingTimeLabels.en}`;
-}
-
-interface PostCardProps {
+/** Pre-formatted, serializable post data for listing cards. */
+export interface PostCardData {
   slug: string;
   title: string;
   description: string;
   date: string;
-  readingTime: string;
+  dateLabel: string;
+  readingLabel: string;
   tags: string[];
-  locale?: string;
   geoBlock?: GeoBlock;
-  userCountry: string | null;
 }
 
-export function PostCard({
-  slug,
-  title,
-  description,
-  date,
-  readingTime,
-  tags,
-  locale = "en",
-  geoBlock,
-  userCountry,
-}: PostCardProps) {
-  const isBlocked = geoBlock && userCountry !== null && geoBlock.countries.includes(userCountry);
+interface PostCardProps {
+  post: PostCardData;
+  /** When set, the card is blurred, unclickable and shows this message. */
+  blockedMessage?: string;
+}
+
+export function PostCard({ post, blockedMessage }: PostCardProps) {
+  const isBlocked = Boolean(blockedMessage);
 
   const card = (
     <div className="relative flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card p-6 transition-colors hover:border-primary/50 hover:bg-accent/50">
       {isBlocked && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-          <p className="text-sm text-muted-foreground">⛔ {geoBlock.message ?? "Недоступно в вашем регионе"}</p>
+          <p className="text-sm text-muted-foreground">⛔ {blockedMessage}</p>
         </div>
       )}
-      <article className={`flex flex-1 flex-col ${isBlocked ? "blur-sm select-none" : ""}`}>
+      <article className={`flex flex-1 flex-col ${isBlocked ? "select-none blur-sm" : ""}`} aria-hidden={isBlocked}>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <time dateTime={date}>
-            {format(new Date(date), "d MMM yyyy", { locale: dateLocales[locale] ?? enUS })}
-          </time>
-          <span>&middot;</span>
-          <span>{localizeReadingTime(readingTime, locale)}</span>
+          <time dateTime={post.date}>{post.dateLabel}</time>
+          <span aria-hidden="true">&middot;</span>
+          <span>{post.readingLabel}</span>
         </div>
-        <h2 className="mt-3 text-xl font-semibold group-hover:text-primary transition-colors">
-          {title}
-        </h2>
-        <p className="mt-2 line-clamp-3 flex-1 text-sm text-muted-foreground">
-          {description}
-        </p>
+        <h2 className="mt-3 text-xl font-semibold transition-colors group-hover:text-primary">{post.title}</h2>
+        <p className="mt-2 line-clamp-3 flex-1 text-sm text-muted-foreground">{post.description}</p>
         <div className="mt-4 flex items-center gap-2">
           <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
+            {post.tags.map((tag) => (
               <Badge key={tag} variant="secondary" className="text-xs">
                 {tag}
               </Badge>
@@ -89,32 +55,8 @@ export function PostCard({
   if (isBlocked) return card;
 
   return (
-    <Link href={`/blog/${slug}`} className="group">
+    <Link href={`/blog/${post.slug}`} className="group">
       {card}
     </Link>
   );
-}
-
-/** Hook to detect user country once, shared across cards */
-export function useUserCountry() {
-  const [country, setCountry] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    fetch("https://ipinfo.io/json?token=58e6c8d230085c")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setCountry(data.country ?? null);
-        setLoaded(true);
-      })
-      .catch(() => {
-        setCountry("UNKNOWN");
-        setLoaded(true);
-      });
-  }, []);
-
-  return { country, loaded };
 }

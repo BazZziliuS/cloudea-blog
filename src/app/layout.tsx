@@ -1,16 +1,25 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
-import { ScrollToTop } from "@/components/scroll-to-top";
-import { RouteProgress } from "@/components/route-progress";
 import { Analytics } from "@/components/analytics";
-import { getConfig, seo } from "@/lib/config";
-import { getLocale } from "@/lib/i18n-server";
+import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
+import { RouteProgress } from "@/components/route-progress";
+import { ScrollToTop } from "@/components/scroll-to-top";
+import { ThemeProvider } from "@/components/theme-provider";
+import {
+  absoluteUrl,
+  getConfig,
+  getDonateLink,
+  getNavLinks,
+  isSupabaseAuthEnabled,
+  seo,
+  type CloudeaConfig,
+} from "@/lib/config";
 import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 import "./globals.css";
 
 const inter = Inter({
@@ -20,121 +29,124 @@ const inter = Inter({
 
 const config = getConfig();
 
-export const viewport = {
+export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
 };
 
-export const metadata = {
-  ...seo({
-    title: config.title,
-    description: config.seo.defaultDescription,
-    path: "/",
-  }),
-  icons: {
-    icon: "/icon.svg",
+const baseMetadata = seo({ path: "/" });
+
+export const metadata: Metadata = {
+  ...baseMetadata,
+  title: {
+    default: config.title,
+    template: config.seo.titleTemplate,
+  },
+  icons: { icon: "/icon.svg" },
+  alternates: {
+    ...baseMetadata.alternates,
+    types: {
+      "application/rss+xml": [{ url: absoluteUrl("/rss.xml"), title: `${config.title} RSS` }],
+      "application/atom+xml": [{ url: absoluteUrl("/atom.xml"), title: `${config.title} Atom` }],
+      "application/feed+json": [{ url: absoluteUrl("/feed.json"), title: `${config.title} JSON Feed` }],
+    },
   },
 };
 
-const feedLinks = [
-  { rel: "alternate", type: "application/rss+xml", title: `${config.title} RSS`, href: `${config.url}/rss.xml` },
-  { rel: "alternate", type: "application/atom+xml", title: `${config.title} Atom`, href: `${config.url}/atom.xml` },
-  { rel: "alternate", type: "application/feed+json", title: `${config.title} JSON Feed`, href: `${config.url}/feed.json` },
-];
+/** Custom CSS from `customCss` is inlined at build time. */
+const customCss = (config.customCss ?? [])
+  .map((cssPath) => {
+    try {
+      return fs.readFileSync(path.join(/* turbopackIgnore: true */ process.cwd(), cssPath), "utf-8");
+    } catch {
+      console.warn(`[cloudea] customCss file not found: ${cssPath}`);
+      return "";
+    }
+  })
+  .filter(Boolean);
 
-const customCssInline = (config.customCss ?? []).map((cssPath) => {
-  const filePath = path.join(process.cwd(), cssPath);
-  try {
-    return fs.readFileSync(filePath, "utf-8");
-  } catch {
-    return "";
-  }
-}).filter(Boolean);
+type ScriptStrategy = NonNullable<NonNullable<CloudeaConfig["customScripts"]>[number]["strategy"]>;
 
-const customScripts = (config.customScripts ?? []).map((script, i) => {
-  const strategy = script.strategy ?? "afterInteractive";
+interface CustomScript {
+  id: string;
+  strategy: ScriptStrategy;
+  position: "head" | "body";
+  src?: string;
+  code?: string;
+}
 
-  // External URL
-  if (script.external && script.src) {
-    return { id: `custom-script-${i}`, src: script.src, strategy, position: script.position ?? "body" };
-  }
+const customScripts: CustomScript[] = (config.customScripts ?? []).map((script, index) => ({
+  id: `custom-script-${index}`,
+  strategy: script.strategy ?? "afterInteractive",
+  position: script.position ?? "body",
+  ...(script.src
+    ? { src: script.external ? script.src : `/api/custom-script/${script.src.replace(/^\.?\//, "")}` }
+    : { code: script.code ?? "" }),
+}));
 
-  // Local file
-  if (script.src && !script.external) {
-    return { id: `custom-script-${i}`, src: `/api/custom-script/${script.src}`, strategy, position: script.position ?? "body" };
-  }
-
-  // Inline code
-  return { id: `custom-script-${i}`, code: script.code ?? "", strategy, position: script.position ?? "body" };
-});
-
-const headScripts = customScripts.filter((s) => s.position === "head");
-const bodyScripts = customScripts.filter((s) => s.position === "body");
-
-function renderScript(s: typeof customScripts[number]) {
-  if ("code" in s && s.code) {
-    return (
-      <Script key={s.id} id={s.id} strategy={s.strategy as "beforeInteractive" | "afterInteractive" | "lazyOnload"}>
-        {s.code}
-      </Script>
-    );
-  }
-  return (
-    <Script key={s.id} id={s.id} src={s.src} strategy={s.strategy as "beforeInteractive" | "afterInteractive" | "lazyOnload"} />
+function renderScript({ id, strategy, src, code }: CustomScript) {
+  return src ? (
+    <Script key={id} id={id} src={src} strategy={strategy} />
+  ) : (
+    <Script key={id} id={id} strategy={strategy}>
+      {code}
+    </Script>
   );
 }
 
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+/** Monetag tag loader: injects the tag script with the configured zone. */
+function MonetagTag({ tagSrc, tagZoneId }: { tagSrc: string; tagZoneId: string }) {
+  const loader = `(function(s){s.dataset.zone=${JSON.stringify(tagZoneId)},s.src=${JSON.stringify(
+    tagSrc,
+  )}})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`;
+  return <script dangerouslySetInnerHTML={{ __html: loader }} />;
+}
+
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const locale = await getLocale();
   const dict = getDictionary(locale);
+  const { themeConfig, monetag } = config;
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
-        {config.monetag?.tagSrc && config.monetag?.tagZoneId && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `(function(s){s.dataset.zone=${JSON.stringify(
-                config.monetag.tagZoneId
-              )},s.src=${JSON.stringify(
-                config.monetag.tagSrc
-              )}})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`,
-            }}
-          />
-        )}
-        {feedLinks.map((link) => (
-          <link key={link.type} rel={link.rel} type={link.type} title={link.title} href={link.href} />
+        {monetag?.tagSrc && monetag.tagZoneId && <MonetagTag tagSrc={monetag.tagSrc} tagZoneId={monetag.tagZoneId} />}
+        {customCss.map((css, index) => (
+          <style key={`custom-css-${index}`} dangerouslySetInnerHTML={{ __html: css }} />
         ))}
-        {customCssInline.map((css, i) => (
-          <style key={`custom-css-${i}`} dangerouslySetInnerHTML={{ __html: css }} />
-        ))}
-        {headScripts.map(renderScript)}
+        {customScripts.filter((s) => s.position === "head").map(renderScript)}
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme={config.themeConfig.colorMode.defaultMode}
-          enableSystem={config.themeConfig.colorMode.respectPrefersColorScheme}
+          defaultTheme={themeConfig.colorMode.defaultMode}
+          enableSystem={themeConfig.colorMode.respectPrefersColorScheme}
         >
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
           >
-            {locale === "ru" ? "Перейти к содержимому" : "Skip to content"}
+            {dict.common.skipToContent}
           </a>
           <RouteProgress />
           <div className="flex min-h-screen flex-col">
-            <Header dict={dict} locale={locale} />
-            <main id="main-content" className="flex-1">{children}</main>
+            <Header
+              title={themeConfig.navbar.title}
+              navItems={getNavLinks(locale)}
+              donateLink={getDonateLink(locale)}
+              githubUrl={themeConfig.socials?.github}
+              authEnabled={isSupabaseAuthEnabled()}
+              dict={dict}
+              locale={locale}
+            />
+            <main id="main-content" className="flex-1">
+              {children}
+            </main>
             <Footer dict={dict} locale={locale} />
           </div>
-          <ScrollToTop />
+          <ScrollToTop label={dict.common.scrollToTop} />
         </ThemeProvider>
-        {bodyScripts.map(renderScript)}
+        {customScripts.filter((s) => s.position === "body").map(renderScript)}
         <Analytics />
       </body>
     </html>

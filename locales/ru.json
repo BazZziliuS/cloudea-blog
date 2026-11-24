@@ -1,4 +1,19 @@
 {
+  "common": {
+    "skipToContent": "Перейти к содержимому",
+    "toggleTheme": "Переключить тему",
+    "toggleMenu": "Меню",
+    "language": "Язык",
+    "scrollToTop": "Наверх",
+    "copy": "Копировать",
+    "copied": "Скопировано!",
+    "copyCode": "Скопировать код",
+    "home": "На главную",
+    "tryAgain": "Попробовать снова",
+    "expand": "Развернуть",
+    "collapse": "Свернуть",
+    "advertisement": "Реклама"
+  },
   "nav": {
     "blog": "Блог",
     "docs": "Документация",
@@ -28,9 +43,6 @@
     "archive": "Архив",
     "archiveSubtitle": "Все посты блога по годам",
     "allTagsLink": "Все",
-    "post": "пост",
-    "posts2_4": "поста",
-    "posts5": "постов",
     "noTags": "Тегов пока нет.",
     "backToTags": "Все теги",
     "searchPlaceholder": "Поиск по блогу и документации...",
@@ -45,13 +57,63 @@
     "docsLabel": "Доки",
     "docs": "Документация",
     "showMore": "Показать ещё",
-    "ofTotal": "из",
-    "recentPosts": "Последние"
+    "recentPosts": "Последние",
+    "postCount": {
+      "one": "{count} пост",
+      "few": "{count} поста",
+      "many": "{count} постов",
+      "other": "{count} поста"
+    },
+    "minRead": "{count} мин чтения",
+    "prev": "← Назад",
+    "next": "Далее →",
+    "shownOf": "{shown} из {total}",
+    "series": "Серия",
+    "seriesPrev": "← Предыдущая",
+    "seriesNext": "Следующая →",
+    "related": "Похожие статьи",
+    "editOnGithub": "Редактировать эту страницу на GitHub",
+    "draftNotice": "Это черновик. Он виден только в режиме предпросмотра.",
+    "exitPreview": "Выйти из превью",
+    "taggedWith": "Посты с тегом «{tag}»"
+  },
+  "docs": {
+    "title": "Документация",
+    "subtitle": "Документация, вики и заметки.",
+    "updated": "Обновлено {date}",
+    "editOnGithub": "Редактировать на GitHub",
+    "docCount": {
+      "one": "{count} документ",
+      "few": "{count} документа",
+      "many": "{count} документов",
+      "other": "{count} документа"
+    }
+  },
+  "geo": {
+    "unavailable": "Этот контент недоступен в вашем регионе.",
+    "unavailableShort": "Недоступно в вашем регионе",
+    "hidden": "Контент скрыт в вашем регионе.",
+    "detectFailed": "Не удалось определить регион. Отключите AdBlock и перезагрузите страницу."
+  },
+  "comments": {
+    "title": "Комментарии",
+    "placeholder": "Написать комментарий...",
+    "replyPlaceholder": "Написать ответ...",
+    "send": "Отправить",
+    "signInToComment": "Войдите, чтобы комментировать",
+    "noComments": "Пока нет комментариев. Будьте первым!",
+    "reply": "Ответить",
+    "delete": "Удалить",
+    "cancel": "Отмена"
   },
   "auth": {
     "title": "Вход в аккаунт",
     "subtitle": "Войдите через GitHub для доступа к платформе",
     "signInGithub": "Войти через GitHub"
+  },
+  "errors": {
+    "notFoundTitle": "Страница не найдена",
+    "notFoundText": "Запрашиваемая страница не существует, была удалена или перемещена по другому адресу."
   },
   "footer": {
     "rights": "Все права защищены.",

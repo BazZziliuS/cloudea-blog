@@ -1,24 +1,24 @@
-"use client";
-
-import { getConfig } from "@/lib/config";
-import { GiscusComments } from "@/components/giscus";
 import { SupabaseComments } from "@/components/comments";
-import type { Locale } from "@/lib/i18n";
+import { GiscusComments } from "@/components/giscus";
+import { getConfig, isSupabaseAuthEnabled } from "@/lib/config";
+import type { Dictionary, Locale } from "@/lib/i18n";
 
 interface BlogCommentsProps {
   slug: string;
   locale: Locale;
+  labels: Dictionary["comments"];
 }
 
-export function BlogComments({ slug, locale }: BlogCommentsProps) {
-  const config = getConfig();
+/** Render the comments widget for the configured provider. */
+export function BlogComments({ slug, locale, labels }: BlogCommentsProps) {
+  const { comments } = getConfig();
 
-  if (config.comments.provider === "giscus") {
-    return <GiscusComments locale={locale} />;
+  if (comments.provider === "giscus" && comments.giscus?.repo) {
+    return <GiscusComments config={comments.giscus} locale={locale} />;
   }
 
-  if (config.comments.provider === "supabase") {
-    return <SupabaseComments slug={slug} locale={locale} />;
+  if (isSupabaseAuthEnabled()) {
+    return <SupabaseComments slug={slug} locale={locale} labels={labels} />;
   }
 
   return null;

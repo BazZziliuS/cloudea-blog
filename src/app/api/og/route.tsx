@@ -1,12 +1,15 @@
 import { ImageResponse } from "next/og";
-import { NextRequest } from "next/server";
-import { getPostBySlug, getDocBySlug, getCustomPage } from "@/lib/content";
+import type { NextRequest } from "next/server";
 import { getConfig } from "@/lib/config";
+import { getCustomPage, getDocBySlug, getPostBySlug } from "@/lib/content";
+import { OG_IMAGE_SIZE } from "@/lib/og";
+import { humanizeSlug } from "@/lib/utils";
 
 const config = getConfig();
+const MAX_SLUG_LENGTH = 300;
 
 export async function GET(request: NextRequest) {
-  const slug = request.nextUrl.searchParams.get("slug") ?? "";
+  const slug = (request.nextUrl.searchParams.get("slug") ?? "").slice(0, MAX_SLUG_LENGTH);
   const type = request.nextUrl.searchParams.get("type") ?? "blog";
 
   let title: string = config.title;
@@ -27,8 +30,8 @@ export async function GET(request: NextRequest) {
           title = page.title;
           description = page.description;
         } catch {
-          // Not a custom page — use slug as title fallback
-          title = slug.charAt(0).toUpperCase() + slug.slice(1);
+          // Not a custom page (e.g. "blog", "docs") — derive the title from the slug.
+          title = humanizeSlug(slug);
           description = config.tagline;
         }
       } else {
@@ -123,6 +126,9 @@ export async function GET(request: NextRequest) {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    {
+      ...OG_IMAGE_SIZE,
+      headers: { "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400" },
+    },
   );
 }

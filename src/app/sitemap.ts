@@ -1,72 +1,55 @@
 import type { MetadataRoute } from "next";
-import { getAllPosts, getAllDocs, getAllTags } from "@/lib/content";
-import { getConfig } from "@/lib/config";
+import { absoluteUrl, getConfig } from "@/lib/config";
+import { getAllCustomPages, getAllDocs, getAllPosts, getAllTags } from "@/lib/content";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const config = getConfig();
-  const baseUrl = config.url.replace(/\/+$/, "");
-
   const posts = getAllPosts();
   const docs = getAllDocs();
+  const latestPostDate = posts[0] ? new Date(posts[0].date) : undefined;
+  const latestDocDate = docs.reduce<Date | undefined>((latest, doc) => {
+    const date = new Date(doc.lastModified);
+    return !latest || date > latest ? date : latest;
+  }, undefined);
 
-  // Используем дату последнего поста как lastModified для списковых страниц
-  const latestPostDate = posts.length > 0
-    ? new Date(posts[0].date)
-    : new Date("2025-01-01");
+  // When the blog is the homepage, /blog redirects to / and must not be listed.
+  const blogIsHomepage = getConfig().homepage === "blog";
 
   const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: baseUrl,
-      lastModified: latestPostDate,
-      changeFrequency: "daily",
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: latestPostDate,
-      changeFrequency: "daily",
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/docs`,
-      lastModified: latestPostDate,
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/tags`,
-      lastModified: latestPostDate,
-      changeFrequency: "weekly",
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/blog/archive`,
-      lastModified: latestPostDate,
-      changeFrequency: "weekly",
-      priority: 0.5,
-    },
+    { url: absoluteUrl(), lastModified: latestPostDate, changeFrequency: "daily", priority: 1 },
+    ...(blogIsHomepage
+      ? []
+      : [{ url: absoluteUrl("/blog"), lastModified: latestPostDate, changeFrequency: "daily" as const, priority: 0.9 }]),
+    { url: absoluteUrl("/docs"), lastModified: latestDocDate, changeFrequency: "weekly", priority: 0.9 },
+    { url: absoluteUrl("/blog/tags"), lastModified: latestPostDate, changeFrequency: "weekly", priority: 0.5 },
+    { url: absoluteUrl("/blog/archive"), lastModified: latestPostDate, changeFrequency: "weekly", priority: 0.5 },
   ];
 
   const blogPages: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
+    url: absoluteUrl(`/blog/${post.slug}`),
     lastModified: new Date(post.date),
     changeFrequency: "monthly",
     priority: 0.8,
   }));
 
   const docPages: MetadataRoute.Sitemap = docs.map((doc) => ({
-    url: `${baseUrl}/docs/${doc.slug.join("/")}`,
-    lastModified: latestPostDate,
+    url: absoluteUrl(`/docs/${doc.slug.join("/")}`),
+    lastModified: new Date(doc.lastModified),
     changeFrequency: "weekly",
     priority: 0.7,
   }));
 
+  const customPages: MetadataRoute.Sitemap = getAllCustomPages().map((page) => ({
+    url: absoluteUrl(`/${page.slug.join("/")}`),
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+
   const tagPages: MetadataRoute.Sitemap = getAllTags().map((tag) => ({
-    url: `${baseUrl}/blog/tags/${tag.name}`,
+    url: absoluteUrl(`/blog/tags/${encodeURIComponent(tag.name)}`),
     lastModified: latestPostDate,
     changeFrequency: "weekly",
     priority: 0.4,
   }));
 
-  return [...staticPages, ...blogPages, ...docPages, ...tagPages];
+  return [...staticPages, ...blogPages, ...docPages, ...customPages, ...tagPages];
 }
